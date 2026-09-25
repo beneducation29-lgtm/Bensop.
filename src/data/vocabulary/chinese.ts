@@ -1,0 +1,286 @@
+import { VocabularyWord } from '../../types/vocabulary';
+
+export const CHINESE_VOCABULARY_WORDS: VocabularyWord[] = [
+  {
+    id: 'zh-vocab-xuexi',
+    language: 'zh',
+    word: '学习',
+    slug: 'xuexi',
+    pronunciation: 'xuéxí',
+    phonetic: 'xuéxí',
+    partOfSpeech: 'verb',
+    meaning: 'học tập, nghiên cứu trau dồi tri thức',
+    definitions: ['Học tập, tiếp thu kiến thức và kỹ năng qua sách vở hoặc thực hành.'],
+    examples: [
+      {
+        sentence: '我每天坚持学习汉语两个小时。',
+        translation: 'Tôi kiên trì học tiếng Hán hai tiếng mỗi ngày.',
+        highlight: '学习汉语'
+      },
+      {
+        sentence: '我们要互相学习，共同进步。',
+        translation: 'Chúng ta cần học tập lẫn nhau để cùng nhau tiến bộ.',
+        highlight: '互相学习'
+      }
+    ],
+    synonyms: ['念书', '读书', '进修'],
+    collocations: ['努力学习', '学习汉语', '学习经验', '学习方法'],
+    relatedWords: [
+      { word: '学校', slug: 'xuexiao', partOfSpeech: 'noun', meaning: 'trường học' },
+      { word: '学生', slug: 'xuesheng', partOfSpeech: 'noun', meaning: 'học sinh, sinh viên' },
+      { word: '学者', slug: 'xuezhe', partOfSpeech: 'noun', meaning: 'học giả, nhà nghiên cứu' }
+    ],
+    topicId: 'daily-life',
+    topicName: '日常会话 — Đời Sống Hàng Ngày',
+    level: 'HSK 1',
+    frequency: 5,
+    tags: ['HSK 1', 'Study', 'Daily'],
+    relatedLessonSlug: 'ngu-am-thanh-dieu-cot-loi',
+    relatedCourseSlug: 'tieng-trung-thuc-chien-tu-con-so-0',
+    relatedQuizSlug: 'hsk-phan-xa-tu-vung-thanh-dieu',
+    relatedGrammarSlug: 'aspect-particles-le',
+    questionIds: ['zh-mc-01', 'zh-fb-01'],
+    createdAt: '2026-09-01T00:00:00Z',
+    updatedAt: '2026-09-20T00:00:00Z'
+  },
+  {
+    id: 'zh-vocab-gongzuo',
+    language: 'zh',
+    word: '工作',
+    slug: 'gongzuo',
+    pronunciation: 'gōngzuò',
+    phonetic: 'gōngzuò',
+    partOfSpeech: 'verb / noun',
+    meaning: 'làm việc, công việc, nghề nghiệp',
+    definitions: ['Tham gia vào hoạt động lao động để kiếm sống; nhiệm vụ chức vụ đảm nhận.'],
+    examples: [
+      {
+        sentence: '他在一家跨国科技公司工作。',
+        translation: 'Anh ấy làm việc ở một công ty công nghệ đa quốc gia.',
+        highlight: '科技公司工作'
+      },
+      {
+        sentence: '祝你新工作一切顺利！',
+        translation: 'Chúc công việc mới của bạn mọi sự thuận lợi!',
+        highlight: '新工作'
+      }
+    ],
+    synonyms: ['上班', '就职'],
+    collocations: ['找工作', '工作认真', '工作经验', '工作环境'],
+    topicId: 'work',
+    topicName: '职场办公 — Công Sở & Doanh Nghiệp',
+    level: 'HSK 1',
+    frequency: 5,
+    tags: ['HSK 1', 'Work', 'Office'],
+    createdAt: '2026-09-02T00:00:00Z',
+    updatedAt: '2026-09-20T00:00:00Z'
+  },
+  {
+    id: 'zh-vocab-lvyou',
+    language: 'zh',
+    word: '旅游',
+    slug: 'lvyou',
+    pronunciation: 'lǚyóu',
+    phonetic: 'lǚyóu',
+    partOfSpeech: 'verb / noun',
+    meaning: 'du lịch, đi du ngoạn khám phá',
+    definitions: ['Đi xa tham quan, nghỉ dưỡng và khám phá cảnh đẹp.'],
+    examples: [
+      {
+        sentence: '今年夏天我们打算去云南旅游。',
+        translation: 'Mùa hè năm nay chúng tôi dự định đi du lịch Vân Nam.',
+        highlight: '去云南旅游'
+      }
+    ],
+    synonyms: ['旅行', '游玩'],
+    collocations: ['出国旅游', '旅游景点', '自助旅游', '旅游计划'],
+    topicId: 'travel',
+    topicName: '旅游出行 — Du Lịch & Khách Sạn',
+    level: 'HSK 2',
+    frequency: 5,
+    tags: ['HSK 2', 'Travel', 'Explore'],
+    createdAt: '2026-09-03T00:00:00Z',
+    updatedAt: '2026-09-20T00:00:00Z'
+  },
+  {
+    id: 'zh-vocab-pengyou',
+    language: 'zh',
+    word: '朋友',
+    slug: 'pengyou',
+    pronunciation: 'péngyou',
+    phonetic: 'péngyou',
+    partOfSpeech: 'noun',
+    meaning: 'bạn bè, bạn hữu thân thiết',
+    definitions: ['Người có mối quan hệ gắn bó, cùng chia sẻ sở thích hoặc hoạn nạn.'],
+    examples: [
+      {
+        sentence: '有朋自远方来，不亦乐乎？',
+        translation: 'Có bạn từ phương xa tới thăm, chẳng vui vẻ lắm sao?',
+        highlight: '有朋自远方来'
+      }
+    ],
+    synonyms: ['好友', '同窗', '挚友'],
+    collocations: ['好朋友', '交朋友', '老朋友', '新朋友'],
+    topicId: 'daily-life',
+    topicName: '日常会话 — Đời Sống Hàng Ngày',
+    level: 'HSK 1',
+    frequency: 5,
+    tags: ['HSK 1', 'Relationships', 'Daily'],
+    createdAt: '2026-09-04T00:00:00Z',
+    updatedAt: '2026-09-20T00:00:00Z'
+  },
+  {
+    id: 'zh-vocab-jiating',
+    language: 'zh',
+    word: '家庭',
+    slug: 'jiating',
+    pronunciation: 'jiātíng',
+    phonetic: 'jiātíng',
+    partOfSpeech: 'noun',
+    meaning: 'gia đình, tổ ấm',
+    definitions: ['Đơn vị xã hội gồm những người có quan hệ huyết thống hoặc hôn nhân.'],
+    examples: [
+      {
+        sentence: '一个和谐温暖的家庭是人生最坚强的后盾。',
+        translation: 'Một gia đình hài hòa ấm áp là điểm tựa vững chắc nhất của cuộc đời.',
+        highlight: '温暖的家庭'
+      }
+    ],
+    collocations: ['幸福家庭', '家庭成员', '家庭教育', '家庭背景'],
+    topicId: 'daily-life',
+    topicName: '日常会话 — Đời Sống Hàng Ngày',
+    level: 'HSK 3',
+    frequency: 4,
+    tags: ['HSK 3', 'Family'],
+    createdAt: '2026-09-05T00:00:00Z',
+    updatedAt: '2026-09-20T00:00:00Z'
+  }
+];
+
+// Rich seed collection of Chinese HSK vocabulary
+const RAW_ZH_SEEDS = [
+  { hanzi: '你好', py: 'nǐ hǎo', mean: 'xin chào', lvl: 'HSK 1', top: 'daily-life', col: '问声你好' },
+  { hanzi: '谢谢', py: 'xièxie', mean: 'cảm ơn', lvl: 'HSK 1', top: 'daily-life', col: '非常感谢' },
+  { hanzi: '再见', py: 'zàijiàn', mean: 'tạm biệt, hẹn gặp lại', lvl: 'HSK 1', top: 'daily-life', col: '明天再见' },
+  { hanzi: '高兴', py: 'gāoxìng', mean: 'vui vẻ, phấn khởi', lvl: 'HSK 1', top: 'daily-life', col: '很高兴认识你' },
+  { hanzi: '喜欢', py: 'xǐhuan', mean: 'thích, yêu mến', lvl: 'HSK 1', top: 'daily-life', col: '非常喜欢' },
+  { hanzi: '吃饭', py: 'chīfàn', mean: 'ăn cơm, dùng bữa', lvl: 'HSK 1', top: 'food', col: '一起吃饭' },
+  { hanzi: '喝茶', py: 'hēchá', mean: 'uống trà', lvl: 'HSK 1', top: 'food', col: '品茗喝茶' },
+  { hanzi: '今天', py: 'jīntiān', mean: 'hôm nay', lvl: 'HSK 1', top: 'time', col: '今天上午' },
+  { hanzi: '明天', py: 'míngtiān', mean: 'ngày mai', lvl: 'HSK 1', top: 'time', col: '明天见' },
+  { hanzi: '昨天', py: 'zuótiān', mean: 'hôm qua', lvl: 'HSK 1', top: 'time', col: '昨天下午' },
+  { hanzi: '学校', py: 'xuéxiào', mean: 'trường học', lvl: 'HSK 1', top: 'education', col: '去学校' },
+  { hanzi: '老师', py: 'lǎoshī', mean: 'thầy cô giáo', lvl: 'HSK 1', top: 'education', col: '中文老师' },
+  { hanzi: '学生', py: 'xuésheng', mean: 'học sinh, sinh viên', lvl: 'HSK 1', top: 'education', col: '大学生' },
+  { hanzi: '公司', py: 'gōngsī', mean: 'công ty, doanh nghiệp', lvl: 'HSK 2', top: 'work', col: '跨国公司' },
+  { hanzi: '经理', py: 'jīnglǐ', mean: 'giám đốc, người quản lý', lvl: 'HSK 3', top: 'work', col: '业务经理' },
+  { hanzi: '会议', py: 'huìyì', mean: 'cuộc họp, hội nghị', lvl: 'HSK 3', top: 'work', col: '参加会议' },
+  { hanzi: '时间', py: 'shíjiān', mean: 'thời gian', lvl: 'HSK 1', top: 'time', col: '安排时间' },
+  { hanzi: '机场', py: 'jīchǎng', mean: 'sân bay, phi trường', lvl: 'HSK 2', top: 'travel', col: '前往机场' },
+  { hanzi: '酒店', py: 'jiǔdiàn', mean: 'khách sạn cao cấp', lvl: 'HSK 3', top: 'travel', col: '预订酒店' },
+  { hanzi: '火车', py: 'huǒchē', mean: 'xe lửa, tàu hỏa', lvl: 'HSK 2', top: 'travel', col: '高铁列车' },
+  { hanzi: '买单', py: 'mǎidān', mean: 'thanh toán hóa đơn', lvl: 'HSK 2', top: 'food', col: '服务员买单' },
+  { hanzi: '菜单', py: 'càidān', mean: 'thực đơn gọi món', lvl: 'HSK 2', top: 'food', col: '看菜单' },
+  { hanzi: '多少钱', py: 'duōshǎo qián', mean: 'bao nhiêu tiền', lvl: 'HSK 1', top: 'shopping', col: '一共多少钱' },
+  { hanzi: '便宜', py: 'piányi', mean: 'rẻ tiền, giá phải chăng', lvl: 'HSK 2', top: 'shopping', col: '太便宜了' },
+  { hanzi: '贵', py: 'guì', mean: 'đắt đỏ', lvl: 'HSK 2', top: 'shopping', col: '有点儿贵' },
+  { hanzi: '打折', py: 'dǎzhé', mean: 'giảm giá, khuyến mãi', lvl: 'HSK 3', top: 'shopping', col: '打八折' },
+  { hanzi: '商店', py: 'shāngdiàn', mean: 'cửa hàng mua sắm', lvl: 'HSK 1', top: 'shopping', col: '进商店' },
+  { hanzi: '超市', py: 'chāoshì', mean: 'siêu thị tiện ích', lvl: 'HSK 2', top: 'shopping', col: '去超市' },
+  { hanzi: '文化', py: 'wénhuà', mean: 'văn hóa', lvl: 'HSK 3', top: 'culture', col: '传统文化' },
+  { hanzi: '书法', py: 'shūfǎ', mean: 'thư pháp chữ Hán', lvl: 'HSK 4', top: 'culture', col: '中国书法' },
+  { hanzi: '历史', py: 'lìshǐ', mean: 'lịch sử', lvl: 'HSK 3', top: 'culture', col: '悠久历史' },
+  { hanzi: '春节', py: 'chūnjié', mean: 'Tết Nguyên Đán', lvl: 'HSK 3', top: 'culture', col: '过春节' },
+  { hanzi: '成语', py: 'chéngyǔ', mean: 'thành ngữ 4 chữ', lvl: 'HSK 4', top: 'culture', col: '常用成语' },
+  { hanzi: '健康', py: 'jiànkāng', mean: 'sức khỏe, lành mạnh', lvl: 'HSK 3', top: 'daily-life', col: '身体健康' },
+  { hanzi: '运动', py: 'yùndòng', mean: 'thể dục vận động', lvl: 'HSK 2', top: 'daily-life', col: '坚持运动' },
+  { hanzi: '医生', py: 'yīshēng', mean: 'bác sĩ y khoa', lvl: 'HSK 1', top: 'daily-life', col: '看医生' },
+  { hanzi: '感冒', py: 'gǎnmào', mean: 'cảm cúm, sổ mũi', lvl: 'HSK 3', top: 'daily-life', col: '得了感冒' },
+  { hanzi: '休息', py: 'xiūxi', mean: 'nghỉ ngơi, tĩnh dưỡng', lvl: 'HSK 2', top: 'daily-life', col: '好好休息' },
+  { hanzi: '准备', py: 'zhǔnbèi', mean: 'chuẩn bị sẵn sàng', lvl: 'HSK 2', top: 'work', col: '做好准备' },
+  { hanzi: '打算', py: 'dǎsuàn', mean: 'dự định, toan tính', lvl: 'HSK 3', top: 'work', col: '有什么打算' },
+  { hanzi: '决定', py: 'juédìng', mean: 'quyết định', lvl: 'HSK 3', top: 'work', col: '做出决定' },
+  { hanzi: '解决', py: 'jiějué', mean: 'giải quyết vấn đề', lvl: 'HSK 3', top: 'work', col: '解决问题' },
+  { hanzi: '安排', py: 'ānpái', mean: 'sắp xếp công việc', lvl: 'HSK 3', top: 'work', col: '日程安排' },
+  { hanzi: '合同', py: 'hétong', mean: 'hợp đồng thương mại', lvl: 'HSK 4', top: 'work', col: '签合同' },
+  { hanzi: '客户', py: 'kèhù', mean: 'khách hàng, đối tác', lvl: 'HSK 4', top: 'work', col: '重要客户' },
+  { hanzi: '谈判', py: 'tánpàn', mean: 'đàm phán, thương lượng', lvl: 'HSK 4', top: 'work', col: '商务谈判' },
+  { hanzi: '成功', py: 'chénggōng', mean: 'thành công', lvl: 'HSK 3', top: 'work', col: '取得成功' },
+  { hanzi: '经验', py: 'jīngyàn', mean: 'kinh nghiệm tích lũy', lvl: 'HSK 3', top: 'education', col: '丰富经验' },
+  { hanzi: '知识', py: 'zhīshi', mean: 'tri thức, kiến thức', lvl: 'HSK 4', top: 'education', col: '积累知识' },
+  { hanzi: '考试', py: 'kǎoshì', mean: 'kỳ thi, thi cử', lvl: 'HSK 2', top: 'education', col: '参加考试' },
+  { hanzi: '成绩', py: 'chéngjì', mean: 'thành tích, điểm số', lvl: 'HSK 3', top: 'education', col: '优异成绩' },
+  { hanzi: '进步', py: 'jìnbù', mean: 'tiến bộ, phát triển', lvl: 'HSK 3', top: 'education', col: '很大进步' },
+  { hanzi: '努力', py: 'nǔlì', mean: 'nỗ lực, cố gắng', lvl: 'HSK 2', top: 'education', col: '努力工作' },
+  { hanzi: '坚持', py: 'jiānchí', mean: 'kiên trì, bền chí', lvl: 'HSK 3', top: 'education', col: '坚持不懈' },
+  { hanzi: '习惯', py: 'xíguàn', mean: 'thói quen, tập quán', lvl: 'HSK 3', top: 'daily-life', col: '良好习惯' },
+  { hanzi: '目标', py: 'mùbiāo', mean: 'mục tiêu cần đạt', lvl: 'HSK 4', top: 'daily-life', col: '实现目标' },
+  { hanzi: '效率', py: 'xiàolǜ', mean: 'hiệu suất làm việc', lvl: 'HSK 4', top: 'work', col: '提高效率' },
+  { hanzi: '关键', py: 'guānjiàn', mean: 'then chốt, điểm mấu chốt', lvl: 'HSK 4', top: 'work', col: '关键时刻' },
+  { hanzi: '影响', py: 'yǐngxiǎng', mean: 'ảnh hưởng, tác động', lvl: 'HSK 3', top: 'daily-life', col: '深远影响' },
+  { hanzi: '态度', py: 'tàidu', mean: 'thái độ cư xử', lvl: 'HSK 4', top: 'daily-life', col: '端正态度' },
+  { hanzi: '责任', py: 'zérèn', mean: 'trách nhiệm', lvl: 'HSK 4', top: 'work', col: '承担责任' },
+  { hanzi: '信任', py: 'xìnrèn', mean: 'tín nhiệm, tin tưởng', lvl: 'HSK 4', top: 'work', col: '建立信任' },
+  { hanzi: '合作', py: 'hézuò', mean: 'hợp tác cùng có lợi', lvl: 'HSK 4', top: 'work', col: '紧密合作' },
+  { hanzi: '理解', py: 'lǐjiě', mean: 'thấu hiểu, lý giải', lvl: 'HSK 3', top: 'daily-life', col: '互相理解' },
+  { hanzi: '支持', py: 'zhīchí', mean: 'ủng hộ, nâng đỡ', lvl: 'HSK 4', top: 'daily-life', col: '全力支持' },
+  { hanzi: '尊重', py: 'zūnzhòng', mean: 'tôn trọng', lvl: 'HSK 4', top: 'daily-life', col: '相互尊重' },
+  { hanzi: '帮助', py: 'bāngzhù', mean: 'giúp đỡ, tương trợ', lvl: 'HSK 1', top: 'daily-life', col: '寻求帮助' },
+  { hanzi: '简单', py: 'jiǎndān', mean: 'đơn giản, mộc mạc', lvl: 'HSK 2', top: 'education', col: '非常简单' },
+  { hanzi: '复杂', py: 'fùzá', mean: 'phức tạp, rắc rối', lvl: 'HSK 4', top: 'education', col: '情况复杂' },
+  { hanzi: '重要', py: 'zhòngyào', mean: 'quan trọng', lvl: 'HSK 2', top: 'education', col: '至关重要' },
+  { hanzi: '清楚', py: 'qīngchu', mean: 'rõ ràng, rành mạch', lvl: 'HSK 3', top: 'education', col: '说得很清楚' },
+  { hanzi: '普通话', py: 'pǔtōnghuà', mean: 'tiếng phổ thông Trung Quốc', lvl: 'HSK 3', top: 'culture', col: '标准普通话' },
+  { hanzi: '发音', py: 'fāyīn', mean: 'phát âm chuẩn', lvl: 'HSK 3', top: 'education', col: '准确发音' },
+  { hanzi: '声调', py: 'shēngdiào', mean: 'thanh điệu tiếng Hán', lvl: 'HSK 3', top: 'education', col: '四个声调' },
+  { hanzi: '汉字', py: 'hànzì', mean: 'chữ Hán', lvl: 'HSK 1', top: 'culture', col: '书写汉字' },
+  { hanzi: '词汇', py: 'cíhuì', mean: 'vốn từ vựng', lvl: 'HSK 4', top: 'education', col: '扩大词汇量' },
+  { hanzi: '语法', py: 'yǔfǎ', mean: 'ngữ pháp', lvl: 'HSK 3', top: 'education', col: '掌握语法' },
+  { hanzi: '阅读', py: 'yuèdú', mean: 'đọc hiểu văn bản', lvl: 'HSK 3', top: 'education', col: '阅读理解' },
+  { hanzi: '听力', py: 'tīnglì', mean: 'kỹ năng nghe hiểu', lvl: 'HSK 3', top: 'education', col: '提高听力' },
+  { hanzi: '口语', py: 'kǒuyǔ', mean: 'khẩu ngữ, kỹ năng nói', lvl: 'HSK 3', top: 'education', col: '练习口语' },
+  { hanzi: '写作', py: 'xiězuò', mean: 'kỹ năng viết văn', lvl: 'HSK 3', top: 'education', col: '商务写作' },
+  { hanzi: '翻译', py: 'fānyì', mean: 'dịch thuật, thông dịch viên', lvl: 'HSK 4', top: 'education', col: '精准翻译' },
+  { hanzi: '沟通', py: 'gōutōng', mean: 'giao tiếp thông suốt', lvl: 'HSK 4', top: 'daily-life', col: '保持沟通' },
+  { hanzi: '表达', py: 'biǎodá', mean: 'diễn đạt ý nghĩ', lvl: 'HSK 4', top: 'daily-life', col: '清楚表达' },
+  { hanzi: '建议', py: 'jiànyì', mean: 'kiến nghị, gợi ý lời khuyên', lvl: 'HSK 3', top: 'work', col: '提出建议' },
+  { hanzi: '要求', py: 'yāoqiú', mean: 'yêu cầu, đòi hỏi', lvl: 'HSK 3', top: 'work', col: '严格要求' },
+  { hanzi: '希望', py: 'xīwàng', mean: 'hy vọng, mong ước', lvl: 'HSK 2', top: 'daily-life', col: '寄予希望' },
+  { hanzi: '满意', py: 'mǎnyì', mean: 'hài lòng, ưng ý', lvl: 'HSK 2', top: 'daily-life', col: '十分满意' },
+  { hanzi: '放心', py: 'fàngxīn', mean: 'an tâm, yên dạ', lvl: 'HSK 3', top: 'daily-life', col: '请您放心' },
+  { hanzi: '担心', py: 'dānxīn', mean: 'lo lắng, bất an', lvl: 'HSK 3', top: 'daily-life', col: '不用担心' },
+  { hanzi: '顺利', py: 'shùnlì', mean: 'thuận lợi, suôn sẻ', lvl: 'HSK 3', top: 'work', col: '一切顺利' },
+  { hanzi: '幸福', py: 'xìngfú', mean: 'hạnh phúc', lvl: 'HSK 3', top: 'daily-life', col: '幸福美满' },
+  { hanzi: '快乐', py: 'kuàilè', mean: 'vui tươi, hạnh phúc hân hoan', lvl: 'HSK 1', top: 'daily-life', col: '祝你快乐' },
+  { hanzi: '美丽', py: 'měilì', mean: 'xinh đẹp, diễm lệ', lvl: 'HSK 3', top: 'daily-life', col: '美丽风光' },
+  { hanzi: '环境', py: 'huánjìng', mean: 'môi trường sinh thái / làm việc', lvl: 'HSK 3', top: 'daily-life', col: '保护环境' }
+];
+
+RAW_ZH_SEEDS.forEach((item) => {
+  CHINESE_VOCABULARY_WORDS.push({
+    id: `zh-vocab-${item.hanzi}`,
+    language: 'zh',
+    word: item.hanzi,
+    slug: item.py.replace(/\s+/g, '-'),
+    pronunciation: item.py,
+    phonetic: item.py,
+    partOfSpeech: 'từ vựng',
+    meaning: item.mean,
+    definitions: [`Từ ${item.hanzi} có nghĩa là: ${item.mean}.`],
+    examples: [
+      {
+        sentence: `在日常交际中，常常使用“${item.hanzi}”。`,
+        translation: `Trong giao tiếp hàng ngày, thường xuyên sử dụng từ "${item.hanzi}" (${item.mean}).`,
+        highlight: item.hanzi
+      }
+    ],
+    collocations: [item.col],
+    topicId: item.top,
+    topicName: item.top === 'daily-life' ? 'Đời Sống Hàng Ngày' : item.top === 'work' ? 'Công Sở' : 'Du Lịch & Văn Hóa',
+    level: item.lvl as any,
+    frequency: 4,
+    tags: [item.lvl, item.top],
+    createdAt: '2026-09-10T00:00:00Z',
+    updatedAt: '2026-09-20T00:00:00Z'
+  });
+});

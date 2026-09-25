@@ -1,0 +1,6 @@
+{
+  "name": "Bensop - Nền tảng Học tập & Phát triển Bản thân",
+  "description": "Hệ sinh thái học hỏi, phát triển và sống tốt hơn dành cho người Việt: Tiếng Trung, Tiếng Anh, Phát triển bản thân, Sức khỏe & Đời sống.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
