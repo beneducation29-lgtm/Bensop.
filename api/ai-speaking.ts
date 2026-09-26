@@ -37,6 +37,7 @@ export default async function handler(req:Req,res:Res){
   const topic=cleanText(body.topic,120);
   const scenario=cleanText(body.scenario,220);
   const learnerGoal=cleanText(body.learnerGoal,220);
+  const conversationMemory=body.conversationMemory&&typeof body.conversationMemory==='object'?body.conversationMemory:{};
   const transcript=cleanText(body.transcript,2000);
   if(!language||!mode||!level||!transcript){
     res.status(400).json({error:'Missing speaking context'});
@@ -63,12 +64,13 @@ export default async function handler(req:Req,res:Res){
   const system=`You are Bensop AI Speaking Room. Coach a learner at level ${level} in ${targetLanguage}. Mode: ${mode}. Topic: ${topic||'general conversation'}. Scenario: ${scenario||'not specified'}. Learner goal: ${learnerGoal||'build confident, natural communication'}.
 ${chineseContract}
 MODE BEHAVIOR: ${modeInstruction}
-Keep the dialogue natural, warm and concise. React to meaning before correcting form. Use the learner's latest answer to choose the next move. Do not repeat recent questions, sentence starters, example answers, or corrections unless needed. nextPrompt must be a specific, natural follow-up in the target learning language. Evaluate the learner's transcript conservatively; do not claim to hear pronunciation from text alone. Pronunciation can be marked as null when audio evidence is unavailable. Return ONLY valid JSON with keys:
-text (string), pinyin (string|null), vietnameseTranslation (string|null), nextPrompt (string|null), feedback (object|null), suggestedModes (string[]).
+Keep the dialogue natural, warm and concise. React to meaning before correcting form. Use the learner's latest answer to choose the next move. Do not repeat recent questions, sentence starters, example answers, or corrections unless needed. nextPrompt must be a specific, natural follow-up in the target learning language. Maintain a compact conversationMemory object for this session: topicFocus, scenarioState, learnerGoal, recentPreferences (max 5), usedPrompts (max 8), usefulCorrections (max 6), lastLearnerIntent. Update it only with information grounded in the conversation; do not invent personal facts or sensitive information. Evaluate the learner's transcript conservatively; do not claim to hear pronunciation from text alone. Pronunciation can be marked as null when audio evidence is unavailable. Return ONLY valid JSON with keys:
+text (string), pinyin (string|null), vietnameseTranslation (string|null), nextPrompt (string|null), conversationMemory (object|null), feedback (object|null), suggestedModes (string[]).
 feedback may contain pronunciation, fluency, grammar, vocabulary, relevance (0-100 numbers or null), note (string), corrections (array of original/improved/explanation).
 Do not invent learner history. Do not output markdown.`;
   const historyText=history.map((t:any)=>`${t.role.toUpperCase()}: ${t.text}`).join('\n');
-  const prompt=system+'\n\nConversation:\n'+historyText+'\n\nLEARNER CURRENT TURN:\n'+transcript;
+  const memoryText=JSON.stringify(conversationMemory).slice(0,4000);
+  const prompt=system+'\n\nSESSION MEMORY:\n'+memoryText+'\n\nConversation:\n'+historyText+'\n\nLEARNER CURRENT TURN:\n'+transcript;
   try{
     const upstream=await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key='+encodeURIComponent(apiKey),{
       method:'POST',
@@ -89,6 +91,15 @@ Do not invent learner history. Do not output markdown.`;
     const reply:any={
       text,
       nextPrompt:cleanText(parsed.nextPrompt,500)||undefined,
+      conversationMemory:parsed.conversationMemory&&typeof parsed.conversationMemory==='object'?{
+        topicFocus:cleanText(parsed.conversationMemory.topicFocus,240)||undefined,
+        scenarioState:cleanText(parsed.conversationMemory.scenarioState,500)||undefined,
+        learnerGoal:cleanText(parsed.conversationMemory.learnerGoal,240)||undefined,
+        recentPreferences:Array.isArray(parsed.conversationMemory.recentPreferences)?parsed.conversationMemory.recentPreferences.slice(-5).map((x:any)=>cleanText(x,180)).filter(Boolean):[],
+        usedPrompts:Array.isArray(parsed.conversationMemory.usedPrompts)?parsed.conversationMemory.usedPrompts.slice(-8).map((x:any)=>cleanText(x,180)).filter(Boolean):[],
+        usefulCorrections:Array.isArray(parsed.conversationMemory.usefulCorrections)?parsed.conversationMemory.usefulCorrections.slice(-6).map((x:any)=>cleanText(x,220)).filter(Boolean):[],
+        lastLearnerIntent:cleanText(parsed.conversationMemory.lastLearnerIntent,240)||undefined,
+      }:undefined,
       feedback:cleanFeedback(parsed.feedback),
       suggestedModes:Array.isArray(parsed.suggestedModes)?parsed.suggestedModes.filter((m:any)=>MODES.has(m)).slice(0,3):[],
     };
