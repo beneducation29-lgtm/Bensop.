@@ -45,6 +45,7 @@ export const LessonDetailPage: React.FC<LessonDetailPageProps> = ({
   const contentBlueprint = contentService.getBlueprint(lesson.slug);
   const video = contentBlueprint?.aiVideo;
   const activeVideoScene = video?.scenes[videoSceneIndex];
+  const ecosystemLinks = contentService.getEcosystemLinks(lesson.slug).filter((link) => link.kind !== 'course');
 
   useEffect(() => {
     if (!isVideoPlaying || !video || !activeVideoScene) return;
@@ -256,6 +257,22 @@ export const LessonDetailPage: React.FC<LessonDetailPageProps> = ({
                       <span key={item} className="rounded-md border border-[#292929] bg-[#111] px-2.5 py-1.5 text-[10px] text-[#AAA]">{item}</span>
                     ))}
                   </div>
+                  {ecosystemLinks.length > 0 && (
+                    <div className="mt-4 border-t border-[#1D1D1D] pt-4">
+                      <div className="mb-2 text-[9px] font-mono font-bold tracking-[0.16em] text-[#555]">ĐI TIẾP TỪ BÀI NÀY</div>
+                      <div className="flex flex-wrap gap-2">
+                        {ecosystemLinks.map((link) => (
+                          <button
+                            key={link.kind}
+                            onClick={() => onNavigate(link.path)}
+                            className="rounded-md border border-[#2D2D2D] bg-[#151515] px-3 py-2 text-[10px] font-bold text-[#D9FF3F] transition hover:border-[#D9FF3F]"
+                          >
+                            {link.label} →
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -415,6 +432,31 @@ export const LessonDetailPage: React.FC<LessonDetailPageProps> = ({
                   <span>Đã kiểm tra thành công! Hãy hoàn thành bài học bên dưới.</span>
                 </div>
               )}
+            </div>
+          )}
+
+          {/* Blueprint-driven ecosystem routing: the lesson now hands the learner directly into the next practice surface. */}
+          {contentBlueprint && ecosystemLinks.length > 0 && (
+            <div className="mb-10 rounded-2xl border border-[#222] bg-[#0B0B0B] p-6">
+              <div className="mb-4">
+                <span className="text-[10px] font-mono font-bold tracking-[0.18em] text-[#D9FF3F]">LEARN → PRACTICE → REVIEW</span>
+                <h4 className="mt-2 text-lg font-black text-white">Không dừng ở bài đọc — đi thẳng vào kỹ năng tiếp theo.</h4>
+                <p className="mt-2 max-w-2xl text-xs leading-relaxed text-[#777]">
+                  Bensop dùng chính blueprint của lesson để nối nội dung với lab phù hợp, giúp người học chuyển từ hiểu khái niệm sang thực hành và kiểm tra.
+                </p>
+              </div>
+              <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                {ecosystemLinks.map((link) => (
+                  <button
+                    key={link.kind}
+                    onClick={() => onNavigate(link.path)}
+                    className="group rounded-xl border border-[#242424] bg-[#111] p-4 text-left transition hover:border-[#D9FF3F]"
+                  >
+                    <div className="text-xs font-bold text-white group-hover:text-[#D9FF3F]">{link.label}</div>
+                    <div className="mt-1 text-[10px] font-mono text-[#555]">MỞ MODULE →</div>
+                  </button>
+                ))}
+              </div>
             </div>
           )}
 
