@@ -57,8 +57,8 @@ const SKILL_PATHS: Record<LanguageCode, Record<string, string>> = {
 class AdaptiveSessionService {
   buildSession(language: LanguageCode = 'en'): AdaptiveSession {
     const profile = learnerProfileService.getSnapshot(language);
-    const mastery = masteryService.getSnapshot();
-    const due = spacedReviewService.getDue();
+    const mastery = masteryService.getSnapshot(language);
+    const due = spacedReviewService.getDue(new Date(), language);
     const candidates = recommendationService.getNextLearningActions(8, language);
     const items: AdaptiveSessionItem[] = [];
     const used = new Set<string>();

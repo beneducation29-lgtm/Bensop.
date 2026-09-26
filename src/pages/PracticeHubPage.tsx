@@ -46,8 +46,11 @@ export const PracticeHubPage: React.FC<PracticeHubPageProps> = ({
   const [customDifficulty, setCustomDifficulty] = useState<string>('all');
 
   const history = quizSessionStorage.getHistory();
-  const mastery = masteryService.getSnapshot();
-  const dueReviews = spacedReviewService.getDue();
+  const activeLanguage: 'en' | 'zh' | undefined =
+    selectedCategory === 'tieng-anh' ? 'en' :
+    selectedCategory === 'tieng-trung' ? 'zh' : undefined;
+  const mastery = masteryService.getSnapshot(activeLanguage);
+  const dueReviews = spacedReviewService.getDue(new Date(), activeLanguage);
   const weakQuestionIds = mastery.questions
     .filter((item) => item.mastery < 70)
     .sort((a, b) => a.mastery - b.mastery)
@@ -92,7 +95,7 @@ export const PracticeHubPage: React.FC<PracticeHubPageProps> = ({
       onStartQuiz(slug);
       return;
     }
-    const fallback = QUIZ_MODELS.find((q) => q.type === 'daily') || QUIZ_MODELS[0];
+    const fallback = QUIZ_MODELS.find((q) => q.type === 'daily' && (!activeLanguage || q.categoryId === (activeLanguage === 'zh' ? 'tieng-trung' : 'tieng-anh'))) || QUIZ_MODELS.find((q) => !activeLanguage || q.categoryId === (activeLanguage === 'zh' ? 'tieng-trung' : 'tieng-anh'));
     if (fallback) onStartQuiz(fallback.slug);
   };
 
@@ -237,7 +240,15 @@ export const PracticeHubPage: React.FC<PracticeHubPageProps> = ({
               </p>
             </div>
             <button
-              onClick={() => onStartQuiz('quiz-en-02')}
+              onClick={() => {
+                if (weakQuestionIds.length) {
+                  const slug = quizService.createReviewQuiz(weakQuestionIds, activeLanguage === 'zh' ? 'Chinese Weak Area Review' : 'English Weak Area Review');
+                  onStartQuiz(slug);
+                  return;
+                }
+                const fallback = QUIZ_MODELS.find((q) => q.categoryId === (activeLanguage === 'zh' ? 'tieng-trung' : 'tieng-anh')) || QUIZ_MODELS[0];
+                if (fallback) onStartQuiz(fallback.slug);
+              }}
               className="mt-6 w-full py-2.5 rounded-lg bg-[#161616] group-hover:bg-amber-400 text-white group-hover:text-black font-mono text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer"
             >
               <span>LUYỆN TẬP ĐIỂM YẾU</span>

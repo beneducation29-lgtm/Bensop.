@@ -50,12 +50,12 @@ export interface LessonContentBlueprint {
   aiVideo: AIVideoLesson;
 }
 
-
 export interface SpacedReviewItem {
   id: string;
   lessonSlug?: string;
   quizSlug?: string;
   reviewType?: 'lesson' | 'quiz';
+  language?: 'en' | 'zh';
   intervalDays: 1 | 3 | 7;
   scheduledAt: string;
   dueAt: string;

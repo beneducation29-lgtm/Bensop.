@@ -17,6 +17,11 @@ export const quizLearningService = {
       result.quizTitle,
       intervalDays,
       result.completedAt,
+      result.categoryId === 'tieng-trung'
+        ? 'zh'
+        : result.categoryId === 'tieng-anh'
+          ? 'en'
+          : undefined,
     );
   },
 };

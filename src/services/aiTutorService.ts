@@ -18,6 +18,21 @@ const skillPaths:Record<string,Record<'en'|'zh',string>>={
 
 type ConversationMessage={role:'user'|'assistant';content:string};
 
+const allowedActionPaths=new Set([
+  '/adaptive-session?lang=en','/adaptive-session?lang=zh',
+  ...Object.values(skillPaths).flatMap(paths=>Object.values(paths)),
+]);
+
+const sanitizeAction=(action:unknown,language:'en'|'zh')=>{
+  if(!action||typeof action!=='object') return undefined;
+  const candidate=action as {label?:unknown;path?:unknown};
+  const path=typeof candidate.path==='string'&&allowedActionPaths.has(candidate.path)
+    ? candidate.path
+    : '/adaptive-session?lang='+language;
+  const label=typeof candidate.label==='string'&&candidate.label.trim()?candidate.label.trim().slice(0,80):'NEXT STEP';
+  return {label,path};
+};
+
 class AITutorService{
   getLearnerContext(language:'en'|'zh'='en'):TutorContext{
     const profile=learnerProfileService.getSnapshot(language),weakest=profile.needsAttention[0];
@@ -37,7 +52,7 @@ class AITutorService{
       if(response.ok){
         const data=await response.json() as Partial<TutorReply>;
         if(typeof data.content==='string'&&data.content.trim()){
-          return{content:data.content,suggestions:Array.isArray(data.suggestions)?data.suggestions:[],source:'ai',action:data.action};
+          return{content:data.content,suggestions:Array.isArray(data.suggestions)?data.suggestions:[],source:'ai',action:sanitizeAction(data.action,context.language)};
         }
       }
     }catch{
@@ -68,13 +83,13 @@ class AITutorService{
     }else if(q.includes('adaptive')||q.includes('tự động')||q.includes('自适应')){
       content=zh?'我会把到期复习、薄弱问题和最近趋势组合成一段短学习流程。':'I’ll combine due reviews, weak areas, and recent trends into one short learning session.';
       suggestions=zh?['开始自适应学习','先看我的弱项']:['Start adaptive session','Show my weak area'];
-      action={label:zh?'开始自适应学习':'START ADAPTIVE SESSION',path:'/adaptive-session'};
+      action={label:zh?'开始自适应学习':'START ADAPTIVE SESSION',path:'/adaptive-session?lang='+context.language};
     }else if(q.includes('hello')||q.includes('xin chào')||q.includes('你好')){
       content=zh?'你好！'+(weakLabel?'你最近可以重点练习'+weakLabel+'。':'')+'今天想练习什么？':'Hello!'+(weakLabel?' Your recent evidence suggests focusing on '+weakLabel+'.':'')+' What would you like to practise today?';
     }else if(learner?.dueReviews){
       content=zh?'我看到你有'+learner.dueReviews+'项复习已经到期。你也可以告诉我一个具体问题，我会结合你的学习记录给出练习。':'You have '+learner.dueReviews+' review item'+(learner.dueReviews===1?'':'s')+' due. Tell me a specific question and I’ll tailor the practice.';
     }
-    return{content,suggestions,source:'fallback',action};
+    return{content,suggestions,source:'fallback',action:sanitizeAction(action,context.language)};
   }
 }
 export const aiTutorService=new AITutorService();

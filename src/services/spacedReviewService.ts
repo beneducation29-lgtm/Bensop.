@@ -1,4 +1,5 @@
 import { SpacedReviewItem } from '../types/content';
+import { LanguageCode } from '../types/vocabulary';
 
 const KEY = 'bensop_spaced_review';
 
@@ -37,13 +38,18 @@ export const spacedReviewService = {
     return this.getAll().filter((item) => item.quizSlug === quizSlug);
   },
 
-  scheduleLesson(lessonSlug: string, completedAt = new Date().toISOString()): SpacedReviewItem[] {
+  scheduleLesson(
+    lessonSlug: string,
+    completedAt = new Date().toISOString(),
+    language?: LanguageCode,
+  ): SpacedReviewItem[] {
     const existing = read().filter((item) => item.lessonSlug !== lessonSlug);
     const intervals: Array<1 | 3 | 7> = [1, 3, 7];
     const items = intervals.map((intervalDays) => ({
       id: `review-lesson-${lessonSlug}-${intervalDays}`,
       lessonSlug,
       reviewType: 'lesson' as const,
+      language,
       intervalDays,
       scheduledAt: completedAt,
       dueAt: addDays(completedAt, intervalDays),
@@ -58,12 +64,14 @@ export const spacedReviewService = {
     _quizTitle: string,
     intervalDays: 1 | 3 | 7,
     completedAt = new Date().toISOString(),
+    language?: LanguageCode,
   ): SpacedReviewItem[] {
     const existing = read().filter((item) => item.quizSlug !== quizSlug);
     const item: SpacedReviewItem = {
       id: `review-quiz-${quizSlug}`,
       quizSlug,
       reviewType: 'quiz',
+      language,
       intervalDays,
       scheduledAt: completedAt,
       dueAt: addDays(completedAt, intervalDays),
@@ -86,8 +94,13 @@ export const spacedReviewService = {
     write(read().map((item) => item.id === id ? { ...item, completedAt: now } : item));
   },
 
-  getDue(now = new Date()): SpacedReviewItem[] {
+  getDue(now = new Date(), language?: LanguageCode): SpacedReviewItem[] {
     const timestamp = now.getTime();
-    return this.getAll().filter((item) => !item.completedAt && new Date(item.dueAt).getTime() <= timestamp);
+    return this.getAll().filter(
+      (item) =>
+        !item.completedAt &&
+        new Date(item.dueAt).getTime() <= timestamp &&
+        (!language || item.language === language),
+    );
   },
 };
