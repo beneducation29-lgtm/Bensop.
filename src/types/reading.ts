@@ -1,0 +1,4 @@
+export type ReadingLevel='A1'|'A2'|'B1'|'B2'|'C1'|'C2'|'HSK 1'|'HSK 2'|'HSK 3'|'HSK 4'|'HSK 5'|'HSK 6';
+export interface ReadingQuestion{id:string;question:string;options:string[];correctAnswer:string;explanation?:string}
+export interface ReadingPassage{id:string;language:'en'|'zh';title:string;slug:string;level:ReadingLevel;topic:string;content:string;translation?:string;vocabularyIds:string[];grammarIds:string[];questions:ReadingQuestion[];tags:string[]}
+export interface ReadingProgress{passageId:string;language:'en'|'zh';attempts:number;bestScore:number;lastScore:number;completed:boolean;lastAttemptAt:string}

@@ -1,0 +1,3 @@
+export type WritingLevel='A1'|'A2'|'B1'|'B2'|'C1'|'C2'|'HSK 1'|'HSK 2'|'HSK 3'|'HSK 4'|'HSK 5'|'HSK 6';
+export interface WritingPrompt{id:string;language:'en'|'zh';title:string;slug:string;level:WritingLevel;topic:string;instruction:string;minimumWords:number;targetVocabulary:string[];targetGrammar:string[]}
+export interface WritingEvaluation{task:number;organization:number;grammar:number;vocabulary:number;overall:number;feedback:string;suggestions:string[]}

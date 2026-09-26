@@ -36,6 +36,16 @@ import { GrammarLabPage } from './pages/GrammarLabPage';
 import { GrammarDetailPage } from './pages/GrammarDetailPage';
 import { GrammarReviewPage } from './pages/GrammarReviewPage';
 import { NotFoundPage } from './components/NotFoundPage';
+import { ListeningLabPage } from './pages/ListeningLabPage';
+import { ListeningLessonPage } from './pages/ListeningLessonPage';
+import { SpeakingLabPage } from './pages/SpeakingLabPage';
+import { SpeakingPracticePage } from './pages/SpeakingPracticePage';
+import { ReadingLabPage } from './pages/ReadingLabPage';
+import { ReadingPracticePage } from './pages/ReadingPracticePage';
+import { WritingLabPage } from './pages/WritingLabPage';
+import { WritingPracticePage } from './pages/WritingPracticePage';
+import { AITutorPage } from './pages/AITutorPage';
+
 
 import { INITIAL_USER } from './data/users';
 import { ARTICLES } from './data/articles';
@@ -498,6 +508,47 @@ export default function App() {
         />
       );
     }
+
+    // Phase 5 — Listening + Speaking
+    if (currentPath === '/tieng-anh/listening' || currentPath === '/tieng-trung/listening') {
+      const language = currentPath.startsWith('/tieng-anh') ? 'en' : 'zh';
+      return <ListeningLabPage language={language} onNavigate={navigateTo} />;
+    }
+    const listeningMatch = currentPath.match(/^\/(tieng-anh|tieng-trung)\/listening\/([a-zA-Z0-9_-]+)$/);
+    if (listeningMatch) {
+      const language = listeningMatch[1] === 'tieng-anh' ? 'en' : 'zh';
+      return <ListeningLessonPage language={language} slug={listeningMatch[2]} onNavigate={navigateTo} />;
+    }
+    if (currentPath === '/tieng-anh/speaking' || currentPath === '/tieng-trung/speaking') {
+      const language = currentPath.startsWith('/tieng-anh') ? 'en' : 'zh';
+      return <SpeakingLabPage language={language} onNavigate={navigateTo} />;
+    }
+    const speakingMatch = currentPath.match(/^\/(tieng-anh|tieng-trung)\/speaking\/([a-zA-Z0-9_-]+)$/);
+    if (speakingMatch) {
+      const language = speakingMatch[1] === 'tieng-anh' ? 'en' : 'zh';
+      return <SpeakingPracticePage language={language} slug={speakingMatch[2]} onNavigate={navigateTo} />;
+    }
+
+    // Phase 6 — Reading + Writing + AI Tutor
+    if (currentPath === '/tieng-anh/reading' || currentPath === '/tieng-trung/reading') {
+      const language = currentPath.startsWith('/tieng-anh') ? 'en' : 'zh';
+      return <ReadingLabPage language={language} onNavigate={navigateTo} />;
+    }
+    const readingMatch = currentPath.match(/^\/(tieng-anh|tieng-trung)\/reading\/([a-zA-Z0-9_-]+)$/);
+    if (readingMatch) {
+      const language = readingMatch[1] === 'tieng-anh' ? 'en' : 'zh';
+      return <ReadingPracticePage language={language} slug={readingMatch[2]} onNavigate={navigateTo} />;
+    }
+    if (currentPath === '/tieng-anh/writing' || currentPath === '/tieng-trung/writing') {
+      const language = currentPath.startsWith('/tieng-anh') ? 'en' : 'zh';
+      return <WritingLabPage language={language} onNavigate={navigateTo} />;
+    }
+    const writingMatch = currentPath.match(/^\/(tieng-anh|tieng-trung)\/writing\/([a-zA-Z0-9_-]+)$/);
+    if (writingMatch) {
+      const language = writingMatch[1] === 'tieng-anh' ? 'en' : 'zh';
+      return <WritingPracticePage language={language} slug={writingMatch[2]} onNavigate={navigateTo} />;
+    }
+    if (currentPath === '/ai-tutor') return <AITutorPage />;
 
     // 13. 404 Not Found Page
     return <NotFoundPage onNavigateHome={() => navigateTo('/')} />;
