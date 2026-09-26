@@ -6,6 +6,7 @@ import { speakingService } from './speakingService';
 import { readingService } from './readingService';
 import { writingService } from './writingService';
 import { masteryService } from './masteryService';
+import { learnerActivityService, LearnerActivityEvent } from './learnerActivityService';
 
 export interface LearnerSkillProfile {
   key: 'vocabulary'|'grammar'|'listening'|'speaking'|'reading'|'writing';
@@ -24,6 +25,9 @@ export interface LearnerProfileSnapshot {
   skills: LearnerSkillProfile[];
   strongest: LearnerSkillProfile | null;
   needsAttention: LearnerSkillProfile[];
+  recentEvidence: LearnerActivityEvent[];
+  lastActiveAt: string | null;
+  streakDays: number;
   updatedAt: string;
 }
 
@@ -37,6 +41,12 @@ export const learnerProfileService = {
     const speaking = speakingService.getProgressList().filter(x=>x.language===language);
     const reading = readingService.getProgress().filter(x=>x.language===language);
     const writing = writingService.getProgress().filter(x=>x.language===language);
+    const recentEvidence = learnerActivityService.getRecent(language, 12);
+    const activeDates = learnerActivityService.getActiveDates(language);
+    const dateSet = new Set(activeDates);
+    let streakDays = 0;
+    const cursor = new Date();
+    while (dateSet.has(cursor.toISOString().slice(0,10))) { streakDays += 1; cursor.setDate(cursor.getDate()-1); }
     const quizSkills = masteryService.getSnapshot().skills.filter(x=>x.categoryId===(language==='zh'?'tieng-trung':'tieng-anh'));
 
     const skills:LearnerSkillProfile[]=[
@@ -52,6 +62,6 @@ export const learnerProfileService = {
     const active=skills.filter(x=>x.activityCount>0);
     const overall=active.length?Math.round((average(active.map(x=>x.score))+quizOverall)/2):quizOverall;
     const sorted=skills.slice().sort((a,b)=>b.score-a.score);
-    return {language,overall,skills,strongest:sorted[0]||null,needsAttention:skills.slice().sort((a,b)=>(a.score-a.coverage*15)-(b.score-b.coverage*15)).slice(0,3),updatedAt:new Date().toISOString()};
+    return {language,overall,skills,strongest:sorted[0]||null,needsAttention:skills.slice().sort((a,b)=>(a.score-a.coverage*15)-(b.score-b.coverage*15)).slice(0,3),recentEvidence,lastActiveAt:recentEvidence[0]?.timestamp||null,streakDays,updatedAt:new Date().toISOString()};
   }
 };
