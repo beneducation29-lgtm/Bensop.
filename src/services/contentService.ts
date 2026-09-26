@@ -1,4 +1,4 @@
-import { LESSON_CONTENT_BLUEPRINTS, getLessonContentBlueprint } from '../data/contentBlueprints';
+import { LESSON_CONTENT_BLUEPRINTS } from '../data/contentBlueprints';
 import { aiVideoService } from './aiVideoService';
 import { CONTENT_EXPANSION } from '../data/contentExpansion';
 
