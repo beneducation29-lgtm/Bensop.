@@ -46,10 +46,7 @@ export function ContentLibraryPage({onNavigate}:{onNavigate:(path:string)=>void}
           </div>
           <div className="mt-5 flex items-center justify-between border-t border-[#1C1C1C] pt-4">
             <span className="flex items-center gap-2 text-[10px] font-mono text-[#555]"><BookOpen className="h-3.5 w-3.5"/> {item.crossLabLinks.length} ecosystem links</span>
-            <div className="flex items-center gap-3">
-              <button onClick={()=>onNavigate('/bai-hoc/'+item.lessonSlug)} className="flex items-center gap-1 text-[10px] font-bold text-[#D9FF3F]">MỞ LESSON <ChevronRight className="h-3.5 w-3.5"/></button>
-              <button onClick={()=>onNavigate('/bai-hoc/'+item.lessonSlug+'#practice')} className="text-[10px] font-mono text-[#666] hover:text-white">XEM FLOW</button>
-            </div>
+            <button onClick={()=>onNavigate('/bai-hoc/'+item.lessonSlug)} className="flex items-center gap-1 text-[10px] font-bold text-[#D9FF3F]">MỞ LESSON <ChevronRight className="h-3.5 w-3.5"/></button>
           </div>
         </article>)}
       </div>
