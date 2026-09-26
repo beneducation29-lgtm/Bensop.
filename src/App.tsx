@@ -46,6 +46,9 @@ import { WritingLabPage } from './pages/WritingLabPage';
 import { WritingPracticePage } from './pages/WritingPracticePage';
 import { AITutorPage } from './pages/AITutorPage';
 import { ContentLibraryPage } from './pages/ContentLibraryPage';
+import { QuizMasteryPage } from './pages/QuizMasteryPage';
+import { quizLearningService } from './services/quizLearningService';
+import { quizService } from './services/quizService';
 
 
 import { INITIAL_USER } from './data/users';
@@ -524,22 +527,33 @@ export default function App() {
         <QuizRunnerPage
           quizSlug={slug}
           onNavigate={navigateTo}
-          onFinishQuiz={(res) => navigateTo(`/quiz-result/${res.sessionId}`)}
+          onFinishQuiz={(res) => {
+            quizLearningService.recordResult(res);
+            navigateTo(`/quiz-result/${res.sessionId}`);
+          }}
         />
       );
     }
 
     // 11. Quiz Result & Detailed Review (/quiz-result/:sessionId)
-    if (currentPath.startsWith('/quiz-result')) {
-      const sessionId = currentPath.replace('/quiz-result/', '').replace('/quiz-result', '');
+    if (currentPath.startsWith('/quiz-result/')) {
+      const sessionId = currentPath.replace('/quiz-result/', '');
       return (
         <QuizResultPage
           sessionId={sessionId}
           onNavigate={navigateTo}
           onRetakeQuiz={(slug) => navigateTo(`/quiz/${slug}`)}
-          onPracticeWrongQuestions={() => navigateTo('/luyen-tap')}
+          onPracticeWrongQuestions={(questionIds) => {
+            const reviewSlug = quizService.createReviewQuiz(questionIds, 'Quiz gần nhất');
+            navigateTo(`/quiz/${reviewSlug}`);
+          }}
         />
       );
+    }
+
+    if (currentPath.startsWith('/quiz-mastery/')) {
+      const sessionId = currentPath.replace('/quiz-mastery/', '');
+      return <QuizMasteryPage sessionId={sessionId} onNavigate={navigateTo} />;
     }
 
     // 12. Question Bank Explorer (/ngan-hang-cau-hoi)
