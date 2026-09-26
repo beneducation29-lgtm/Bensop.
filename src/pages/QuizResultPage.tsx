@@ -150,6 +150,14 @@ export const QuizResultPage: React.FC<QuizResultPageProps> = ({
                   <span>LÀM LẠI TOÀN BỘ BÀI</span>
                 </button>
 
+                <button
+                  onClick={() => onNavigate(`/quiz-mastery/${result.sessionId}`)}
+                  className="px-5 py-3 rounded-xl bg-[#101010] hover:bg-[#1A1A1A] text-[#D9FF3F] font-mono text-xs font-bold border border-[#2B2B2B] hover:border-[#D9FF3F] transition-all flex items-center gap-2 cursor-pointer"
+                >
+                  <BarChart3 className="w-4 h-4" />
+                  <span>XEM MASTERY & LỊCH ÔN</span>
+                </button>
+
                 {result.wrongQuestionIds.length > 0 && onPracticeWrongQuestions && (
                   <button
                     onClick={() => onPracticeWrongQuestions(result.wrongQuestionIds)}
