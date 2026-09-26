@@ -242,7 +242,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                 {adaptiveSession.items.length} BƯỚC · <b className="text-[#D9FF3F]">{adaptiveSession.totalMinutes} PHÚT</b>
               </span>
               <button
-                onClick={() => adaptiveSession.items[0] && onNavigate(adaptiveSession.items[0].path)}
+                onClick={() => onNavigate('/adaptive-session')}
                 className="rounded-xl bg-[#D9FF3F] px-5 py-3 text-[10px] font-mono font-extrabold text-black hover:bg-[#cbf532] transition-colors"
               >
                 BẮT ĐẦU PHIÊN →
