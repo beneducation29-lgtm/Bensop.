@@ -94,6 +94,10 @@ export const PracticeHubPage: React.FC<PracticeHubPageProps> = ({
 
   // Handle launch of custom practice
   const handleAdaptivePractice = () => {
+    if (dueReviews.length > 0 && dueReviews[0].path) {
+      onNavigate(dueReviews[0].path);
+      return;
+    }
     if (weakQuestionIds.length) {
       const slug = quizService.createReviewQuiz(weakQuestionIds, 'Adaptive Mastery Review');
       onStartQuiz(slug);
@@ -166,7 +170,7 @@ export const PracticeHubPage: React.FC<PracticeHubPageProps> = ({
               className="shrink-0 px-6 py-3.5 rounded-xl bg-[#D9FF3F] text-black font-mono text-xs font-extrabold flex items-center justify-center gap-2 hover:bg-[#cbf532] transition-all"
             >
               <Zap className="w-4 h-4" />
-              {weakQuestionIds.length ? 'LUYỆN ĐIỂM YẾU NGAY' : 'BẮT ĐẦU PHIÊN LUYỆN'}
+              {dueReviews.length ? 'ÔN REVIEW ĐẾN HẠN' : weakQuestionIds.length ? 'LUYỆN ĐIỂM YẾU NGAY' : 'BẮT ĐẦU PHIÊN LUYỆN'}
             </button>
           </div>
 
