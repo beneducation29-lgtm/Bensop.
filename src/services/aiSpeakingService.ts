@@ -67,6 +67,7 @@ export const aiSpeakingService = {
       usedPrompts:safeArray(memory.usedPrompts,8,180),
       usefulCorrections:safeArray(memory.usefulCorrections,6,220),
       lastLearnerIntent:typeof memory.lastLearnerIntent==='string'?memory.lastLearnerIntent.trim().slice(0,240):undefined,
+      conversationMove:memory.conversationMove,
     }};
     writeSession(next);return next;
   },
