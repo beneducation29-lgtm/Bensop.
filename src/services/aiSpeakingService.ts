@@ -13,7 +13,13 @@ const MODE_LABELS: Record<AISpeakingMode, string> = {
 };
 
 const readSession = (): AISpeakingSession | null => {
-  try { const raw = localStorage.getItem(SESSION_KEY); return raw ? JSON.parse(raw) as AISpeakingSession : null; } catch { return null; }
+  try {
+    const raw=localStorage.getItem(SESSION_KEY);
+    if(!raw)return null;
+    const parsed=JSON.parse(raw) as AISpeakingSession;
+    if(!parsed||!parsed.id||!['en','zh'].includes(parsed.language)||!Array.isArray(parsed.turns))return null;
+    return parsed;
+  } catch { return null; }
 };
 const writeSession = (session: AISpeakingSession) => { try { localStorage.setItem(SESSION_KEY, JSON.stringify(session)); } catch {} };
 const createId = () => `ai-speaking-${Date.now()}-${Math.random().toString(36).slice(2,8)}`;
