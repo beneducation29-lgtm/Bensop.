@@ -48,5 +48,15 @@ export const masteryService = {
     snapshot.overall=snapshot.skills.length?Math.round(snapshot.skills.filter(item=>item.categoryId===categoryId).reduce((sum,item)=>sum+item.mastery,0)/Math.max(1,snapshot.skills.filter(item=>item.categoryId===categoryId).length)):snapshot.overall;
     snapshot.updatedAt=new Date().toISOString();write(snapshot);return snapshot;
   },
+  recordWritingEvaluation(input:{language:LanguageCode;promptId:string;score:number;task?:number;organization?:number;grammar?:number;vocabulary?:number}): MasterySnapshot {
+    const snapshot=read();
+    const categoryId=categoryForLanguage(input.language);
+    const metrics:[string,number|undefined][]=[['writing',input.score],['writing-task',input.task],['writing-organization',input.organization],['writing-grammar',input.grammar],['writing-vocabulary',input.vocabulary]];
+    metrics.forEach(([skill,value])=>{if(typeof value!=='number')return;snapshot.skills=upsert(snapshot.skills,{id:`skill:${categoryId}:${skill}`,entityType:'skill',entityId:skill,label:skill,categoryId},value,value>=60?1:0,1);});
+    snapshot.topics=upsert(snapshot.topics,{id:`topic:${categoryId}:ai-writing`,entityType:'topic',entityId:'ai-writing',label:input.language==='zh'?'中文 AI 写作':'English AI Writing',categoryId},input.score,input.score>=60?1:0,1);
+    const categorySkills=snapshot.skills.filter(item=>item.categoryId===categoryId);
+    snapshot.overall=categorySkills.length?Math.round(categorySkills.reduce((sum,item)=>sum+item.mastery,0)/categorySkills.length):snapshot.overall;
+    snapshot.updatedAt=new Date().toISOString();write(snapshot);return snapshot;
+  },
   getWeakAreas(limit=5,language?:LanguageCode):MasteryRecord[]{return this.getSnapshot(language).topics.filter(item=>item.mastery<80).sort((a,b)=>a.mastery-b.mastery).slice(0,limit);}
 };
