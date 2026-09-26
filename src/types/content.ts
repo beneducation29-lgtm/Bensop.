@@ -30,6 +30,7 @@ export interface AIVideoLesson {
 
 export interface LessonContentBlueprint {
   lessonSlug: string;
+  title?: string;
   category: ContentCategory;
   learningObjective: string[];
   prerequisite?: string[];
