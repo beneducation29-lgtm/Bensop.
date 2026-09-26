@@ -1,4 +1,4 @@
-import { AISpeakingMode, AISpeakingReply, AISpeakingRoomContext, AISpeakingSession, AISpeakingTurn } from '../types/aiSpeaking';
+import { AISpeakingMode, AISpeakingReply, AISpeakingRoomContext, AISpeakingSession, AISpeakingTurn, AISpeakingConversationMemory } from '../types/aiSpeaking';
 import { LanguageCode } from '../types/vocabulary';
 
 const SESSION_KEY = 'bensop_ai_speaking_session';
@@ -33,7 +33,7 @@ export const aiSpeakingService = {
   getLanguageLabel:(language:LanguageCode)=>LANGUAGE_LABELS[language],
   getTurnDisplay:(turn:AISpeakingTurn,language:LanguageCode)=>language==='zh'?normalizeChineseDisplay(turn).display:turn.display,
   createSession(context:AISpeakingRoomContext):AISpeakingSession{
-    const session:AISpeakingSession={id:createId(),language:context.language,mode:context.mode,level:context.level,topic:context.topic||(context.language==='zh'?'日常生活':'Everyday Life'),scenario:context.scenario,startedAt:new Date().toISOString(),turns:[],status:'ready'};
+    const session:AISpeakingSession={id:createId(),language:context.language,mode:context.mode,level:context.level,topic:context.topic||(context.language==='zh'?'日常生活':'Everyday Life'),scenario:context.scenario,conversationMemory:{topicFocus:context.topic,scenarioState:context.scenario,learnerGoal:context.learnerGoal},startedAt:new Date().toISOString(),turns:[],status:'ready'};
     writeSession(session);return session;
   },
   getSession(language?:LanguageCode){const session=readSession();return !session||(language&&session.language!==language)?null:session;},
@@ -51,7 +51,7 @@ export const aiSpeakingService = {
     let response: Response;
     try {
       response=await fetch('/api/ai-speaking',{method:'POST',headers:{'Content-Type':'application/json'},signal:controller.signal,body:JSON.stringify({
-      language:context.language,mode:context.mode,level:context.level,topic:context.topic,scenario:context.scenario,learnerGoal:context.learnerGoal,transcript,history:history.slice(-10).map(t=>({role:t.role,text:t.text})),
+      language:context.language,mode:context.mode,level:context.level,topic:context.topic,scenario:context.scenario,learnerGoal:context.learnerGoal,conversationMemory:history.length?this.getSession(context.language)?.conversationMemory:undefined,transcript,history:history.slice(-10).map(t=>({role:t.role,text:t.text})),
     })});
     } catch (error) {
       if (error instanceof DOMException && error.name === 'AbortError') throw new Error('AI Speaking phản hồi quá lâu. Hãy thử gửi lại.');
