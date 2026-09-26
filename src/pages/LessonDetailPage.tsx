@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Lesson, Course, SavedItem } from '../types';
 import { LESSONS } from '../data/lessons';
+import { contentService } from '../services/contentService';
 import { COURSES } from '../data/courses';
 import { BookmarkButton } from '../components/BookmarkButton';
 import { 
-  ArrowLeft, ArrowRight, CheckCircle2, Play, Pause, Volume2, 
+  ArrowLeft, ArrowRight, CheckCircle2, Play, Pause, Volume2, Sparkles, Film, Clock3, 
   HelpCircle, ChevronDown, BookOpen, Check, Award, AlertCircle 
 } from 'lucide-react';
 
@@ -33,12 +34,35 @@ export const LessonDetailPage: React.FC<LessonDetailPageProps> = ({
   const [selectedExerciseOption, setSelectedExerciseOption] = useState<number | null>(null);
   const [exerciseSubmitted, setExerciseSubmitted] = useState(false);
   const [mobileSyllabusOpen, setMobileSyllabusOpen] = useState(false);
+  const [videoSceneIndex, setVideoSceneIndex] = useState(0);
+  const [isVideoPlaying, setIsVideoPlaying] = useState(false);
 
   const lesson = LESSONS.find((l) => l.slug === slug) || LESSONS[0];
   const course = COURSES.find((c) => c.slug === lesson.courseSlug) || COURSES[0];
 
   const isCompleted = completedLessons.includes(lesson.slug);
   const isSaved = savedItems.some((s) => s.slug === lesson.slug);
+  const contentBlueprint = contentService.getBlueprint(lesson.slug);
+  const video = contentBlueprint?.aiVideo;
+  const activeVideoScene = video?.scenes[videoSceneIndex];
+
+  useEffect(() => {
+    if (!isVideoPlaying || !video || !activeVideoScene) return;
+    const timer = window.setTimeout(() => {
+      if (videoSceneIndex >= video.scenes.length - 1) setIsVideoPlaying(false);
+      else setVideoSceneIndex((index) => index + 1);
+    }, activeVideoScene.durationSeconds * 1000);
+    return () => window.clearTimeout(timer);
+  }, [isVideoPlaying, video, activeVideoScene, videoSceneIndex]);
+
+  const speakVideoScene = () => {
+    if (!activeVideoScene || typeof window === 'undefined' || !('speechSynthesis' in window)) return;
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(activeVideoScene.narration);
+    utterance.lang = video?.voiceLanguage === 'en' ? 'en-US' : video?.voiceLanguage === 'zh' ? 'zh-CN' : 'vi-VN';
+    utterance.rate = 0.96;
+    window.speechSynthesis.speak(utterance);
+  };
 
   // Flatten course lessons for sidebar
   const allCourseLessons = course.modules.flatMap((m) => m.lessons);
@@ -145,6 +169,49 @@ export const LessonDetailPage: React.FC<LessonDetailPageProps> = ({
             </p>
           </div>
 
+          {/* AI Visual Lesson — content-first video layer */}
+          {video && activeVideoScene && (
+            <section className="mb-10 overflow-hidden rounded-2xl border border-[#292929] bg-[#0A0A0A] shadow-[0_20px_70px_rgba(0,0,0,0.35)]">
+              <div className="flex items-center justify-between gap-4 border-b border-[#202020] px-5 py-4">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#D9FF3F] text-black"><Sparkles className="h-4 w-4" /></div>
+                  <div><div className="text-[10px] font-mono font-bold tracking-[0.18em] text-[#D9FF3F]">BENSOP AI VISUAL LESSON</div><h2 className="mt-1 text-sm font-bold text-white sm:text-base">{video.title}</h2></div>
+                </div>
+                <div className="hidden items-center gap-3 text-[10px] font-mono text-[#666] sm:flex"><span className="flex items-center gap-1"><Clock3 className="h-3.5 w-3.5" /> {video.targetMinutes} phút</span><span className="flex items-center gap-1"><Film className="h-3.5 w-3.5" /> SCRIPT READY</span></div>
+              </div>
+              <div className="grid lg:grid-cols-[1.15fr_0.85fr]">
+                <div className="relative min-h-[330px] overflow-hidden border-b border-[#202020] bg-[#111] p-6 lg:border-b-0 lg:border-r">
+                  <div className="absolute inset-0 opacity-30 [background-image:linear-gradient(#242424_1px,transparent_1px),linear-gradient(90deg,#242424_1px,transparent_1px)] [background-size:32px_32px]" />
+                  <div className="relative flex h-full min-h-[280px] flex-col justify-between">
+                    <div className="flex items-center justify-between text-[10px] font-mono text-[#666]"><span>SCENE {videoSceneIndex + 1} / {video.scenes.length}</span><span>{activeVideoScene.durationSeconds}s</span></div>
+                    <div className="my-8">
+                      <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-[#303030] bg-[#0B0B0B] px-3 py-1 text-[10px] font-mono text-[#D9FF3F]"><span className="h-1.5 w-1.5 animate-pulse rounded-full bg-[#D9FF3F]" /> AI STORYBOARD</div>
+                      <h3 className="max-w-xl text-2xl font-black leading-tight text-white sm:text-3xl">{activeVideoScene.visual}</h3>
+                      <p className="mt-5 max-w-xl text-sm leading-relaxed text-[#999]">{activeVideoScene.narration}</p>
+                    </div>
+                    <div className="flex flex-wrap gap-2">{activeVideoScene.onScreen.map((label) => <span key={label} className="rounded-md border border-[#2D2D2D] bg-[#0C0C0C] px-3 py-2 text-[10px] font-mono font-bold text-white">{label}</span>)}</div>
+                  </div>
+                </div>
+                <div className="p-5 sm:p-6">
+                  <div className="mb-5 flex gap-2">
+                    <button onClick={() => { setIsVideoPlaying((playing) => !playing); if (!isVideoPlaying) speakVideoScene(); }} className="flex items-center gap-2 rounded-lg bg-[#D9FF3F] px-4 py-2.5 text-xs font-extrabold text-black transition hover:bg-[#cbf532]">{isVideoPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4 fill-current" />}{isVideoPlaying ? 'TẠM DỪNG' : 'XEM BÀI GIẢNG'}</button>
+                    <button onClick={speakVideoScene} className="rounded-lg border border-[#2C2C2C] px-3 py-2.5 text-xs font-bold text-white hover:border-[#555]">🔊 Nghe lời thoại</button>
+                  </div>
+                  <div className="mb-5 h-1.5 overflow-hidden rounded-full bg-[#202020]"><div className="h-full bg-[#D9FF3F] transition-all" style={{ width: ((videoSceneIndex + 1) / video.scenes.length * 100) + '%' }} /></div>
+                  <div className="space-y-2">
+                    {video.scenes.map((scene, index) => (
+                      <button key={scene.id} onClick={() => { setVideoSceneIndex(index); setIsVideoPlaying(false); }} className={"w-full rounded-lg border p-3 text-left transition " + (index === videoSceneIndex ? 'border-[#D9FF3F] bg-[#171717]' : 'border-[#222] bg-[#0D0D0D] hover:border-[#3A3A3A]')}>
+                        <div className="flex items-center justify-between gap-3"><span className={"text-[10px] font-mono font-bold " + (index === videoSceneIndex ? 'text-[#D9FF3F]' : 'text-[#666]')}>SCENE {index + 1}</span><span className="text-[10px] font-mono text-[#555]">{scene.durationSeconds}s</span></div>
+                        <div className="mt-1 line-clamp-2 text-xs text-[#AAA]">{scene.onScreen.join(' · ')}</div>
+                      </button>
+                    ))}
+                  </div>
+                  {activeVideoScene.interaction && <div className="mt-5 border-l-2 border-[#D9FF3F] bg-[#121212] p-3 text-[11px] leading-relaxed text-[#CCC]"><span className="font-bold text-[#D9FF3F]">THỬ NGAY · </span>{activeVideoScene.interaction}</div>}
+                  <p className="mt-5 text-[10px] leading-relaxed text-[#555]">Pipeline video: script → visual scenes → AI voice → motion → subtitles → checkpoint → export. Khi có file video thật, chỉ cần gắn vào <span className="text-[#888]">videoUrl</span>.</p>
+                </div>
+              </div>
+            </section>
+          )}
           {/* Interactive Audio Simulation Player */}
           <div className="p-4 sm:p-5 bg-[#0E0E0E] border border-[#222] rounded-xl mb-10 flex items-center justify-between gap-4 shadow-lg">
             <div className="flex items-center gap-3">
