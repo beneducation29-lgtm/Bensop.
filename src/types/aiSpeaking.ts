@@ -69,6 +69,7 @@ export interface AISpeakingConversationMemory {
   stage?: string;
   openThread?: string;
   learnerDetails?: string[];
+  conversationMove?: 'follow-thread'|'clarify'|'deepen'|'challenge'|'offer-choice'|'transition';
 }
 
 export interface AISpeakingRoomContext {
