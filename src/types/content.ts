@@ -53,7 +53,9 @@ export interface LessonContentBlueprint {
 
 export interface SpacedReviewItem {
   id: string;
-  lessonSlug: string;
+  lessonSlug?: string;
+  quizSlug?: string;
+  reviewType?: 'lesson' | 'quiz';
   intervalDays: 1 | 3 | 7;
   scheduledAt: string;
   dueAt: string;
