@@ -126,6 +126,51 @@ class QuizService {
     QUIZ_MODELS.push(newQuiz);
     return newQuiz.slug;
   }
+  createReviewQuiz(questionIds: string[], sourceQuizTitle = 'Quiz Review'): string {
+    const validIds = questionIds.filter((id, index, arr) => arr.indexOf(id) === index);
+    const slug = `quiz-review-${validIds.slice().sort().join('-')}`;
+    const existing = this.getQuizBySlug(slug);
+    if (existing) return existing.slug;
+
+    const questions = validIds
+      .map((id) => QUESTIONS_BANK.find((q) => q.id === id))
+      .filter(Boolean);
+
+    if (!questions.length) return 'daily-challenge';
+
+    const categoryId = questions[0]!.categoryId;
+    const categoryName =
+      categoryId === 'tieng-anh' ? 'TIẾNG ANH' :
+      categoryId === 'tieng-trung' ? 'TIẾNG TRUNG' :
+      categoryId === 'phat-trien-ban-than' ? 'PHÁT TRIỂN BẢN THÂN' :
+      'SỨC KHỎE & ĐỜI SỐNG';
+
+    const newQuiz: QuizModel = {
+      id: slug,
+      slug,
+      title: `Review câu sai · ${sourceQuizTitle}`,
+      categoryId,
+      categoryName,
+      description: 'Bài luyện tập được tạo trực tiếp từ những câu bạn chưa làm đúng trong lần kiểm tra gần nhất.',
+      type: 'review',
+      skills: Array.from(new Set(questions.map((q) => q!.skill))),
+      topics: Array.from(new Set(questions.map((q) => q!.topicId))),
+      questionIds: questions.map((q) => q!.id),
+      questionCount: questions.length,
+      difficulty: 'Intermediate',
+      duration: Math.max(5, questions.length * 2),
+      passingScore: 70,
+      randomizeQuestions: false,
+      randomizeOptions: true,
+      showExplanation: true,
+      allowRetry: true,
+      createdAt: new Date().toISOString(),
+    };
+
+    QUIZ_MODELS.push(newQuiz);
+    return newQuiz.slug;
+  }
+
 }
 
 export const quizService = new QuizService();
