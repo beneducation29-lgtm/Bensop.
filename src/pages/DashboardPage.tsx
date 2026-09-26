@@ -33,6 +33,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
   const dueReviews = spacedReviewService.getDue().slice(0, 5);
   const masterySnapshot = masteryService.getSnapshot();
   const nextLearningAction = recommendationService.getNextLearningAction();
+  const learningSkillSnapshot = recommendationService.getLearningSkillSnapshot(nextLearningAction.type === 'writing' ? 'en' : 'en');
 
   const handleOpenRecommended = (slug: string, type: 'article' | 'course') => {
     if (type === 'article') {
@@ -204,6 +205,37 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
               {nextLearningAction.cta}
               <ArrowRight className="w-4 h-4" />
             </button>
+          </div>
+        </section>
+
+        {/* CROSS-SKILL LEARNING PROFILE */}
+        <section className="mb-12 rounded-3xl border border-[#202020] bg-[#0B0B0B] p-6 sm:p-8">
+          <div className="mb-5">
+            <span className="text-[10px] font-mono font-bold tracking-[0.18em] text-[#D9FF3F]">CROSS-SKILL PROFILE</span>
+            <h3 className="mt-2 text-2xl font-black uppercase text-white">6 KỸ NĂNG · 1 LỘ TRÌNH.</h3>
+            <p className="mt-2 max-w-2xl text-xs leading-relaxed text-[#777]">
+              Bensop kết hợp dữ liệu từ Vocabulary, Grammar, Listening, Speaking, Reading và Writing để chọn bước tiếp theo thay vì chỉ dựa vào một loại bài tập.
+            </p>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+            {learningSkillSnapshot.map((skill) => (
+              <button
+                key={skill.key}
+                onClick={() => onNavigate(skill.path)}
+                className="rounded-xl border border-[#202020] bg-[#101010] p-4 text-left hover:border-[#D9FF3F]/50 transition-colors"
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-xs font-bold text-white">{skill.label}</span>
+                  <span className="font-mono text-[10px] text-[#D9FF3F]">{skill.score}%</span>
+                </div>
+                <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-[#1A1A1A]">
+                  <div className="h-full bg-[#D9FF3F]" style={{ width: `${skill.score}%` }} />
+                </div>
+                <div className="mt-2 text-[9px] font-mono text-[#666]">
+                  {skill.activityCount}/{skill.total} nội dung đã luyện
+                </div>
+              </button>
+            ))}
           </div>
         </section>
 
