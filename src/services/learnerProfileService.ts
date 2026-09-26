@@ -50,7 +50,9 @@ export const learnerProfileService = {
     let streakDays = 0;
     const cursor = new Date();
     while (dateSet.has(cursor.toISOString().slice(0,10))) { streakDays += 1; cursor.setDate(cursor.getDate()-1); }
-    const quizSkills = masteryService.getSnapshot().skills.filter(x=>x.categoryId===(language==='zh'?'tieng-trung':'tieng-anh'));
+    const languageMastery = masteryService.getSnapshot(language);
+    const masteryForSkill=(key:LearnerSkillProfile['key'],fallback:number)=>languageMastery.skills.find(x=>x.entityId===key)?.mastery??fallback;
+    const speakingEvidence=learnerActivityService.getAll().filter(e=>e.language===language&&e.skill==='speaking');
 
     const evidenceFor=(skill:'vocabulary'|'grammar'|'listening'|'speaking'|'reading'|'writing')=>recentEvidence.filter(e=>e.skill===skill);
     const skillMomentum=(skill:'vocabulary'|'grammar'|'listening'|'speaking'|'reading'|'writing',base:number)=>{
@@ -72,6 +74,7 @@ export const learnerProfileService = {
       {key:'writing',label:'Writing',score:masteryForSkill('writing',average(writing.map(x=>x.bestScore))),coverage:writing.length/Math.max(1,writingService.getAll(language).length),activityCount:writing.length,total:writingService.getAll(language).length,evidenceCount:writing.reduce((n,x)=>n+x.attempts,0),...skillMomentum('writing',average(writing.map(x=>x.bestScore))),path:`/tieng-${language==='en'?'anh':'trung'}/writing`},
     ];
 
+    const quizSkills=languageMastery.skills.filter(x=>x.categoryId===(language==='zh'?'tieng-trung':'tieng-anh'));
     const quizSkills=languageMastery.skills.filter(x=>x.categoryId===(language==='zh'?'tieng-trung':'tieng-anh'));
     const quizOverall=quizSkills.length?average(quizSkills.map(x=>x.mastery)):0;
     const active=skills.filter(x=>x.activityCount>0);
