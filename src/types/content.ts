@@ -28,6 +28,12 @@ export interface AIVideoLesson {
   scenes: VideoScene[];
 }
 
+export interface ContentEcosystemLink {
+  label: string;
+  path: string;
+  kind: 'vocabulary' | 'grammar' | 'listening' | 'speaking' | 'reading' | 'writing' | 'quiz' | 'tutor' | 'progress' | 'course';
+}
+
 export interface LessonContentBlueprint {
   lessonSlug: string;
   title?: string;
