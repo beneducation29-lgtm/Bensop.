@@ -52,12 +52,16 @@ export const masteryService = {
     const snapshot=read(); const categoryId=categoryForLanguage(input.language);
     snapshot.skills=upsert(snapshot.skills,{id:`skill:${categoryId}:reading`,entityType:'skill',entityId:'reading',label:'reading',categoryId},input.score,input.score>=60?1:0,1);
     snapshot.topics=upsert(snapshot.topics,{id:`topic:${categoryId}:reading`,entityType:'topic',entityId:'reading',label:input.language==='zh'?'中文阅读':'English Reading',categoryId},input.score,input.score>=60?1:0,1);
+    const categorySkills=snapshot.skills.filter(item=>item.categoryId===categoryId);
+    snapshot.overall=categorySkills.length?Math.round(categorySkills.reduce((sum,item)=>sum+item.mastery,0)/categorySkills.length):snapshot.overall;
     snapshot.updatedAt=new Date().toISOString(); write(snapshot); return snapshot;
   },
   recordListeningEvaluation(input:{language:LanguageCode;lessonId:string;score:number}): MasterySnapshot {
     const snapshot=read(); const categoryId=categoryForLanguage(input.language);
     snapshot.skills=upsert(snapshot.skills,{id:`skill:${categoryId}:listening`,entityType:'skill',entityId:'listening',label:'listening',categoryId},input.score,input.score>=60?1:0,1);
     snapshot.topics=upsert(snapshot.topics,{id:`topic:${categoryId}:listening`,entityType:'topic',entityId:'listening',label:input.language==='zh'?'中文听力':'English Listening',categoryId},input.score,input.score>=60?1:0,1);
+    const categorySkills=snapshot.skills.filter(item=>item.categoryId===categoryId);
+    snapshot.overall=categorySkills.length?Math.round(categorySkills.reduce((sum,item)=>sum+item.mastery,0)/categorySkills.length):snapshot.overall;
     snapshot.updatedAt=new Date().toISOString(); write(snapshot); return snapshot;
   },
   recordWritingEvaluation(input:{language:LanguageCode;promptId:string;score:number;task?:number;organization?:number;grammar?:number;vocabulary?:number}): MasterySnapshot {
