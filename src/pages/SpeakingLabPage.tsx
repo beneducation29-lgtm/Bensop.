@@ -34,13 +34,14 @@ export function SpeakingLabPage({language,onNavigate}:P){
    const average=Math.round(values.reduce((a,b)=>a+b,0)/values.length);
    const previous=feedbackTurns.slice(-8,-4).map(t=>t.feedback!).flatMap(f=>[f.fluency,f.grammar,f.vocabulary,f.relevance].filter((v):v is number=>typeof v==='number'));
    const previousAverage=previous.length?previous.reduce((a,b)=>a+b,0)/previous.length:average;
+   const trend: 'improving'|'stable'|'struggling'=average>=previousAverage+5?'improving':average<=previousAverage-5?'struggling':'stable';
    return {
      fluency:Math.round(recent.reduce((s,x)=>s+(x.fluency??average),0)/recent.length),
      grammar:Math.round(recent.reduce((s,x)=>s+(x.grammar??average),0)/recent.length),
      vocabulary:Math.round(recent.reduce((s,x)=>s+(x.vocabulary??average),0)/recent.length),
      relevance:Math.round(recent.reduce((s,x)=>s+(x.relevance??average),0)/recent.length),
      average,
-     trend:average>=previousAverage+5?'improving':average<=previousAverage-5?'struggling':'stable' as const,
+     trend,
    };
  },[feedbackTurns.length,session?.turns]);
  const sessionScores=feedbackTurns.map(t=>t.feedback!).map(f=>[f.fluency,f.grammar,f.vocabulary,f.relevance].filter((v):v is number=>typeof v==='number')).filter(a=>a.length).map(a=>Math.round(a.reduce((x,y)=>x+y,0)/a.length));
