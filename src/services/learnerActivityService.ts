@@ -31,6 +31,14 @@ export const learnerActivityService={
   getRecent(language?:'en'|'zh',limit=10):LearnerActivityEvent[]{
     return this.getAll().filter(e=>!language||e.language===language).slice(0,limit);
   },
+  getSince(timestamp:string, language?:'en'|'zh'):LearnerActivityEvent[]{
+    if(!timestamp) return this.getAll().filter(e=>!language||e.language===language);
+    return this.getAll().filter(e=>(!language||e.language===language)&&e.timestamp>timestamp);
+  },
+  getSinceForSkills(timestamp:string, skills:LearnerActivitySkill[], language?:'en'|'zh'):LearnerActivityEvent[]{
+    const allowed=new Set(skills);
+    return this.getSince(timestamp,language).filter(e=>allowed.has(e.skill));
+  },
   getActiveDates(language?:'en'|'zh'):string[]{
     return Array.from(new Set(this.getAll().filter(e=>!language||e.language===language).map(e=>e.timestamp.slice(0,10))));
   }
