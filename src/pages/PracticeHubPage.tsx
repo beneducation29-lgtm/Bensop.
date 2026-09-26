@@ -49,6 +49,10 @@ export const PracticeHubPage: React.FC<PracticeHubPageProps> = ({
   const activeLanguage: 'en' | 'zh' | undefined =
     selectedCategory === 'tieng-anh' ? 'en' :
     selectedCategory === 'tieng-trung' ? 'zh' : undefined;
+  const languageCategoryId = activeLanguage === 'zh' ? 'tieng-trung' : activeLanguage === 'en' ? 'tieng-anh' : undefined;
+  const languageDailyQuiz = languageCategoryId
+    ? QUIZ_MODELS.find((q) => q.type === 'daily' && q.categoryId === languageCategoryId)
+    : QUIZ_MODELS.find((q) => q.type === 'daily');
   const mastery = masteryService.getSnapshot(activeLanguage);
   const dueReviews = spacedReviewService.getDue(new Date(), activeLanguage);
   const weakQuestionIds = mastery.questions
@@ -81,12 +85,12 @@ export const PracticeHubPage: React.FC<PracticeHubPageProps> = ({
     const wrongSet = new Set<string>();
     history.forEach((h) => {
       const res = quizSessionStorage.getResult(h.sessionId);
-      if (res && res.wrongQuestionIds) {
-        res.wrongQuestionIds.forEach((id) => wrongSet.add(id));
-      }
+      if (!res || !res.wrongQuestionIds) return;
+      if (languageCategoryId && res.categoryId !== languageCategoryId) return;
+      res.wrongQuestionIds.forEach((id) => wrongSet.add(id));
     });
     return Array.from(wrongSet);
-  }, [history]);
+  }, [history, languageCategoryId]);
 
   // Handle launch of custom practice
   const handleAdaptivePractice = () => {
@@ -213,7 +217,7 @@ export const PracticeHubPage: React.FC<PracticeHubPageProps> = ({
               </p>
             </div>
             <button
-              onClick={() => onStartQuiz('daily-challenge')}
+              onClick={() => onStartQuiz(languageDailyQuiz?.slug || 'daily-challenge')}
               className="mt-6 w-full py-2.5 rounded-lg bg-[#161616] group-hover:bg-[#D9FF3F] text-white group-hover:text-black font-mono text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer"
             >
               <span>BẮT ĐẦU THỬ THÁCH</span>
@@ -246,7 +250,7 @@ export const PracticeHubPage: React.FC<PracticeHubPageProps> = ({
                   onStartQuiz(slug);
                   return;
                 }
-                const fallback = QUIZ_MODELS.find((q) => q.categoryId === (activeLanguage === 'zh' ? 'tieng-trung' : 'tieng-anh')) || QUIZ_MODELS[0];
+                const fallback = QUIZ_MODELS.find((q) => q.categoryId === (languageCategoryId || 'tieng-anh')) || QUIZ_MODELS[0];
                 if (fallback) onStartQuiz(fallback.slug);
               }}
               className="mt-6 w-full py-2.5 rounded-lg bg-[#161616] group-hover:bg-amber-400 text-white group-hover:text-black font-mono text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer"

@@ -30,12 +30,16 @@ export const spacedReviewService = {
     return read().sort((a, b) => a.dueAt.localeCompare(b.dueAt));
   },
 
-  getForLesson(lessonSlug: string): SpacedReviewItem[] {
-    return this.getAll().filter((item) => item.lessonSlug === lessonSlug);
+  getForLesson(lessonSlug: string, language?: LanguageCode): SpacedReviewItem[] {
+    return this.getAll().filter(
+      (item) => item.lessonSlug === lessonSlug && (!language || item.language === language),
+    );
   },
 
-  getForQuiz(quizSlug: string): SpacedReviewItem[] {
-    return this.getAll().filter((item) => item.quizSlug === quizSlug);
+  getForQuiz(quizSlug: string, language?: LanguageCode): SpacedReviewItem[] {
+    return this.getAll().filter(
+      (item) => item.quizSlug === quizSlug && (!language || item.language === language),
+    );
   },
 
   scheduleLesson(
@@ -43,7 +47,7 @@ export const spacedReviewService = {
     completedAt = new Date().toISOString(),
     language?: LanguageCode,
   ): SpacedReviewItem[] {
-    const existing = read().filter((item) => item.lessonSlug !== lessonSlug);
+    const existing = read().filter((item) => item.lessonSlug !== lessonSlug || (language && item.language !== language));
     const intervals: Array<1 | 3 | 7> = [1, 3, 7];
     const items = intervals.map((intervalDays) => ({
       id: `review-lesson-${lessonSlug}-${intervalDays}`,
@@ -66,7 +70,7 @@ export const spacedReviewService = {
     completedAt = new Date().toISOString(),
     language?: LanguageCode,
   ): SpacedReviewItem[] {
-    const existing = read().filter((item) => item.quizSlug !== quizSlug);
+    const existing = read().filter((item) => item.quizSlug !== quizSlug || (language && item.language !== language));
     const item: SpacedReviewItem = {
       id: `review-quiz-${quizSlug}`,
       quizSlug,
