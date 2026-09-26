@@ -33,7 +33,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
   const dueReviews = spacedReviewService.getDue().slice(0, 5);
   const masterySnapshot = masteryService.getSnapshot();
   const nextLearningAction = recommendationService.getNextLearningAction();
-  const learningSkillSnapshot = recommendationService.getLearningSkillSnapshot(nextLearningAction.type === 'writing' ? 'en' : 'en');
+  const learningSkillSnapshot = recommendationService.getLearningSkillSnapshot('en');
 
   const handleOpenRecommended = (slug: string, type: 'article' | 'course') => {
     if (type === 'article') {
