@@ -63,6 +63,31 @@ export const spacedReviewService = {
     return items;
   },
 
+  scheduleSkillReview(
+    reviewType: 'speaking' | 'writing',
+    sourceId: string,
+    title: string,
+    path: string,
+    intervalDays: 1 | 3 | 7,
+    completedAt = new Date().toISOString(),
+    language?: LanguageCode,
+  ): SpacedReviewItem[] {
+    const existing = read().filter((item) => !(item.reviewType === reviewType && item.sourceId === sourceId && (!language || item.language === language)));
+    const item: SpacedReviewItem = {
+      id: `review-${reviewType}-${language || 'unknown'}-${sourceId}`,
+      reviewType,
+      sourceId,
+      title,
+      path,
+      language,
+      intervalDays,
+      scheduledAt: completedAt,
+      dueAt: addDays(completedAt, intervalDays),
+    };
+    write([...existing, item]);
+    return [item];
+  },
+
   scheduleQuiz(
     quizSlug: string,
     _quizTitle: string,
