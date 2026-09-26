@@ -35,13 +35,23 @@ const SKILL_LABELS: Record<string, string> = {
   writing: 'Writing',
 };
 
-const SKILL_PATHS: Record<string, string> = {
-  vocabulary: '/tieng-anh/vocabulary/practice',
-  grammar: '/tieng-anh/grammar',
-  listening: '/tieng-anh/listening',
-  speaking: '/tieng-anh/speaking',
-  reading: '/tieng-anh/reading',
-  writing: '/tieng-anh/writing',
+const SKILL_PATHS: Record<LanguageCode, Record<string, string>> = {
+  en: {
+    vocabulary: '/tieng-anh/vocabulary/practice',
+    grammar: '/tieng-anh/grammar',
+    listening: '/tieng-anh/listening',
+    speaking: '/tieng-anh/speaking',
+    reading: '/tieng-anh/reading',
+    writing: '/tieng-anh/writing',
+  },
+  zh: {
+    vocabulary: '/tieng-trung/vocabulary/practice',
+    grammar: '/tieng-trung/grammar',
+    listening: '/tieng-trung/listening',
+    speaking: '/tieng-trung/speaking',
+    reading: '/tieng-trung/reading',
+    writing: '/tieng-trung/writing',
+  },
 };
 
 class AdaptiveSessionService {
@@ -99,7 +109,7 @@ class AdaptiveSessionService {
       });
 
     ranked.slice(0, 4).forEach(skill => {
-      const path = SKILL_PATHS[skill.key] || skill.path;
+      const path = SKILL_PATHS[language][skill.key] || skill.path;
       add({
         type: skill.key as LearningActionType,
         skill: SKILL_LABELS[skill.key] || skill.label,
