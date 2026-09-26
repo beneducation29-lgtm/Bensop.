@@ -12,9 +12,10 @@ interface QuizMasteryPageProps {
 
 export const QuizMasteryPage: React.FC<QuizMasteryPageProps> = ({ sessionId, onNavigate }) => {
   const result: QuizResult | null = quizSessionStorage.getResult(sessionId);
-  const mastery = masteryService.getSnapshot();
-  const weakAreas = masteryService.getWeakAreas(5);
-  const review = spacedReviewService.getForQuiz(result?.quizSlug || '');
+  const language = result?.categoryId === 'tieng-trung' ? 'zh' : result?.categoryId === 'tieng-anh' ? 'en' : undefined;
+  const mastery = masteryService.getSnapshot(language);
+  const weakAreas = masteryService.getWeakAreas(5, language);
+  const review = spacedReviewService.getForQuiz(result?.quizSlug || '', language);
 
   if (!result) {
     return (
