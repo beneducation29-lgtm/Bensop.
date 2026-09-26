@@ -46,9 +46,19 @@ export const aiSpeakingService = {
   },
   completeSession(sessionId:string){const session=readSession();if(!session||session.id!==sessionId)return null;const next={...session,status:'completed' as const};writeSession(next);return next;},
   async reply(context:AISpeakingRoomContext,transcript:string,history:AISpeakingSession['turns']):Promise<AISpeakingReply>{
-    const response=await fetch('/api/ai-speaking',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
+    const controller=new AbortController();
+    const timeout=window.setTimeout(()=>controller.abort(),18000);
+    let response: Response;
+    try {
+      response=await fetch('/api/ai-speaking',{method:'POST',headers:{'Content-Type':'application/json'},signal:controller.signal,body:JSON.stringify({
       language:context.language,mode:context.mode,level:context.level,topic:context.topic,scenario:context.scenario,learnerGoal:context.learnerGoal,transcript,history:history.slice(-10).map(t=>({role:t.role,text:t.text})),
     })});
+    } catch (error) {
+      if (error instanceof DOMException && error.name === 'AbortError') throw new Error('AI Speaking phản hồi quá lâu. Hãy thử gửi lại.');
+      throw error;
+    } finally {
+      window.clearTimeout(timeout);
+    }
     const data=await response.json().catch(()=>({}));
     if(!response.ok) throw new Error(typeof data?.error==='string'?data.error:'AI speaking request failed');
     if(typeof data?.text!=='string'||!data.text.trim()) throw new Error('AI speaking returned an empty response');
