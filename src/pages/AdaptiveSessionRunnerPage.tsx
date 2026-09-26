@@ -40,11 +40,7 @@ const latestEvidenceAt = (language: 'en' | 'zh') =>
   learnerActivityService.getRecent(language, 1)[0]?.timestamp || '';
 
 const evidenceSkillsForItems = (sessionItems: AdaptiveSessionItem[]) =>
-  Array.from(new Set(
-    sessionItems
-      .map(item => item.skillKey)
-      .filter((skill): skill is 'vocabulary'|'grammar'|'listening'|'speaking'|'reading'|'writing'|'quiz' => skill !== 'lesson')
-  ));
+  Array.from(new Set(sessionItems.map(item => item.skillKey))) as Array<'lesson'|'vocabulary'|'grammar'|'listening'|'speaking'|'reading'|'writing'|'quiz'>;
 
 export const AdaptiveSessionRunnerPage: React.FC<AdaptiveSessionRunnerPageProps> = ({ items, totalMinutes, onNavigate }) => {
   const [current, setCurrent] = useState(0);
