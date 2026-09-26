@@ -46,17 +46,21 @@ export const aiSpeakingService = {
   },
   updateMemory(sessionId:string,memory:AISpeakingConversationMemory){
     const session=readSession();if(!session||session.id!==sessionId)return null;
+    const safeArray=(value:unknown,max:number,itemMax:number)=>{
+      if(!Array.isArray(value))return [];
+      return value.filter(x=>typeof x==='string').slice(-max).map(x=>x.trim().slice(0,itemMax)).filter(Boolean);
+    };
     const next={...session,conversationMemory:{
-      topicFocus:memory.topicFocus?.slice(0,240),
-      scenarioState:memory.scenarioState?.slice(0,500),
-      learnerGoal:memory.learnerGoal?.slice(0,240),
-      stage:memory.stage?.slice(0,80),
-      openThread:memory.openThread?.slice(0,300),
-      learnerDetails:(memory.learnerDetails||[]).slice(-5).map(x=>String(x).slice(0,180)),
-      recentPreferences:(memory.recentPreferences||[]).slice(-5).map(x=>String(x).slice(0,180)),
-      usedPrompts:(memory.usedPrompts||[]).slice(-8).map(x=>String(x).slice(0,180)),
-      usefulCorrections:(memory.usefulCorrections||[]).slice(-6).map(x=>String(x).slice(0,220)),
-      lastLearnerIntent:memory.lastLearnerIntent?.slice(0,240),
+      topicFocus:typeof memory.topicFocus==='string'?memory.topicFocus.trim().slice(0,240):undefined,
+      scenarioState:typeof memory.scenarioState==='string'?memory.scenarioState.trim().slice(0,500):undefined,
+      learnerGoal:typeof memory.learnerGoal==='string'?memory.learnerGoal.trim().slice(0,240):undefined,
+      stage:typeof memory.stage==='string'?memory.stage.trim().slice(0,80):undefined,
+      openThread:typeof memory.openThread==='string'?memory.openThread.trim().slice(0,300):undefined,
+      learnerDetails:safeArray(memory.learnerDetails,5,180),
+      recentPreferences:safeArray(memory.recentPreferences,5,180),
+      usedPrompts:safeArray(memory.usedPrompts,8,180),
+      usefulCorrections:safeArray(memory.usefulCorrections,6,220),
+      lastLearnerIntent:typeof memory.lastLearnerIntent==='string'?memory.lastLearnerIntent.trim().slice(0,240):undefined,
     }};
     writeSession(next);return next;
   },
