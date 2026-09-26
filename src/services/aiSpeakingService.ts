@@ -78,7 +78,7 @@ export const aiSpeakingService = {
     let response: Response;
     try {
       response=await fetch('/api/ai-speaking',{method:'POST',headers:{'Content-Type':'application/json'},signal:controller.signal,body:JSON.stringify({
-      language:context.language,mode:context.mode,level:context.level,topic:context.topic,scenario:context.scenario,learnerGoal:context.learnerGoal,conversationMemory:history.length?this.getSession(context.language)?.conversationMemory:undefined,transcript,history:history.slice(-10).map(t=>({role:t.role,text:t.text})),
+      language:context.language,mode:context.mode,level:context.level,topic:context.topic,scenario:context.scenario,learnerGoal:context.learnerGoal,performanceSnapshot:context.performanceSnapshot,conversationMemory:history.length?this.getSession(context.language)?.conversationMemory:undefined,transcript,history:history.slice(-10).map(t=>({role:t.role,text:t.text})),
     })});
     } catch (error) {
       if (error instanceof DOMException && error.name === 'AbortError') throw new Error('AI Speaking phản hồi quá lâu. Hãy thử gửi lại.');
