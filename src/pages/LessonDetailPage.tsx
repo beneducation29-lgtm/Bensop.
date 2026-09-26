@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Lesson, Course, SavedItem } from '../types';
 import { LESSONS } from '../data/lessons';
 import { contentService } from '../services/contentService';
+import { spacedReviewService } from '../services/spacedReviewService';
 import { COURSES } from '../data/courses';
 import { BookmarkButton } from '../components/BookmarkButton';
 import { 
@@ -36,6 +37,7 @@ export const LessonDetailPage: React.FC<LessonDetailPageProps> = ({
   const [mobileSyllabusOpen, setMobileSyllabusOpen] = useState(false);
   const [videoSceneIndex, setVideoSceneIndex] = useState(0);
   const [isVideoPlaying, setIsVideoPlaying] = useState(false);
+  const [, setReviewRefresh] = useState(0);
 
   const lesson = LESSONS.find((l) => l.slug === slug) || LESSONS[0];
   const course = COURSES.find((c) => c.slug === lesson.courseSlug) || COURSES[0];
@@ -46,6 +48,8 @@ export const LessonDetailPage: React.FC<LessonDetailPageProps> = ({
   const video = contentBlueprint?.aiVideo;
   const activeVideoScene = video?.scenes[videoSceneIndex];
   const ecosystemLinks = contentService.getEcosystemLinks(lesson.slug).filter((link) => link.kind !== 'course');
+  const reviewItems = spacedReviewService.getForLesson(lesson.slug);
+  const now = Date.now();
 
   useEffect(() => {
     if (!isVideoPlaying || !video || !activeVideoScene) return;
@@ -249,6 +253,35 @@ export const LessonDetailPage: React.FC<LessonDetailPageProps> = ({
                       <div key={item} className="flex gap-3 text-xs text-[#AAA]"><span className="font-mono font-bold text-[#555]">0{index + 1}</span><span>{item}</span></div>
                     ))}
                   </div>
+                  {reviewItems.length > 0 && (
+                    <div className="mt-4 border-t border-[#1D1D1D] pt-4">
+                      <div className="mb-2 text-[9px] font-mono font-bold tracking-[0.16em] text-[#666]">LỊCH ÔN TẬP ĐÃ KÍCH HOẠT</div>
+                      <div className="space-y-2">
+                        {reviewItems.map((item) => {
+                          const due = new Date(item.dueAt);
+                          const isDue = !item.completedAt && due.getTime() <= now;
+                          return (
+                            <div key={item.id} className="flex items-center justify-between gap-3 rounded-lg border border-[#202020] bg-[#101010] px-3 py-2">
+                              <div>
+                                <div className="text-[10px] font-bold text-white">Sau {item.intervalDays} ngày</div>
+                                <div className="text-[9px] font-mono text-[#555]">
+                                  {item.completedAt ? 'ĐÃ ÔN' : isDue ? 'ĐẾN HẠN' : due.toLocaleDateString('vi-VN')}
+                                </div>
+                              </div>
+                              {isDue && (
+                                <button
+                                  onClick={() => { spacedReviewService.markComplete(item.id); setReviewRefresh((v) => v + 1); }}
+                                  className="rounded-md border border-[#D9FF3F] px-2.5 py-1.5 text-[9px] font-bold text-[#D9FF3F] hover:bg-[#D9FF3F] hover:text-black"
+                                >
+                                  ĐÁNH DẤU ĐÃ ÔN
+                                </button>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
                 </div>
                 <div className="rounded-xl border border-[#252525] bg-[#0B0B0B] p-5">
                   <div className="mb-3 text-[10px] font-mono font-bold tracking-[0.18em] text-[#D9FF3F]">BENSOP ECOSYSTEM</div>
