@@ -51,6 +51,8 @@ export const aiSpeakingService = {
       scenarioState:memory.scenarioState?.slice(0,500),
       learnerGoal:memory.learnerGoal?.slice(0,240),
       stage:memory.stage?.slice(0,80),
+      openThread:memory.openThread?.slice(0,300),
+      learnerDetails:(memory.learnerDetails||[]).slice(-5).map(x=>String(x).slice(0,180)),
       recentPreferences:(memory.recentPreferences||[]).slice(-5).map(x=>String(x).slice(0,180)),
       usedPrompts:(memory.usedPrompts||[]).slice(-8).map(x=>String(x).slice(0,180)),
       usefulCorrections:(memory.usefulCorrections||[]).slice(-6).map(x=>String(x).slice(0,220)),
