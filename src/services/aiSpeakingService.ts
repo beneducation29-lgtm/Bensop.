@@ -2,6 +2,7 @@ import { AISpeakingMode, AISpeakingReply, AISpeakingRoomContext, AISpeakingSessi
 import { LanguageCode } from '../types/vocabulary';
 
 const SESSION_KEY = 'bensop_ai_speaking_session';
+const SESSION_KEYS: Record<LanguageCode,string> = { en: 'bensop_ai_speaking_session_en', zh: 'bensop_ai_speaking_session_zh' };
 
 const LANGUAGE_LABELS: Record<LanguageCode, string> = { en: 'English', zh: '中文' };
 const MODE_LABELS: Record<AISpeakingMode, string> = {
@@ -12,16 +13,30 @@ const MODE_LABELS: Record<AISpeakingMode, string> = {
   'pronunciation-coach': 'Pronunciation Coach',
 };
 
-const readSession = (): AISpeakingSession | null => {
+const readSession = (language?:LanguageCode): AISpeakingSession | null => {
   try {
-    const raw=localStorage.getItem(SESSION_KEY);
+    const key=language?SESSION_KEYS[language]:SESSION_KEY;
+    let raw=localStorage.getItem(key);
+    if(!raw&&language){
+      const legacy=localStorage.getItem(SESSION_KEY);
+      if(legacy){
+        try {
+          const candidate=JSON.parse(legacy) as AISpeakingSession;
+          if(candidate?.language===language){
+            raw=legacy;
+            localStorage.setItem(key,legacy);
+            localStorage.removeItem(SESSION_KEY);
+          }
+        } catch {}
+      }
+    }
     if(!raw)return null;
     const parsed=JSON.parse(raw) as AISpeakingSession;
     if(!parsed||!parsed.id||!['en','zh'].includes(parsed.language)||!Array.isArray(parsed.turns))return null;
     return parsed;
   } catch { return null; }
 };
-const writeSession = (session: AISpeakingSession) => { try { localStorage.setItem(SESSION_KEY, JSON.stringify(session)); } catch {} };
+const writeSession = (session: AISpeakingSession) => { try { localStorage.setItem(SESSION_KEYS[session.language], JSON.stringify(session)); } catch {} };
 const createId = () => `ai-speaking-${Date.now()}-${Math.random().toString(36).slice(2,8)}`;
 
 const normalizeChineseDisplay = (turn: AISpeakingTurn): AISpeakingTurn => {
@@ -42,7 +57,7 @@ export const aiSpeakingService = {
     const session:AISpeakingSession={id:createId(),language:context.language,mode:context.mode,level:context.level,topic:context.topic||(context.language==='zh'?'日常生活':'Everyday Life'),scenario:context.scenario,conversationMemory:{topicFocus:context.topic,scenarioState:context.scenario,learnerGoal:context.learnerGoal},startedAt:new Date().toISOString(),turns:[],status:'ready'};
     writeSession(session);return session;
   },
-  getSession(language?:LanguageCode){const session=readSession();return !session||(language&&session.language!==language)?null:session;},
+  getSession(language?:LanguageCode){const session=readSession(language);return !session||(language&&session.language!==language)?null:session;},
   addTurn(sessionId:string,turn:Omit<AISpeakingSession['turns'][number],'id'|'createdAt'>){
     const session=readSession();if(!session||session.id!==sessionId)return null;
     const nextTurn:AISpeakingTurn={...turn,id:createId(),createdAt:new Date().toISOString()};
