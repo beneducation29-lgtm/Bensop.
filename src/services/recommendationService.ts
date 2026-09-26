@@ -91,7 +91,6 @@ class RecommendationService {
       .sort((a, b) => a.mastery - b.mastery)[0];
 
     if (weakQuestion) {
-      const reviewSlug = `quiz-review-${weakQuestion.entityId}`;
       return {
         type: 'weakness',
         title: 'Củng cố điểm yếu',
@@ -133,7 +132,6 @@ class RecommendationService {
     }
 
     const lastCategory = history[0]?.categoryId;
-    const languagePath = lastCategory === 'tieng-trung' ? '/tieng-trung' : '/tieng-anh';
     return {
       type: 'quiz',
       title: 'Tiếp tục nhịp học',
