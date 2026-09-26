@@ -36,7 +36,7 @@ class RecommendationService{
   const add=(action:NextLearningAction)=>{if(!actions.some(x=>x.path===action.path&&x.type===action.type))actions.push(action)};
   const dueReviews=spacedReviewService.getDue(new Date(),language);
   dueReviews.slice(0,2).forEach((next,index)=>{
-   const path=next.quizSlug?'/quiz/'+next.quizSlug:next.lessonSlug?'/bai-hoc/'+next.lessonSlug:'/luyen-tap';
+   const path=next.path || (next.quizSlug?'/quiz/'+next.quizSlug:next.lessonSlug?'/bai-hoc/'+next.lessonSlug:'/luyen-tap');
    add({type:'review',title:index===0?'Ôn tập đúng lúc':'Tiếp tục lượt ôn',description:'Nội dung này đã đến hạn theo lịch Spaced Review của bạn.',cta:'ÔN NGAY',path,reason:`${dueReviews.length} lượt ôn đang đến hạn.`,priority:'high',durationMinutes:next.reviewType==='quiz'?8:10});
   });
   const mastery=masteryService.getSnapshot(language);
