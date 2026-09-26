@@ -39,6 +39,13 @@ const writeState = (state: PersistedSessionState) => {
 const latestEvidenceAt = (language: 'en' | 'zh') =>
   learnerActivityService.getRecent(language, 1)[0]?.timestamp || '';
 
+const evidenceSkillsForItems = (sessionItems: AdaptiveSessionItem[]) =>
+  Array.from(new Set(
+    sessionItems
+      .map(item => item.skillKey)
+      .filter((skill): skill is 'vocabulary'|'grammar'|'listening'|'speaking'|'reading'|'writing'|'quiz' => skill !== 'lesson')
+  ));
+
 export const AdaptiveSessionRunnerPage: React.FC<AdaptiveSessionRunnerPageProps> = ({ items, totalMinutes, onNavigate }) => {
   const [current, setCurrent] = useState(0);
   const [completed, setCompleted] = useState<string[]>([]);
@@ -53,7 +60,11 @@ export const AdaptiveSessionRunnerPage: React.FC<AdaptiveSessionRunnerPageProps>
     const latest = latestEvidenceAt(sessionLanguage);
     const sameSession = !!saved && saved.itemIds.join('|') === itemIds.join('|');
 
-    if (saved && sameSession && latest && saved.lastEvidenceAt && latest > saved.lastEvidenceAt) {
+    const relevantEvidence = saved && sameSession
+      ? learnerActivityService.getSinceForSkills(saved.lastEvidenceAt, evidenceSkillsForItems(items), sessionLanguage)
+      : [];
+
+    if (saved && sameSession && relevantEvidence.length > 0) {
       setCurrent(0);
       setCompleted([]);
       setRefreshedByEvidence(true);
@@ -61,7 +72,7 @@ export const AdaptiveSessionRunnerPage: React.FC<AdaptiveSessionRunnerPageProps>
         itemIds,
         current: 0,
         completed: [],
-        lastEvidenceAt: latest,
+        lastEvidenceAt: relevantEvidence[0]?.timestamp || latest,
         updatedAt: new Date().toISOString(),
       });
     } else if (saved && sameSession) {
