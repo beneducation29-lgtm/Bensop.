@@ -32,6 +32,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
   const recommendations = getRecommendations(activeInterest);
   const dueReviews = spacedReviewService.getDue().slice(0, 5);
   const masterySnapshot = masteryService.getSnapshot();
+  const nextLearningAction = recommendationService.getNextLearningAction();
 
   const handleOpenRecommended = (slug: string, type: 'article' | 'course') => {
     if (type === 'article') {
@@ -177,6 +178,34 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
             </div>
           </div>
         </div>
+
+        {/* NEXT BEST LEARNING ACTION */}
+        <section className="mb-12 rounded-3xl border border-[#D9FF3F]/20 bg-[#0D0D0D] p-6 sm:p-8">
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+            <div className="min-w-0">
+              <div className="flex items-center gap-2 text-[10px] font-mono font-bold tracking-[0.18em] text-[#D9FF3F]">
+                <Zap className="w-3.5 h-3.5" />
+                NEXT BEST LEARNING ACTION
+              </div>
+              <h2 className="mt-2 text-2xl sm:text-3xl font-black uppercase text-white">
+                {nextLearningAction.title}
+              </h2>
+              <p className="mt-2 max-w-2xl text-xs sm:text-sm leading-relaxed text-[#777]">
+                {nextLearningAction.description}
+              </p>
+              <div className="mt-3 text-[10px] font-mono text-[#555]">
+                VÌ SAO: <span className="text-[#888]">{nextLearningAction.reason}</span>
+              </div>
+            </div>
+            <button
+              onClick={() => onNavigate(nextLearningAction.path)}
+              className="shrink-0 px-6 py-3.5 rounded-xl bg-[#D9FF3F] text-black font-mono text-xs font-extrabold flex items-center justify-center gap-2 hover:bg-[#cbf532] transition-all"
+            >
+              {nextLearningAction.cta}
+              <ArrowRight className="w-4 h-4" />
+            </button>
+          </div>
+        </section>
 
         {/* SPACED REVIEW QUEUE — driven by completed lesson schedules */}
         <section className="mb-12 rounded-3xl border border-[#202020] bg-[#0B0B0B] p-6 sm:p-8">
