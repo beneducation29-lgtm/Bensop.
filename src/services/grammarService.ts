@@ -3,6 +3,7 @@ import { LanguageCode } from '../types/vocabulary';
 import { ENGLISH_GRAMMAR_CONCEPTS } from '../data/grammar/english';
 import { CHINESE_GRAMMAR_CONCEPTS } from '../data/grammar/chinese';
 import { calculateMasteryStatus, calculateNewMasteryScore } from '../types/learningProgress';
+import { learnerActivityService } from './learnerActivityService';
 
 const STORAGE_KEY_PREFIX = 'bensop_grammar_progress_';
 const STORAGE_KEY_SAVED = 'bensop_grammar_saved';
@@ -102,6 +103,7 @@ class GrammarService {
       };
       map[conceptId] = updated;
       this.saveProgressMap(language, map);
+      learnerActivityService.record({skill:'grammar',language,activityId:conceptId,score:updated.masteryScore,evidenceType:'completion',timestamp:updated.lastPracticedAt||new Date().toISOString(),metadata:{action:'view'}});
       return updated;
     }
     return existing;
@@ -126,6 +128,7 @@ class GrammarService {
     };
     map[conceptId] = updated;
     this.saveProgressMap(language, map);
+    learnerActivityService.record({skill:'grammar',language,activityId:conceptId,score:newScore,evidenceType:'mastery',timestamp:updated.lastPracticedAt||new Date().toISOString(),metadata:{isCorrect}});
     return updated;
   }
 
