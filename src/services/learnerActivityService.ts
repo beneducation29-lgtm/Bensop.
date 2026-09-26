@@ -1,4 +1,4 @@
-export type LearnerActivitySkill = 'vocabulary'|'grammar'|'listening'|'speaking'|'reading'|'writing'|'quiz';
+export type LearnerActivitySkill = 'lesson'|'vocabulary'|'grammar'|'listening'|'speaking'|'reading'|'writing'|'quiz';
 
 export interface LearnerActivityEvent {
   id: string;
