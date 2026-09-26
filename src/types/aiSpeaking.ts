@@ -52,9 +52,20 @@ export interface AISpeakingSession {
   level: string;
   topic: string;
   scenario?: string;
+  conversationMemory?: AISpeakingConversationMemory;
   startedAt: string;
   turns: AISpeakingTurn[];
   status: 'ready' | 'active' | 'completed';
+}
+
+export interface AISpeakingConversationMemory {
+  topicFocus?: string;
+  scenarioState?: string;
+  learnerGoal?: string;
+  recentPreferences?: string[];
+  usedPrompts?: string[];
+  usefulCorrections?: string[];
+  lastLearnerIntent?: string;
 }
 
 export interface AISpeakingRoomContext {
@@ -75,4 +86,5 @@ export interface AISpeakingReply {
   nextPrompt?: string;
   feedback?: AISpeakingTurnFeedback;
   suggestedModes?: AISpeakingMode[];
+  conversationMemory?: AISpeakingConversationMemory;
 }
