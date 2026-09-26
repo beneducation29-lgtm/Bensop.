@@ -12,6 +12,7 @@ import { spacedReviewService } from '../services/spacedReviewService';
 import { LESSONS } from '../data/lessons';
 import { masteryService } from '../services/masteryService';
 import { learnerProfileService } from '../services/learnerProfileService';
+import { adaptiveSessionService } from '../services/adaptiveSessionService';
 
 interface DashboardPageProps {
   user: UserProgress;
@@ -34,7 +35,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
   const dueReviews = spacedReviewService.getDue().slice(0, 5);
   const masterySnapshot = masteryService.getSnapshot();
   const nextLearningActions = recommendationService.getNextLearningActions(3);
-  const nextLearningAction = nextLearningActions[0];
+  const adaptiveSession = adaptiveSessionService.buildSession();
   const learningSkillSnapshot = recommendationService.getLearningSkillSnapshot();
   const learnerProfile = learnerProfileService.getSnapshot();
 
@@ -217,6 +218,52 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                 <div className="mt-4 flex items-center justify-between text-[10px] font-mono font-bold text-white">
                   <span>{action.cta}</span>
                   <ArrowRight className="w-3.5 h-3.5 text-[#D9FF3F]" />
+                </div>
+              </button>
+            ))}
+          </div>
+        </section>
+
+        {/* ADAPTIVE SESSION ENGINE */}
+        <section className="mb-12 rounded-3xl border border-[#D9FF3F]/30 bg-[#0D0D0D] p-6 sm:p-8">
+          <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-5 mb-6">
+            <div>
+              <div className="flex items-center gap-2 text-[10px] font-mono font-bold tracking-[0.18em] text-[#D9FF3F]">
+                <Zap className="w-3.5 h-3.5" />
+                ADAPTIVE SESSION ENGINE
+              </div>
+              <h2 className="mt-2 text-2xl sm:text-3xl font-black uppercase text-white">PHIÊN HỌC DÀNH RIÊNG CHO BẠN.</h2>
+              <p className="mt-2 max-w-2xl text-xs sm:text-sm leading-relaxed text-[#777]">
+                Bensop tự ghép một phiên 10–15 phút từ lượt ôn đến hạn, điểm yếu, mức độ luyện và momentum gần đây.
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="rounded-xl border border-[#252525] bg-[#121212] px-4 py-2 text-[10px] font-mono text-[#888]">
+                {adaptiveSession.items.length} BƯỚC · <b className="text-[#D9FF3F]">{adaptiveSession.totalMinutes} PHÚT</b>
+              </span>
+              <button
+                onClick={() => adaptiveSession.items[0] && onNavigate(adaptiveSession.items[0].path)}
+                className="rounded-xl bg-[#D9FF3F] px-5 py-3 text-[10px] font-mono font-extrabold text-black hover:bg-[#cbf532] transition-colors"
+              >
+                BẮT ĐẦU PHIÊN →
+              </button>
+            </div>
+          </div>
+          <div className="grid gap-3 md:grid-cols-2">
+            {adaptiveSession.items.map((item, index) => (
+              <button
+                key={item.id}
+                onClick={() => onNavigate(item.path)}
+                className="rounded-2xl border border-[#222] bg-[#101010] p-5 text-left hover:border-[#D9FF3F]/40 transition-all"
+              >
+                <div className="flex items-center justify-between gap-3">
+                  <span className="text-[9px] font-mono font-bold tracking-widest text-[#D9FF3F]">BƯỚC {index + 1} · {item.skill.toUpperCase()}</span>
+                  <span className="text-[9px] font-mono text-[#666]">{item.durationMinutes} PHÚT</span>
+                </div>
+                <h3 className="mt-3 text-sm font-black uppercase text-white">{item.title}</h3>
+                <p className="mt-2 text-xs leading-relaxed text-[#777]">{item.description}</p>
+                <div className="mt-3 border-t border-[#1D1D1D] pt-3 text-[10px] leading-relaxed text-[#888]">
+                  <span className="text-[#555]">TÍN HIỆU: </span>{item.reason}
                 </div>
               </button>
             ))}
