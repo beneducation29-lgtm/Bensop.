@@ -23,7 +23,8 @@ const cleanFeedback=(value:unknown)=>{
       explanation:cleanText(item?.explanation,240),
     })).filter((item:any)=>item.original&&item.improved);
   }
-  return feedback.note ? feedback : undefined;
+  const hasEvidence=Object.keys(feedback).some(key=>key!=='note' && feedback[key]!==undefined);
+  return feedback.note || hasEvidence ? feedback : undefined;
 };
 
 export default async function handler(req:Req,res:Res){
