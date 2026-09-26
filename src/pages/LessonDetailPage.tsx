@@ -212,6 +212,68 @@ export const LessonDetailPage: React.FC<LessonDetailPageProps> = ({
               </div>
             </section>
           )}
+          {contentBlueprint && (
+            <section className="mb-10 space-y-5">
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="rounded-xl border border-[#252525] bg-[#0B0B0B] p-5">
+                  <div className="mb-3 text-[10px] font-mono font-bold tracking-[0.18em] text-[#D9FF3F]">SAU BÀI NÀY, BẠN LÀM ĐƯỢC</div>
+                  <ul className="space-y-2.5">
+                    {contentBlueprint.learningObjective.map((item) => (
+                      <li key={item} className="flex gap-2 text-xs leading-relaxed text-[#CCC]"><CheckCircle2 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#D9FF3F]" />{item}</li>
+                    ))}
+                  </ul>
+                </div>
+                <div className="rounded-xl border border-[#252525] bg-[#0B0B0B] p-5">
+                  <div className="mb-3 text-[10px] font-mono font-bold tracking-[0.18em] text-[#D9FF3F]">CORE IDEA</div>
+                  <p className="text-sm leading-relaxed text-[#AAA]">{contentBlueprint.coreIdea}</p>
+                  <div className="mt-4 border-l-2 border-[#333] pl-3 text-[11px] leading-relaxed text-[#777]">
+                    <span className="font-bold text-[#999]">DỄ NHẦM: </span>{contentBlueprint.misconception}
+                  </div>
+                </div>
+              </div>
+
+              <div className="rounded-xl border border-[#252525] bg-[#0B0B0B] p-5">
+                <div className="mb-3 flex items-center justify-between gap-3">
+                  <div className="text-[10px] font-mono font-bold tracking-[0.18em] text-[#D9FF3F]">THỬ THÁCH THỰC HÀNH</div>
+                  <span className="text-[9px] font-mono text-[#555]">DO → MEASURE → REVIEW</span>
+                </div>
+                <p className="text-sm leading-relaxed text-[#CCC]">{contentBlueprint.practicalChallenge}</p>
+              </div>
+
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="rounded-xl border border-[#252525] bg-[#0B0B0B] p-5">
+                  <div className="mb-3 text-[10px] font-mono font-bold tracking-[0.18em] text-[#D9FF3F]">SPACED REVIEW</div>
+                  <div className="space-y-2">
+                    {contentBlueprint.spacedReview.map((item, index) => (
+                      <div key={item} className="flex gap-3 text-xs text-[#AAA]"><span className="font-mono font-bold text-[#555]">0{index + 1}</span><span>{item}</span></div>
+                    ))}
+                  </div>
+                </div>
+                <div className="rounded-xl border border-[#252525] bg-[#0B0B0B] p-5">
+                  <div className="mb-3 text-[10px] font-mono font-bold tracking-[0.18em] text-[#D9FF3F]">BENSOP ECOSYSTEM</div>
+                  <div className="flex flex-wrap gap-2">
+                    {contentBlueprint.crossLabLinks.map((item) => (
+                      <span key={item} className="rounded-md border border-[#292929] bg-[#111] px-2.5 py-1.5 text-[10px] text-[#AAA]">{item}</span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              <details className="rounded-xl border border-[#202020] bg-[#090909] p-4">
+                <summary className="cursor-pointer list-none text-[10px] font-mono font-bold tracking-[0.18em] text-[#777]">NGUỒN & BIÊN SOẠN BENSOP</summary>
+                <div className="mt-4 space-y-3">
+                  {contentBlueprint.sources.map((source) => (
+                    <div key={source.title} className="flex flex-col gap-1 border-b border-[#181818] pb-3 last:border-0 last:pb-0">
+                      <div className="text-xs font-bold text-[#CCC]">{source.title}</div>
+                      <div className="text-[10px] font-mono text-[#555]">{source.publisher} · {source.usage}</div>
+                      <a href={source.url} target="_blank" rel="noreferrer" className="text-[10px] text-[#777] hover:text-[#D9FF3F]">{source.url}</a>
+                    </div>
+                  ))}
+                </div>
+              </details>
+            </section>
+          )}
+
           {/* Interactive Audio Simulation Player */}
           <div className="p-4 sm:p-5 bg-[#0E0E0E] border border-[#222] rounded-xl mb-10 flex items-center justify-between gap-4 shadow-lg">
             <div className="flex items-center gap-3">
