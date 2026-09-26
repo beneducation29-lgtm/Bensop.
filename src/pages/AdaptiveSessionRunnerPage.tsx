@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { ArrowRight, CheckCircle2, Clock3, RotateCcw, Sparkles, Target, Zap } from 'lucide-react';
 import { AdaptiveSessionItem } from '../services/adaptiveSessionService';
 import { learnerActivityService } from '../services/learnerActivityService';
@@ -9,41 +9,135 @@ interface AdaptiveSessionRunnerPageProps {
   onNavigate: (path: string) => void;
 }
 
+interface PersistedSessionState {
+  itemIds: string[];
+  current: number;
+  completed: string[];
+  lastEvidenceAt: string;
+  updatedAt: string;
+}
+
+const STORAGE_KEY = 'bensop_adaptive_session';
+
+const readState = (): PersistedSessionState | null => {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    return raw ? JSON.parse(raw) as PersistedSessionState : null;
+  } catch {
+    return null;
+  }
+};
+
+const writeState = (state: PersistedSessionState) => {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  } catch {
+    // Adaptive session state is an enhancement; learning remains usable without storage.
+  }
+};
+
+const latestEvidenceAt = (language: 'en' | 'zh') =>
+  learnerActivityService.getRecent(language, 1)[0]?.timestamp || '';
+
 export const AdaptiveSessionRunnerPage: React.FC<AdaptiveSessionRunnerPageProps> = ({ items, totalMinutes, onNavigate }) => {
   const [current, setCurrent] = useState(0);
   const [completed, setCompleted] = useState<string[]>([]);
+  const [sessionReady, setSessionReady] = useState(false);
+  const [refreshedByEvidence, setRefreshedByEvidence] = useState(false);
+
+  const itemIds = useMemo(() => items.map(item => item.id), [items]);
+  const sessionLanguage = items[0]?.language || 'en';
+
+  useEffect(() => {
+    const saved = readState();
+    const latest = latestEvidenceAt(sessionLanguage);
+    const sameSession = !!saved && saved.itemIds.join('|') === itemIds.join('|');
+
+    if (saved && sameSession && latest && saved.lastEvidenceAt && latest > saved.lastEvidenceAt) {
+      setCurrent(0);
+      setCompleted([]);
+      setRefreshedByEvidence(true);
+      writeState({
+        itemIds,
+        current: 0,
+        completed: [],
+        lastEvidenceAt: latest,
+        updatedAt: new Date().toISOString(),
+      });
+    } else if (saved && sameSession) {
+      setCurrent(Math.min(saved.current, Math.max(0, items.length - 1)));
+      setCompleted(saved.completed.filter(id => itemIds.includes(id)));
+      setRefreshedByEvidence(false);
+    } else {
+      setCurrent(0);
+      setCompleted([]);
+      setRefreshedByEvidence(false);
+      writeState({
+        itemIds,
+        current: 0,
+        completed: [],
+        lastEvidenceAt: latest || new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      });
+    }
+
+    setSessionReady(true);
+  }, [itemIds.join('|'), sessionLanguage]);
 
   const item = items[current];
   const doneCount = completed.length;
   const progress = items.length ? Math.round((doneCount / items.length) * 100) : 0;
 
+  const persist = (nextCurrent: number, nextCompleted: string[], evidenceAt?: string) => {
+    writeState({
+      itemIds,
+      current: nextCurrent,
+      completed: nextCompleted,
+      lastEvidenceAt: evidenceAt || readState()?.lastEvidenceAt || latestEvidenceAt(sessionLanguage) || new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    });
+  };
+
   const markComplete = () => {
+    if (!item || completed.includes(item.id)) return;
+    const nextCompleted = [...completed, item.id];
+    setCompleted(nextCompleted);
+    persist(current, nextCompleted);
+  };
+
+  const openActivity = () => {
     if (!item) return;
-    if (!completed.includes(item.id)) {
-      learnerActivityService.record({
-        skill: item.skill.toLowerCase() as any,
-        language: 'en',
-        activityId: item.id,
-        score: 100,
-        evidenceType: 'completion',
-        timestamp: new Date().toISOString(),
-        metadata: { adaptiveSession: true, path: item.path },
-      });
-      setCompleted(prev => [...prev, item.id]);
-    }
+    persist(current, completed, new Date().toISOString());
+    onNavigate(item.path);
   };
 
   const next = () => {
-    markComplete();
-    if (current < items.length - 1) setCurrent(current + 1);
+    if (!item) return;
+    const nextCompleted = completed.includes(item.id) ? completed : [...completed, item.id];
+    const nextCurrent = current < items.length - 1 ? current + 1 : current;
+    setCompleted(nextCompleted);
+    setCurrent(nextCurrent);
+    persist(nextCurrent, nextCompleted);
   };
 
   const reset = () => {
     setCurrent(0);
     setCompleted([]);
+    setRefreshedByEvidence(false);
+    persist(0, []);
   };
 
-  const status = useMemo(() => item ? (completed.includes(item.id) ? 'ĐÃ HOÀN THÀNH' : 'ĐANG THỰC HIỆN') : 'HOÀN TẤT', [item, completed]);
+  const status = useMemo(() => item ? (completed.includes(item.id) ? 'ĐÃ XÁC NHẬN' : 'ĐANG THỰC HIỆN') : 'HOÀN TẤT', [item, completed]);
+
+  if (!sessionReady) {
+    return (
+      <div className="pt-28 pb-24 min-h-screen bg-[#050505] text-white">
+        <div className="max-w-4xl mx-auto px-5 sm:px-8">
+          <div className="rounded-3xl border border-[#242424] bg-[#0D0D0D] p-10 text-center text-sm text-[#777]">ĐANG PHÂN TÍCH EVIDENCE...</div>
+        </div>
+      </div>
+    );
+  }
 
   if (!item || doneCount === items.length) {
     return (
@@ -54,7 +148,7 @@ export const AdaptiveSessionRunnerPage: React.FC<AdaptiveSessionRunnerPageProps>
             <div className="mt-5 text-[10px] font-mono tracking-[0.2em] text-[#D9FF3F]">ADAPTIVE SESSION COMPLETE</div>
             <h1 className="mt-3 text-3xl sm:text-5xl font-black uppercase">PHIÊN HỌC ĐÃ HOÀN TẤT.</h1>
             <p className="mx-auto mt-4 max-w-xl text-sm leading-relaxed text-[#777]">
-              Bạn vừa hoàn thành {items.length} bước trong phiên {totalMinutes} phút. Evidence mới đã được ghi nhận để phiên tiếp theo thích nghi tốt hơn.
+              Bạn vừa xác nhận {items.length} bước trong phiên khoảng {totalMinutes} phút. Khi hoạt động thật tạo evidence mới, Bensop sẽ tự tính lại ưu tiên tiếp theo.
             </p>
             <div className="mt-8 flex flex-col sm:flex-row justify-center gap-3">
               <button onClick={() => onNavigate('/dashboard')} className="rounded-xl bg-[#D9FF3F] px-6 py-3 text-xs font-extrabold text-black">VỀ DASHBOARD</button>
@@ -73,10 +167,16 @@ export const AdaptiveSessionRunnerPage: React.FC<AdaptiveSessionRunnerPageProps>
           <div>
             <div className="flex items-center gap-2 text-[10px] font-mono tracking-[0.18em] text-[#D9FF3F]"><Sparkles className="w-3.5 h-3.5" /> ADAPTIVE SESSION</div>
             <h1 className="mt-2 text-3xl sm:text-5xl font-black uppercase">HỌC THEO TÍN HIỆU CỦA BẠN.</h1>
-            <p className="mt-3 text-sm text-[#777]">Bước {current + 1}/{items.length} · {progress}% phiên đã hoàn thành · khoảng {totalMinutes} phút.</p>
+            <p className="mt-3 text-sm text-[#777]">Bước {current + 1}/{items.length} · {progress}% phiên đã xác nhận · khoảng {totalMinutes} phút.</p>
           </div>
           <div className="flex items-center gap-2 rounded-xl border border-[#222] bg-[#101010] px-4 py-3 text-[10px] font-mono text-[#888]"><Clock3 className="w-4 h-4 text-[#D9FF3F]" /> {item.durationMinutes} PHÚT</div>
         </div>
+
+        {refreshedByEvidence && (
+          <div className="mb-6 rounded-2xl border border-[#D9FF3F]/25 bg-[#D9FF3F]/5 px-4 py-3 text-xs text-[#B9C88A]">
+            <span className="font-bold text-[#D9FF3F]">EVIDENCE MỚI ĐÃ ĐƯỢC PHÁT HIỆN.</span> Bensop vừa tính lại phiên này từ kết quả hoạt động bạn mới hoàn thành.
+          </div>
+        )}
 
         <div className="mb-6 h-2 overflow-hidden rounded-full bg-[#151515]"><div className="h-full bg-[#D9FF3F] transition-all" style={{ width: progress + '%' }} /></div>
 
@@ -98,16 +198,16 @@ export const AdaptiveSessionRunnerPage: React.FC<AdaptiveSessionRunnerPageProps>
             <div className="rounded-2xl border border-[#202020] bg-[#111] p-5">
               <Zap className="h-5 w-5 text-[#D9FF3F]" />
               <div className="mt-3 text-[9px] font-mono text-[#555]">NHIỆM VỤ</div>
-              <p className="mt-2 text-xs leading-relaxed text-[#888]">Mở hoạt động này, hoàn thành bài tập, sau đó quay lại đây để Bensop cập nhật evidence.</p>
+              <p className="mt-2 text-xs leading-relaxed text-[#888]">Mở hoạt động này, hoàn thành bài tập, sau đó quay lại đây. Bensop sẽ đọc evidence mới để điều chỉnh bước tiếp theo.</p>
             </div>
           </div>
 
           <div className="mt-8 flex flex-col sm:flex-row gap-3">
-            <button onClick={() => onNavigate(item.path)} className="flex-1 rounded-xl bg-[#D9FF3F] px-6 py-4 text-xs font-extrabold text-black flex items-center justify-center gap-2">
+            <button onClick={openActivity} className="flex-1 rounded-xl bg-[#D9FF3F] px-6 py-4 text-xs font-extrabold text-black flex items-center justify-center gap-2">
               MỞ HOẠT ĐỘNG <ArrowRight className="h-4 w-4" />
             </button>
             <button onClick={next} className="rounded-xl border border-[#2A2A2A] bg-[#151515] px-6 py-4 text-xs font-bold text-white">
-              {current === items.length - 1 ? 'ĐÁNH DẤU HOÀN TẤT' : 'HOÀN TẤT & BƯỚC TIẾP →'}
+              {current === items.length - 1 ? 'XÁC NHẬN HOÀN TẤT' : 'XÁC NHẬN & BƯỚC TIẾP →'}
             </button>
           </div>
         </section>
