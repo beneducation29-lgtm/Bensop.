@@ -49,6 +49,8 @@ import { ContentLibraryPage } from './pages/ContentLibraryPage';
 import { QuizMasteryPage } from './pages/QuizMasteryPage';
 import { quizLearningService } from './services/quizLearningService';
 import { quizService } from './services/quizService';
+import { AdaptiveSessionRunnerPage } from './pages/AdaptiveSessionRunnerPage';
+import { adaptiveSessionService } from './services/adaptiveSessionService';
 
 
 import { INITIAL_USER } from './data/users';
@@ -141,6 +143,8 @@ export default function App() {
       document.title = 'Nội dung đã lưu — BENSOP';
     } else if (currentPath === '/content-lab') {
       document.title = 'BENSOP Content Engine — Thư viện học liệu';
+    } else if (currentPath === '/adaptive-session') {
+      document.title = 'Adaptive Learning Session — BENSOP';
     } else if (currentPath === '/dashboard') {
       document.title = `Bảng học tập của ${user.name} — BENSOP`;
     } else if (currentPath === '/luyen-tap') {
@@ -272,6 +276,18 @@ export default function App() {
             </div>
           </section>
         </>
+      );
+    }
+
+    // 1.5 Adaptive Learning Session
+    if (currentPath === '/adaptive-session') {
+      const session = adaptiveSessionService.buildSession();
+      return (
+        <AdaptiveSessionRunnerPage
+          items={session.items}
+          totalMinutes={session.totalMinutes}
+          onNavigate={navigateTo}
+        />
       );
     }
 
