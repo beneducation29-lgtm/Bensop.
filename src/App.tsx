@@ -60,6 +60,8 @@ import { LESSONS } from './data/lessons';
 import { Article, Course, SavedItem, UserProgress } from './types';
 import { ArrowRight, BookOpen } from 'lucide-react';
 import { spacedReviewService } from './services/spacedReviewService';
+import { learnerActivityService } from './services/learnerActivityService';
+
 
 export default function App() {
   const [currentPath, setCurrentPath] = useState<string>(() => {
@@ -208,8 +210,20 @@ export default function App() {
           }
         : null;
 
-      if (isDone) spacedReviewService.clearLesson(lessonSlug);
-      else spacedReviewService.scheduleLesson(lessonSlug);
+      if (isDone) {
+        spacedReviewService.clearLesson(lessonSlug);
+      } else {
+        spacedReviewService.scheduleLesson(lessonSlug);
+        learnerActivityService.record({
+          skill: 'lesson',
+          language: lesson?.category === 'tieng-trung' ? 'zh' : 'en',
+          activityId: lessonSlug,
+          score: 100,
+          evidenceType: 'completion',
+          timestamp: new Date().toISOString(),
+          metadata: { completed: true },
+        });
+      }
 
       return {
         ...prev,
@@ -280,8 +294,10 @@ export default function App() {
     }
 
     // 1.5 Adaptive Learning Session
-    if (currentPath === '/adaptive-session') {
-      const session = adaptiveSessionService.buildSession();
+    if (currentPath.startsWith('/adaptive-session')) {
+      const params = new URLSearchParams(window.location.search);
+      const language = params.get('lang') === 'zh' ? 'zh' : 'en';
+      const session = adaptiveSessionService.buildSession(language);
       return (
         <AdaptiveSessionRunnerPage
           items={session.items}
