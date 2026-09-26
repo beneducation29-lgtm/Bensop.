@@ -64,7 +64,7 @@ export const spacedReviewService = {
   },
 
   scheduleSkillReview(
-    reviewType: 'speaking' | 'writing',
+    reviewType: 'listening' | 'speaking' | 'reading' | 'writing',
     sourceId: string,
     title: string,
     path: string,
