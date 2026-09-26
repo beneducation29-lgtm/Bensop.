@@ -150,9 +150,14 @@ Do not invent learner history. Do not output markdown.`;
       const fallbackPrompt=language==='zh'
         ? (mode==='role-play'?'接下来，你会怎么做？':mode==='interview'?'你为什么这样选择？':'你能举一个具体的例子吗？')
         : (mode==='role-play'?'What would you do next?':mode==='interview'?'Why would you choose that?':'Can you give me one specific example?');
+      const fallbackChineseDisplay=mode==='role-play'
+        ? {pinyin:'Hǎo, wǒmen jìxù zhège qíngjìng. Nǐ gāngcái de yìsi hěn qīngchǔ.',vietnameseTranslation:'Tốt lắm, chúng ta tiếp tục tình huống này nhé. Ý của bạn vừa nói rất rõ.'}
+        : mode==='interview'
+          ? {pinyin:'Hěn hǎo. Qǐng yòng yí gè jùtǐ lìzi jìxù shuōmíng.',vietnameseTranslation:'Rất tốt. Hãy tiếp tục giải thích bằng một ví dụ cụ thể.'}
+          : {pinyin:'Bùcuò. Qǐng zài shuō yí jù, gàosu wǒ yí gè jùtǐ xìjié.',vietnameseTranslation:'Không tệ. Hãy nói thêm một câu và cho mình một chi tiết cụ thể.'};
       res.status(200).json({
         text:fallbackText,
-        ...(language==='zh'?{pinyin:mode==='role-play'?'Hǎo, wǒmen jìxù zhège qíngjìng. Nǐ gāngcái de yìsi hěn qīngchǔ.':'Bùcuò. Qǐng zài shuō yí jù, gàosu wǒ yí gè jùtǐ xìjié.',vietnameseTranslation:'Tốt lắm. Hãy tiếp tục và thêm một chi tiết cụ thể.'}:{vietnameseTranslation:'Tốt lắm. Hãy tiếp tục với một chi tiết cụ thể.'}),
+        ...(language==='zh'?fallbackChineseDisplay:{vietnameseTranslation:'Good job. Keep going with one specific detail.'}),
         nextPrompt:fallbackPrompt,
         conversationMemory:conversationMemory,
         feedback:undefined,
