@@ -57,7 +57,7 @@ export function SpeakingLabPage({language,onNavigate}:P){
        const score=scores.length?Math.round(scores.reduce((a,b)=>a+b,0)/scores.length):60;
        masteryService.recordSpeakingEvaluation({language,sessionId:session.id,score,fluency:f.fluency,grammar:f.grammar,vocabulary:f.vocabulary,relevance:f.relevance});
        learnerActivityService.record({skill:'speaking',language,activityId:`ai-speaking:${session.id}`,score,evidenceType:'assessment',timestamp:new Date().toISOString(),metadata:{mode:session.mode}});
-       spacedReviewService.scheduleQuiz('ai-speaking:'+session.id,language==='zh'?'中文 AI 口语':'English AI Speaking',score>=80?7:score>=60?3:1,new Date().toISOString(),language);
+       spacedReviewService.scheduleSkillReview('speaking',session.id,language==='zh'?'中文 AI 口语':'English AI Speaking',language==='zh'?'/tieng-trung/speaking':'/tieng-anh/speaking',score>=80?7:score>=60?3:1,new Date().toISOString(),language);
      }
      setSession(aiTurn||withLearner);
    }catch(e){
