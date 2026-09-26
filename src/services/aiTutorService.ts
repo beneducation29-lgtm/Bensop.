@@ -16,6 +16,8 @@ const skillPaths:Record<string,Record<'en'|'zh',string>>={
   writing:{en:'/tieng-anh/writing',zh:'/tieng-trung/writing'},
 };
 
+type ConversationMessage={role:'user'|'assistant';content:string};
+
 class AITutorService{
   getLearnerContext(language:'en'|'zh'='en'):TutorContext{
     const profile=learnerProfileService.getSnapshot(language),weakest=profile.needsAttention[0];
@@ -25,7 +27,25 @@ class AITutorService{
     const action=recommendationService.getNextLearningActions(1,language)[0];
     return action?{label:action.cta,path:action.path}:null;
   }
-  async reply(message:string,context:TutorContext):Promise<TutorReply>{
+  async reply(message:string,context:TutorContext,history:ConversationMessage[]=[]):Promise<TutorReply>{
+    try{
+      const response=await fetch('/api/ai-tutor',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({message,context,history:history.slice(-8)}),
+      });
+      if(response.ok){
+        const data=await response.json() as Partial<TutorReply>;
+        if(typeof data.content==='string'&&data.content.trim()){
+          return{content:data.content,suggestions:Array.isArray(data.suggestions)?data.suggestions:[],source:'ai',action:data.action};
+        }
+      }
+    }catch{
+      // Keep AI Coach usable when the server/API key is unavailable.
+    }
+    return this.fallbackReply(message,context);
+  }
+  private fallbackReply(message:string,context:TutorContext):TutorReply{
     const q=message.toLowerCase(),zh=context.language==='zh',learner=context.learner;
     const weakest=learner?.weakestSkill,weakLabel=weakest?skillLabels[weakest]?.[zh?'zh':'en']:undefined;
     let content=zh?'我可以根据你的学习记录，帮你练习中文。':'I can use your recent learning evidence to guide your practice.';
@@ -40,9 +60,9 @@ class AITutorService{
       suggestions=zh?['给我3个新词','做词汇回忆','用新词造句']:['Give me 3 words','Test my vocabulary','Make a sentence with me'];
       action={label:zh?'进入词汇练习':'OPEN VOCABULARY PRACTICE',path:skillPaths.vocabulary[context.language]};
     }else if(q.includes('what should i')||q.includes('học gì')||q.includes('nên học gì')||q.includes('接下来')){
-      if(weakLabel) content=zh?'根据你的学习记录，建议先加强'+weakLabel+'。当前记录约为'+(learner?.weakestScore??0)+'%。'+(learner?.weakestTrend==='down'?'最近趋势有所下降。':'先做一个短练习即可继续积累证据。'):
-        'Based on your recent learning evidence, I’d start with '+weakLabel+'. Your current record is about '+(learner?.weakestScore??0)+'%, so a short targeted practice is a useful next step.';
-      else content=zh?'目前还没有足够的学习证据。我建议先完成一次短练习，让我更准确地帮你安排下一步。':'There is not enough learning evidence yet. Complete one short practice so I can make the next recommendation more specific.';
+      content=weakLabel
+        ?(zh?'根据你的学习记录，建议先加强'+weakLabel+'。当前记录约为'+(learner?.weakestScore??0)+'%。':'Based on your recent learning evidence, I’d start with '+weakLabel+'. Your current record is about '+(learner?.weakestScore??0)+'%.')
+        :(zh?'目前还没有足够的学习证据。先完成一次短练习。':'There is not enough learning evidence yet. Complete one short practice first.');
       suggestions=zh?['开始自适应学习','查看待复习内容','练习最弱项']:['Start adaptive session','Review due items','Practise my weakest skill'];
       action={label:zh?'开始自适应学习':'START ADAPTIVE SESSION',path:'/adaptive-session'};
     }else if(q.includes('adaptive')||q.includes('tự động')||q.includes('自适应')){
@@ -52,7 +72,7 @@ class AITutorService{
     }else if(q.includes('hello')||q.includes('xin chào')||q.includes('你好')){
       content=zh?'你好！'+(weakLabel?'你最近可以重点练习'+weakLabel+'。':'')+'今天想练习什么？':'Hello!'+(weakLabel?' Your recent evidence suggests focusing on '+weakLabel+'.':'')+' What would you like to practise today?';
     }else if(learner?.dueReviews){
-      content=zh?'我看到你有'+learner.dueReviews+'项复习已经到期。你也可以告诉我一个具体问题，我会结合你的学习记录给出练习。':'You have '+learner.dueReviews+' review item'+(learner.dueReviews===1?'':'s')+' due. You can also send me a specific question and I’ll tailor the practice to your recent learning evidence.';
+      content=zh?'我看到你有'+learner.dueReviews+'项复习已经到期。你也可以告诉我一个具体问题，我会结合你的学习记录给出练习。':'You have '+learner.dueReviews+' review item'+(learner.dueReviews===1?'':'s')+' due. Tell me a specific question and I’ll tailor the practice.';
     }
     return{content,suggestions,source:'fallback',action};
   }
