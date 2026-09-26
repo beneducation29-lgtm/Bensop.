@@ -9,6 +9,19 @@ const cleanText=(value:unknown,max:number)=>{
   return typeof value==='string' ? value.trim().slice(0,max) : '';
 };
 
+const normalizeForCompare=(value:string)=>value.toLowerCase().replace(/[^\\p{L}\\p{N}]+/gu,' ').replace(/\\s+/g,' ').trim();
+const questionCount=(value:string)=>((value.match(/[?？]/g)||[]).length);
+const looksLikeBadReply=(text:string,history:Array<{role:string;text:string}>,language:string)=>{
+  const normalized=normalizeForCompare(text);
+  const recentAi=history.filter(x=>x.role==='ai').slice(-3).map(x=>normalizeForCompare(x.text)).filter(Boolean);
+  if(recentAi.some(x=>x===normalized||x.length>35&&normalized.includes(x)||normalized.length>35&&x.includes(normalized))) return 'duplicate';
+  if(questionCount(text)>1) return 'too-many-questions';
+  if(text.length>750) return 'too-long';
+  if(language==='en' && /[\\u4e00-\\u9fff]/u.test(text)) return 'wrong-language';
+  if(language==='zh' && !/[\\u4e00-\\u9fff]/u.test(text)) return 'wrong-language';
+  return '';
+};
+
 const cleanFeedback=(value:unknown)=>{
   if(!value || typeof value!=='object') return undefined;
   const raw=value as Record<string,unknown>;
@@ -122,6 +135,26 @@ Do not invent learner history. Do not output markdown.`;
     try{parsed=JSON.parse(raw);}catch{res.status(502).json({error:'Gemini returned invalid speaking JSON'});return;}
     const text=cleanText(parsed.text,900);
     if(!text){res.status(502).json({error:'Gemini returned empty speaking text'});return;}
+    const qualityIssue=looksLikeBadReply(text,history,language);
+    if(qualityIssue){
+      const fallbackText=language==='zh'
+        ? (mode==='role-play'?'好，我们继续这个情境。你刚才的意思很清楚。':mode==='interview'?'很好。请用一个具体例子继续说明。':'不错。请再说一句，告诉我一个具体细节。')
+        : (mode==='role-play'?'Great, let’s keep the scene moving. Your choice makes sense.':mode==='interview'?'Good. Give me one specific example to explain that.':'Nice. Add one specific detail to what you just said.');
+      const fallbackPrompt=language==='zh'
+        ? (mode==='role-play'?'接下来，你会怎么做？':mode==='interview'?'你为什么这样选择？':'你能举一个具体的例子吗？')
+        : (mode==='role-play'?'What would you do next?':mode==='interview'?'Why would you choose that?':'Can you give me one specific example?');
+      res.status(200).json({
+        text:fallbackText,
+        ...(language==='zh'?{pinyin:mode==='role-play'?'Hǎo, wǒmen jìxù zhège qíngjìng. Nǐ gāngcái de yìsi hěn qīngchǔ.':'Bùcuò. Qǐng zài shuō yí jù, gàosu wǒ yí gè jùtǐ xìjié.',vietnameseTranslation:'Tốt lắm. Hãy tiếp tục và thêm một chi tiết cụ thể.'}:{vietnameseTranslation:'Tốt lắm. Hãy tiếp tục với một chi tiết cụ thể.'}),
+        nextPrompt:fallbackPrompt,
+        conversationMemory:conversationMemory,
+        feedback:undefined,
+        suggestedModes:[mode],
+        qualityFallback:true,
+        qualityIssue
+      });
+      return;
+    }
     const reply:any={
       text,
       nextPrompt:cleanText(parsed.nextPrompt,500)||undefined,
@@ -140,6 +173,7 @@ Do not invent learner history. Do not output markdown.`;
       }:undefined,
       feedback:cleanFeedback(parsed.feedback),
       suggestedModes:Array.isArray(parsed.suggestedModes)?parsed.suggestedModes.filter((m:any)=>MODES.has(m)).slice(0,3):[],
+      qualityFallback:false,
     };
     if(language==='zh'){
       reply.pinyin=cleanText(parsed.pinyin,900)||undefined;
