@@ -54,7 +54,7 @@ export interface SpacedReviewItem {
   id: string;
   lessonSlug?: string;
   quizSlug?: string;
-  reviewType?: 'lesson' | 'quiz' | 'speaking' | 'writing';
+  reviewType?: 'lesson' | 'quiz' | 'listening' | 'speaking' | 'reading' | 'writing';
   sourceId?: string;
   title?: string;
   path?: string;
