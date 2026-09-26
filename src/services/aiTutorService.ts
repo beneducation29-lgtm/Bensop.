@@ -64,7 +64,7 @@ class AITutorService{
         ?(zh?'根据你的学习记录，建议先加强'+weakLabel+'。当前记录约为'+(learner?.weakestScore??0)+'%。':'Based on your recent learning evidence, I’d start with '+weakLabel+'. Your current record is about '+(learner?.weakestScore??0)+'%.')
         :(zh?'目前还没有足够的学习证据。先完成一次短练习。':'There is not enough learning evidence yet. Complete one short practice first.');
       suggestions=zh?['开始自适应学习','查看待复习内容','练习最弱项']:['Start adaptive session','Review due items','Practise my weakest skill'];
-      action={label:zh?'开始自适应学习':'START ADAPTIVE SESSION',path:'/adaptive-session'};
+      action={label:zh?'开始自适应学习':'START ADAPTIVE SESSION',path:'/adaptive-session?lang='+context.language};
     }else if(q.includes('adaptive')||q.includes('tự động')||q.includes('自适应')){
       content=zh?'我会把到期复习、薄弱问题和最近趋势组合成一段短学习流程。':'I’ll combine due reviews, weak areas, and recent trends into one short learning session.';
       suggestions=zh?['开始自适应学习','先看我的弱项']:['Start adaptive session','Show my weak area'];
