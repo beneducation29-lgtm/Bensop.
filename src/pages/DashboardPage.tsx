@@ -10,6 +10,7 @@ import { learningProgressService } from '../services/learningProgressService';
 import { recommendationService } from '../services/recommendationService';
 import { spacedReviewService } from '../services/spacedReviewService';
 import { LESSONS } from '../data/lessons';
+import { masteryService } from '../services/masteryService';
 
 interface DashboardPageProps {
   user: UserProgress;
@@ -30,6 +31,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
 
   const recommendations = getRecommendations(activeInterest);
   const dueReviews = spacedReviewService.getDue().slice(0, 5);
+  const masterySnapshot = masteryService.getSnapshot();
 
   const handleOpenRecommended = (slug: string, type: 'article' | 'course') => {
     if (type === 'article') {
@@ -194,24 +196,51 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
           ) : (
             <div className="grid gap-3 md:grid-cols-2">
               {dueReviews.map((item) => {
-                const lesson = LESSONS.find((entry) => entry.slug === item.lessonSlug);
+                const lesson = item.lessonSlug ? LESSONS.find((entry) => entry.slug === item.lessonSlug) : undefined;
+                const label = lesson?.title || item.lessonSlug || item.quizSlug || 'Nội dung cần ôn';
                 return (
                   <div key={item.id} className="flex items-center justify-between gap-4 rounded-xl border border-[#252525] bg-[#101010] p-4">
                     <div className="min-w-0">
-                      <div className="text-[9px] font-mono font-bold text-[#D9FF3F]">ÔN SAU {item.intervalDays} NGÀY · ĐẾN HẠN</div>
-                      <div className="mt-1 truncate text-sm font-bold text-white">{lesson?.title || item.lessonSlug}</div>
+                      <div className="text-[9px] font-mono font-bold text-[#D9FF3F]">
+                        {item.reviewType === 'quiz' ? 'ÔN QUIZ' : 'ÔN BÀI'} · SAU {item.intervalDays} NGÀY · ĐẾN HẠN
+                      </div>
+                      <div className="mt-1 truncate text-sm font-bold text-white">{label}</div>
                     </div>
                     <button
-                      onClick={() => onSelectLesson(item.lessonSlug)}
+                      onClick={() => item.quizSlug ? onNavigate(`/quiz/${item.quizSlug}`) : item.lessonSlug ? onSelectLesson(item.lessonSlug) : onNavigate('/luyen-tap')}
                       className="shrink-0 rounded-lg bg-[#D9FF3F] px-3 py-2 text-[10px] font-extrabold text-black"
                     >
-                      ÔN BÀI →
+                      ÔN NGAY →
                     </button>
                   </div>
                 );
               })}
             </div>
           )}
+        </section>
+
+        {/* LIVE MASTERY SNAPSHOT */}
+        <section className="mb-12 grid grid-cols-1 lg:grid-cols-3 gap-4">
+          <div className="lg:col-span-1 rounded-2xl border border-[#202020] bg-[#0B0B0B] p-6">
+            <span className="text-[10px] font-mono tracking-[0.18em] text-[#D9FF3F]">LIVE MASTERY</span>
+            <div className="mt-2 text-4xl font-black text-white">{masterySnapshot.overall}%</div>
+            <p className="mt-1 text-xs text-[#777]">được cập nhật từ các quiz đã hoàn thành</p>
+          </div>
+          <div className="lg:col-span-2 rounded-2xl border border-[#202020] bg-[#0B0B0B] p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-sm font-bold uppercase text-white">Kỹ năng đang được ghi nhận</h3>
+              <button onClick={() => onNavigate('/luyen-tap')} className="text-xs font-mono text-[#D9FF3F]">LUYỆN THÊM →</button>
+            </div>
+            <div className="grid sm:grid-cols-2 gap-3">
+              {masterySnapshot.skills.slice().sort((a,b) => b.mastery-a.mastery).slice(0,4).map((item) => (
+                <div key={item.id} className="rounded-xl bg-[#111] border border-[#202020] p-3">
+                  <div className="flex justify-between text-xs"><span className="text-white">{item.label}</span><span className="font-mono text-[#D9FF3F]">{item.mastery}%</span></div>
+                  <div className="mt-2 h-1.5 bg-[#1A1A1A] rounded-full overflow-hidden"><div className="h-full bg-[#D9FF3F]" style={{width:`${item.mastery}%`}} /></div>
+                </div>
+              ))}
+              {!masterySnapshot.skills.length && <p className="text-xs text-[#777]">Làm quiz đầu tiên để Bensop bắt đầu đo mastery.</p>}
+            </div>
+          </div>
         </section>
 
         {/* LANGUAGE PROGRESS: Vocabulary + Grammar (Phase 4 Requirement 41) */}
