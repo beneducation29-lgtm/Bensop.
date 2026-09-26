@@ -1,5 +1,6 @@
 import { SpeakingActivity, SpeakingProgress, ConversationScenario } from '../types/speaking';
 import { ALL_SPEAKING_ACTIVITIES, CONVERSATION_SCENARIOS } from '../data/speaking';
+import { learnerActivityService } from './learnerActivityService';
 
 const SPEAKING_PROGRESS_KEY = 'bensop_speaking_progress';
 
@@ -113,6 +114,7 @@ class SpeakingService {
         list.push(progress);
       }
       localStorage.setItem(SPEAKING_PROGRESS_KEY, JSON.stringify(list));
+      learnerActivityService.record({skill:'speaking',language:progress.language,activityId:progress.activityId,score:progress.bestScore,evidenceType:'assessment',timestamp:progress.lastAttemptAt,metadata:{completed:progress.completed}});
     } catch (e) {
       console.warn('Failed to save speaking progress:', e);
     }
