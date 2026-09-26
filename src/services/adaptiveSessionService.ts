@@ -3,11 +3,14 @@ import { learnerProfileService } from './learnerProfileService';
 import { spacedReviewService } from './spacedReviewService';
 import { masteryService } from './masteryService';
 import { recommendationService, LearningActionType } from './recommendationService';
+import { LearnerActivitySkill } from './learnerActivityService';
 
 export interface AdaptiveSessionItem {
   id: string;
   type: LearningActionType;
   skill: string;
+  skillKey: LearnerActivitySkill | 'lesson';
+  language: LanguageCode;
   title: string;
   description: string;
   path: string;
@@ -54,7 +57,7 @@ class AdaptiveSessionService {
       const key = item.path + ':' + item.type;
       if (used.has(key) || items.length >= 5) return;
       used.add(key);
-      items.push({ ...item, id: 'adaptive-' + items.length + '-' + item.type });
+      items.push({ ...item, id: 'adaptive-' + item.type + '-' + item.path.replace(/[^a-zA-Z0-9]+/g, '-').replace(/^-|-$/g, '') });
     };
 
     if (due.length) {
@@ -63,6 +66,8 @@ class AdaptiveSessionService {
       add({
         type: 'review',
         skill: review.reviewType === 'quiz' ? 'quiz' : 'lesson',
+        skillKey: review.reviewType === 'quiz' ? 'quiz' : 'lesson',
+        language,
         title: 'Ôn lượt đến hạn',
         description: 'Bắt đầu bằng nội dung đã đến hạn để tận dụng Spaced Review.',
         path,
@@ -76,6 +81,8 @@ class AdaptiveSessionService {
       add({
         type: 'weakness',
         skill: 'quiz',
+        skillKey: 'quiz',
+        language,
         title: 'Sửa lỗi câu hỏi yếu',
         description: 'Luyện lại các dạng câu hỏi có mastery thấp trước khi chuyển sang nội dung mới.',
         path: '/luyen-tap',
@@ -96,6 +103,8 @@ class AdaptiveSessionService {
       add({
         type: skill.key as LearningActionType,
         skill: SKILL_LABELS[skill.key] || skill.label,
+        skillKey: skill.key,
+        language,
         title: skill.momentum < 0 ? 'Ổn định lại ' + (SKILL_LABELS[skill.key] || skill.label) : 'Củng cố ' + (SKILL_LABELS[skill.key] || skill.label),
         description: skill.activityCount === 0
           ? 'Kỹ năng này chưa có đủ evidence. Một bài ngắn sẽ giúp Bensop hiểu bạn tốt hơn.'
@@ -110,9 +119,14 @@ class AdaptiveSessionService {
 
     candidates.forEach(action => {
       if (items.length >= 5) return;
+      const actionSkill = action.type === 'review' || action.type === 'weakness' || action.type === 'quiz'
+        ? 'quiz'
+        : action.type as LearnerActivitySkill;
       add({
         type: action.type,
         skill: SKILL_LABELS[action.type] || action.type,
+        skillKey: actionSkill,
+        language,
         title: action.title,
         description: action.description,
         path: action.path,
@@ -125,6 +139,8 @@ class AdaptiveSessionService {
       add({
         type: 'quiz',
         skill: 'Quiz',
+        skillKey: 'quiz',
+        language,
         title: 'Khởi động phiên học',
         description: 'Làm một phiên luyện ngắn để tạo evidence đầu tiên cho hồ sơ học tập.',
         path: '/luyen-tap',
