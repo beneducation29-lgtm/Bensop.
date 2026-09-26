@@ -50,7 +50,7 @@ export const spacedReviewService = {
     const existing = read().filter((item) => item.lessonSlug !== lessonSlug || (language && item.language !== language));
     const intervals: Array<1 | 3 | 7> = [1, 3, 7];
     const items = intervals.map((intervalDays) => ({
-      id: `review-lesson-${lessonSlug}-${intervalDays}`,
+      id: `review-lesson-${language || 'unknown'}-${lessonSlug}-${intervalDays}`,
       lessonSlug,
       reviewType: 'lesson' as const,
       language,
@@ -72,7 +72,7 @@ export const spacedReviewService = {
   ): SpacedReviewItem[] {
     const existing = read().filter((item) => item.quizSlug !== quizSlug || (language && item.language !== language));
     const item: SpacedReviewItem = {
-      id: `review-quiz-${quizSlug}`,
+      id: `review-quiz-${language || 'unknown'}-${quizSlug}`,
       quizSlug,
       reviewType: 'quiz',
       language,
@@ -85,12 +85,12 @@ export const spacedReviewService = {
     return [item];
   },
 
-  clearLesson(lessonSlug: string): void {
-    write(read().filter((item) => item.lessonSlug !== lessonSlug));
+  clearLesson(lessonSlug: string, language?: LanguageCode): void {
+    write(read().filter((item) => item.lessonSlug !== lessonSlug || (language ? item.language !== language : false)));
   },
 
-  clearQuiz(quizSlug: string): void {
-    write(read().filter((item) => item.quizSlug !== quizSlug));
+  clearQuiz(quizSlug: string, language?: LanguageCode): void {
+    write(read().filter((item) => item.quizSlug !== quizSlug || (language ? item.language !== language : false)));
   },
 
   markComplete(id: string): void {
