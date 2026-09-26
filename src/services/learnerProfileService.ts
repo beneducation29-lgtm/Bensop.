@@ -16,6 +16,9 @@ export interface LearnerSkillProfile {
   activityCount: number;
   total: number;
   evidenceCount: number;
+  recentScore: number;
+  momentum: number;
+  trend: 'up' | 'down' | 'stable';
   path: string;
 }
 
@@ -49,13 +52,24 @@ export const learnerProfileService = {
     while (dateSet.has(cursor.toISOString().slice(0,10))) { streakDays += 1; cursor.setDate(cursor.getDate()-1); }
     const quizSkills = masteryService.getSnapshot().skills.filter(x=>x.categoryId===(language==='zh'?'tieng-trung':'tieng-anh'));
 
+    const evidenceFor=(skill:'vocabulary'|'grammar'|'listening'|'speaking'|'reading'|'writing')=>recentEvidence.filter(e=>e.skill===skill);
+    const skillMomentum=(skill:'vocabulary'|'grammar'|'listening'|'speaking'|'reading'|'writing',base:number)=>{
+      const ev=evidenceFor(skill).slice(0,6);
+      if(ev.length<2) return {recentScore:ev[0]?.score??base,momentum:0,trend:'stable' as const};
+      const recent=ev.slice(0,3).reduce((n,e)=>n+e.score,0)/Math.min(3,ev.length);
+      const older=ev.slice(3,6);
+      const olderAvg=older.length?older.reduce((n,e)=>n+e.score,0)/older.length:base;
+      const momentum=Math.round(recent-olderAvg);
+      return {recentScore:Math.round(recent),momentum,trend:(momentum>=5?'up':momentum<=-5?'down':'stable') as 'up'|'down'|'stable'};
+    };
+
     const skills:LearnerSkillProfile[]=[
-      {key:'vocabulary',label:'Vocabulary',score:average(Object.values(vocab).map(x=>x.masteryScore)),coverage:Object.keys(vocab).length/Math.max(1,vocabularyService.getAllWords(language).length),activityCount:Object.keys(vocab).length,total:vocabularyService.getAllWords(language).length,evidenceCount:Object.values(vocab).reduce((n,x)=>n+x.reviewCount,0),path:`/tieng-${language==='en'?'anh':'trung'}/vocabulary/practice`},
-      {key:'grammar',label:'Grammar',score:average(Object.values(grammar).map(x=>x.masteryScore)),coverage:Object.keys(grammar).length/Math.max(1,grammarService.getAllConcepts(language).length),activityCount:Object.keys(grammar).length,total:grammarService.getAllConcepts(language).length,evidenceCount:Object.values(grammar).reduce((n,x)=>n+x.practiceCount,0),path:`/tieng-${language==='en'?'anh':'trung'}/grammar/review`},
-      {key:'listening',label:'Listening',score:average(listening.map(x=>x.accuracy)),coverage:listening.length/Math.max(1,listeningService.getAllLessons(language).length),activityCount:listening.length,total:listeningService.getAllLessons(language).length,evidenceCount:listening.reduce((n,x)=>n+x.attempts,0),path:`/tieng-${language==='en'?'anh':'trung'}/listening`},
-      {key:'speaking',label:'Speaking',score:average(speaking.map(x=>x.bestScore)),coverage:speaking.length/Math.max(1,speakingService.getAllActivities(language).length),activityCount:speaking.length,total:speakingService.getAllActivities(language).length,evidenceCount:speaking.reduce((n,x)=>n+x.attempts,0),path:`/tieng-${language==='en'?'anh':'trung'}/speaking`},
-      {key:'reading',label:'Reading',score:average(reading.map(x=>x.bestScore)),coverage:reading.length/Math.max(1,readingService.getAll(language).length),activityCount:reading.length,total:readingService.getAll(language).length,evidenceCount:reading.reduce((n,x)=>n+x.attempts,0),path:`/tieng-${language==='en'?'anh':'trung'}/reading`},
-      {key:'writing',label:'Writing',score:average(writing.map(x=>x.bestScore)),coverage:writing.length/Math.max(1,writingService.getAll(language).length),activityCount:writing.length,total:writingService.getAll(language).length,evidenceCount:writing.reduce((n,x)=>n+x.attempts,0),path:`/tieng-${language==='en'?'anh':'trung'}/writing`},
+      {key:'vocabulary',label:'Vocabulary',score:average(Object.values(vocab).map(x=>x.masteryScore)),coverage:Object.keys(vocab).length/Math.max(1,vocabularyService.getAllWords(language).length),activityCount:Object.keys(vocab).length,total:vocabularyService.getAllWords(language).length,evidenceCount:Object.values(vocab).reduce((n,x)=>n+x.reviewCount,0),...skillMomentum('vocabulary',average(Object.values(vocab).map(x=>x.masteryScore))),path:`/tieng-${language==='en'?'anh':'trung'}/vocabulary/practice`},
+      {key:'grammar',label:'Grammar',score:average(Object.values(grammar).map(x=>x.masteryScore)),coverage:Object.keys(grammar).length/Math.max(1,grammarService.getAllConcepts(language).length),activityCount:Object.keys(grammar).length,total:grammarService.getAllConcepts(language).length,evidenceCount:Object.values(grammar).reduce((n,x)=>n+x.practiceCount,0),...skillMomentum('grammar',average(Object.values(grammar).map(x=>x.masteryScore))),path:`/tieng-${language==='en'?'anh':'trung'}/grammar/review`},
+      {key:'listening',label:'Listening',score:average(listening.map(x=>x.accuracy)),coverage:listening.length/Math.max(1,listeningService.getAllLessons(language).length),activityCount:listening.length,total:listeningService.getAllLessons(language).length,evidenceCount:listening.reduce((n,x)=>n+x.attempts,0),...skillMomentum('listening',average(listening.map(x=>x.accuracy))),path:`/tieng-${language==='en'?'anh':'trung'}/listening`},
+      {key:'speaking',label:'Speaking',score:average(speaking.map(x=>x.bestScore)),coverage:speaking.length/Math.max(1,speakingService.getAllActivities(language).length),activityCount:speaking.length,total:speakingService.getAllActivities(language).length,evidenceCount:speaking.reduce((n,x)=>n+x.attempts,0),...skillMomentum('speaking',average(speaking.map(x=>x.bestScore))),path:`/tieng-${language==='en'?'anh':'trung'}/speaking`},
+      {key:'reading',label:'Reading',score:average(reading.map(x=>x.bestScore)),coverage:reading.length/Math.max(1,readingService.getAll(language).length),activityCount:reading.length,total:readingService.getAll(language).length,evidenceCount:reading.reduce((n,x)=>n+x.attempts,0),...skillMomentum('reading',average(reading.map(x=>x.bestScore))),path:`/tieng-${language==='en'?'anh':'trung'}/reading`},
+      {key:'writing',label:'Writing',score:average(writing.map(x=>x.bestScore)),coverage:writing.length/Math.max(1,writingService.getAll(language).length),activityCount:writing.length,total:writingService.getAll(language).length,evidenceCount:writing.reduce((n,x)=>n+x.attempts,0),...skillMomentum('writing',average(writing.map(x=>x.bestScore))),path:`/tieng-${language==='en'?'anh':'trung'}/writing`},
     ];
 
     const quizOverall=quizSkills.length?average(quizSkills.map(x=>x.mastery)):0;
