@@ -621,7 +621,7 @@ export default function App() {
       const language = writingMatch[1] === 'tieng-anh' ? 'en' : 'zh';
       return <WritingPracticePage language={language} slug={writingMatch[2]} onNavigate={navigateTo} />;
     }
-    if (currentPath === '/ai-tutor') return <AITutorPage />;
+    if (currentPath === '/ai-tutor') return <AITutorPage onNavigate={navigateTo} />;
 
     // 13. 404 Not Found Page
     return <NotFoundPage onNavigateHome={() => navigateTo('/')} />;
