@@ -71,6 +71,14 @@ export default async function handler(req:Req,res:Res){
     'pronunciation-coach':'Focus on one pronunciation or phrasing target. Without audio evidence, discuss likely pronunciation risks but never claim to have heard them.'
   };
   const modeInstruction=modeGuidance[mode]||modeGuidance['free-conversation'];
+  const conversationStrategy:Record<string,string>={
+    'shadowing':'Use a tight loop: model line → learner attempt → one priority adjustment → invite a retry. Keep the learner speaking more than you explain.',
+    'role-play':'Use the scenario as a living scene. Introduce one realistic detail at a time, respond to the learner choice, and let the situation evolve instead of asking disconnected questions.',
+    'free-conversation':'Use the learner answer as the source of the next topic. Prefer one curious follow-up, a small personal-choice question, or a connection to something already mentioned.',
+    'interview':'Build a coherent interview arc. Each question should use the previous answer as evidence for the next question and gradually require examples, reasons, or reflection.',
+    'pronunciation-coach':'Keep one sound/phrase target active. Give a short model, let the learner retry, then reinforce or adjust only that target.'
+  };
+  const strategyInstruction=conversationStrategy[mode]||conversationStrategy['free-conversation'];
   const feedbackGuidance:Record<string,string>={
     'shadowing':'Keep feedback extremely light: one pronunciation/phrasing target at a time. Prioritize retrying the model line over explaining.',
     'role-play':'Do not interrupt the role-play with a long correction. Give at most one high-value correction after the conversational reply.',
@@ -86,6 +94,7 @@ export default async function handler(req:Req,res:Res){
 ${chineseContract}
 MODE BEHAVIOR: ${modeInstruction}
 FEEDBACK RHYTHM: ${feedbackInstruction}
+CONVERSATION STRATEGY: ${strategyInstruction}
 Keep the dialogue natural, warm and concise. Conversation depth: turn ${conversationTurn}. On early turns, establish context; on middle turns, deepen one thread; on later turns, connect ideas, introduce a small challenge or naturally wrap up instead of restarting the topic. React to meaning before correcting form. Use the learner's latest answer to choose the next move. Do not repeat recent questions, sentence starters, example answers, or corrections unless needed. Do not force every remembered detail into the reply; use memory only when it helps the current turn. nextPrompt must be a specific, natural follow-up in the target learning language. Maintain a compact conversationMemory object for this session: topicFocus, scenarioState, learnerGoal, stage, recentPreferences (max 5), usedPrompts (max 8), usefulCorrections (max 6), lastLearnerIntent, openThread, learnerDetails (max 5). openThread is the single unresolved detail worth exploring next; learnerDetails must contain only concrete, non-sensitive facts explicitly stated by the learner in this session. For stage, use a short progression appropriate to the mode: role-play opening/complication/resolution; interview background/example/challenge/reflection; free-conversation discover/deepen/connect/close; shadowing model/repeat/correction/retry; pronunciation-coach target/example/retry/reinforcement. Do not jump stages without evidence. For openThread, prefer one detail from the learner's latest answer that can naturally continue the conversation; replace it when the learner clearly moves to a new topic. For learnerDetails, retain only facts explicitly stated by the learner. Never infer age, location, family, identity, health, finances, beliefs, or other sensitive traits. Update it only with information grounded in the conversation; do not invent personal facts or sensitive information. Evaluate the learner's transcript conservatively; do not claim to hear pronunciation from text alone. Pronunciation can be marked as null when audio evidence is unavailable. Return ONLY valid JSON with keys:
 text (string), pinyin (string|null), vietnameseTranslation (string|null), nextPrompt (string|null), conversationMemory (object|null), feedback (object|null), suggestedModes (string[]).
 feedback may contain pronunciation, fluency, grammar, vocabulary, relevance (0-100 numbers or null), note (string), corrections (array of original/improved/explanation).
