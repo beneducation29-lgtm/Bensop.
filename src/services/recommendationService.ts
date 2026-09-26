@@ -9,6 +9,7 @@ import { listeningService } from './listeningService';
 import { speakingService } from './speakingService';
 import { readingService } from './readingService';
 import { writingService } from './writingService';
+import { learnerProfileService } from './learnerProfileService';
 
 export type LearningActionType =
   | 'review'
@@ -70,66 +71,7 @@ class RecommendationService {
   }
 
   getLearningSkillSnapshot(language: LanguageCode = 'en') {
-    const vocab = vocabularyService.getAllProgress(language);
-    const grammar = grammarService.getAllProgress(language);
-    const listening = listeningService.getProgressList().filter((item) => item.language === language);
-    const speaking = speakingService.getProgressList().filter((item) => item.language === language);
-    const reading = readingService.getProgress().filter((item) => item.language === language);
-    const writingCount = writingService.getAll(language).length;
-
-    const average = (values: number[]) =>
-      values.length ? Math.round(values.reduce((sum, value) => sum + value, 0) / values.length) : 0;
-
-    return [
-      {
-        key: 'vocabulary',
-        label: 'Vocabulary',
-        score: average(Object.values(vocab).map((item) => item.masteryScore)),
-        activityCount: Object.keys(vocab).length,
-        total: vocabularyService.getAllWords(language).length,
-        path: `/tieng-${language === 'en' ? 'anh' : 'trung'}/vocabulary/practice`,
-      },
-      {
-        key: 'grammar',
-        label: 'Grammar',
-        score: average(Object.values(grammar).map((item) => item.masteryScore)),
-        activityCount: Object.keys(grammar).length,
-        total: grammarService.getAllConcepts(language).length,
-        path: `/tieng-${language === 'en' ? 'anh' : 'trung'}/grammar/review`,
-      },
-      {
-        key: 'listening',
-        label: 'Listening',
-        score: average(listening.map((item) => item.accuracy)),
-        activityCount: listening.length,
-        total: listeningService.getAllLessons(language).length,
-        path: `/tieng-${language === 'en' ? 'anh' : 'trung'}/listening`,
-      },
-      {
-        key: 'speaking',
-        label: 'Speaking',
-        score: average(speaking.map((item) => item.bestScore)),
-        activityCount: speaking.length,
-        total: speakingService.getAllActivities(language).length,
-        path: `/tieng-${language === 'en' ? 'anh' : 'trung'}/speaking`,
-      },
-      {
-        key: 'reading',
-        label: 'Reading',
-        score: average(reading.map((item) => item.bestScore)),
-        activityCount: reading.length,
-        total: readingService.getAll(language).length,
-        path: `/tieng-${language === 'en' ? 'anh' : 'trung'}/reading`,
-      },
-      {
-        key: 'writing',
-        label: 'Writing',
-        score: 0,
-        activityCount: 0,
-        total: writingCount,
-        path: `/tieng-${language === 'en' ? 'anh' : 'trung'}/writing`,
-      },
-    ];
+    return learnerProfileService.getSnapshot(language).skills;
   }
 
   private getPreferredLanguage(): LanguageCode {
