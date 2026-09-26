@@ -9,7 +9,7 @@ const cleanText=(value:unknown,max:number)=>{
   return typeof value==='string' ? value.trim().slice(0,max) : '';
 };
 
-const normalizeForCompare=(value:string)=>value.toLowerCase().replace(/[^\\p{L}\\p{N}]+/gu,' ').replace(/\\s+/g,' ').trim();
+const normalizeForCompare=(value:string)=>value.toLowerCase().replace(/[^\p{L}\p{N}]+/gu,' ').replace(/\s+/g,' ').trim();
 const questionCount=(value:string)=>((value.match(/[?？]/g)||[]).length);
 const looksLikeBadReply=(text:string,history:Array<{role:string;text:string}>,language:string)=>{
   const normalized=normalizeForCompare(text);
@@ -17,7 +17,7 @@ const looksLikeBadReply=(text:string,history:Array<{role:string;text:string}>,la
   if(recentAi.some(x=>x===normalized||x.length>35&&normalized.includes(x)||normalized.length>35&&x.includes(normalized))) return 'duplicate';
   if(questionCount(text)>1) return 'too-many-questions';
   if(text.length>750) return 'too-long';
-  if(language==='en' && /[\\u4e00-\\u9fff]/u.test(text)) return 'wrong-language';
+  if(language==='en' && /[\u4e00-\u9fff]/u.test(text)) return 'wrong-language';
   if(language==='zh' && !/[\\u4e00-\\u9fff]/u.test(text)) return 'wrong-language';
   return '';
 };
