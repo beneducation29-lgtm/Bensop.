@@ -24,6 +24,25 @@ export function SpeakingLabPage({language,onNavigate}:P){
  const showNextPrompt=!!nextPrompt&&!!session?.turns.length&&nextPrompt.trim().toLowerCase()!==session.turns[session.turns.length-1].text.trim().toLowerCase()&&!session.turns[session.turns.length-1].text.toLowerCase().includes(nextPrompt.trim().toLowerCase());
  const modeTip=mode==='shadowing'?'Nghe → bắt chước → nhận 1 điểm sửa trọng tâm':mode==='role-play'?'AI giữ vai diễn và đẩy tình huống tiến lên':mode==='free-conversation'?'AI bám vào chi tiết bạn vừa nói để trò chuyện tiếp':mode==='interview'?'AI hỏi sâu dần như một buổi phỏng vấn thật':'Tập trung vào 1 điểm phát âm/phrasing mỗi lượt';
  const feedbackTurns=(session?.turns||[]).filter(t=>t.role==='ai'&&t.feedback);
+ const performanceSnapshot=useMemo(()=>{
+   const recent=feedbackTurns.slice(-4).map(t=>t.feedback!).map(f=>({
+     fluency:f.fluency,grammar:f.grammar,vocabulary:f.vocabulary,relevance:f.relevance,
+     average:[f.fluency,f.grammar,f.vocabulary,f.relevance].filter((v):v is number=>typeof v==='number')
+   }));
+   const values=recent.flatMap(x=>x.average);
+   if(!values.length)return undefined;
+   const average=Math.round(values.reduce((a,b)=>a+b,0)/values.length);
+   const previous=feedbackTurns.slice(-8,-4).map(t=>t.feedback!).flatMap(f=>[f.fluency,f.grammar,f.vocabulary,f.relevance].filter((v):v is number=>typeof v==='number'));
+   const previousAverage=previous.length?previous.reduce((a,b)=>a+b,0)/previous.length:average;
+   return {
+     fluency:Math.round(recent.reduce((s,x)=>s+(x.fluency??average),0)/recent.length),
+     grammar:Math.round(recent.reduce((s,x)=>s+(x.grammar??average),0)/recent.length),
+     vocabulary:Math.round(recent.reduce((s,x)=>s+(x.vocabulary??average),0)/recent.length),
+     relevance:Math.round(recent.reduce((s,x)=>s+(x.relevance??average),0)/recent.length),
+     average,
+     trend:average>=previousAverage+5?'improving':average<=previousAverage-5?'struggling':'stable' as const,
+   };
+ },[feedbackTurns.length,session?.turns]);
  const sessionScores=feedbackTurns.map(t=>t.feedback!).map(f=>[f.fluency,f.grammar,f.vocabulary,f.relevance].filter((v):v is number=>typeof v==='number')).filter(a=>a.length).map(a=>Math.round(a.reduce((x,y)=>x+y,0)/a.length));
  const sessionScore=sessionScores.length?Math.round(sessionScores.reduce((a,b)=>a+b,0)/sessionScores.length):0;
  const weakMetrics=['fluency','grammar','vocabulary','relevance'].map(key=>({key,label:key==='fluency'?'Fluency':key==='grammar'?'Grammar':key==='vocabulary'?'Vocabulary':'Relevance',score:feedbackTurns.length?Math.round(feedbackTurns.reduce((sum,t)=>sum+(typeof t.feedback?.[key as keyof AISpeakingTurnFeedback]==='number'?(t.feedback?.[key as keyof AISpeakingTurnFeedback] as number):0),0)/feedbackTurns.length):0})).filter(x=>x.score>0).sort((a,b)=>a.score-b.score);
@@ -55,7 +74,7 @@ export function SpeakingLabPage({language,onNavigate}:P){
    if(!withLearner)return;
    setSession(withLearner);setResponse('');setError('');setLoading(true);
    try{
-     const reply=await aiSpeakingService.reply({language,level:session.level,mode:session.mode,topic:session.topic,scenario:session.scenario,learnerGoal:modeInfo.goal},transcript,withLearner.turns);
+     const reply=await aiSpeakingService.reply({language,level:session.level,mode:session.mode,topic:session.topic,scenario:session.scenario,learnerGoal:modeInfo.goal,performanceSnapshot},transcript,withLearner.turns);
      const aiTurn=aiSpeakingService.addTurn(session.id,{role:'ai',text:reply.text,display:{text:reply.text,pinyin:reply.pinyin,vietnameseTranslation:reply.vietnameseTranslation},feedback:reply.feedback});
      setNextPrompt(reply.nextPrompt||'');
      if(reply.conversationMemory) aiSpeakingService.updateMemory(session.id,reply.conversationMemory);
