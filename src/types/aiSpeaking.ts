@@ -67,6 +67,8 @@ export interface AISpeakingConversationMemory {
   usefulCorrections?: string[];
   lastLearnerIntent?: string;
   stage?: string;
+  openThread?: string;
+  learnerDetails?: string[];
 }
 
 export interface AISpeakingRoomContext {
