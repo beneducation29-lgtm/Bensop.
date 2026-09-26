@@ -15,22 +15,23 @@ const MODE_LABELS: Record<AISpeakingMode, string> = {
 
 const readSession = (language?:LanguageCode): AISpeakingSession | null => {
   try {
-    const key=language?SESSION_KEYS[language]:SESSION_KEY;
-    let raw=localStorage.getItem(key);
-    if(!raw&&language){
-      const legacy=localStorage.getItem(SESSION_KEY);
-      if(legacy){
-        try {
-          const candidate=JSON.parse(legacy) as AISpeakingSession;
-          if(candidate?.language===language){
-            raw=legacy;
-            localStorage.setItem(key,legacy);
-            localStorage.removeItem(SESSION_KEY);
-          }
-        } catch {}
-      }
+    const keys=language?[SESSION_KEYS[language],SESSION_KEY]:[SESSION_KEYS.en,SESSION_KEYS.zh,SESSION_KEY];
+    let raw:string|null=null;
+    let sourceKey='';
+    for(const key of keys){
+      const candidate=localStorage.getItem(key);
+      if(candidate){raw=candidate;sourceKey=key;break;}
     }
     if(!raw)return null;
+    if(language&&sourceKey===SESSION_KEY){
+      try {
+        const candidate=JSON.parse(raw) as AISpeakingSession;
+        if(candidate?.language===language){
+          localStorage.setItem(SESSION_KEYS[language],raw);
+          localStorage.removeItem(SESSION_KEY);
+        }
+      } catch {}
+    }
     const parsed=JSON.parse(raw) as AISpeakingSession;
     if(!parsed||!parsed.id||!['en','zh'].includes(parsed.language)||!Array.isArray(parsed.turns))return null;
     return parsed;
