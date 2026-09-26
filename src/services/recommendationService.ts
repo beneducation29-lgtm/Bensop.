@@ -30,6 +30,7 @@ export interface NextLearningAction {
   path: string;
   reason: string;
   priority: 'high' | 'medium' | 'normal';
+  durationMinutes: number;
 }
 
 class RecommendationService {
@@ -131,103 +132,112 @@ class RecommendationService {
     ];
   }
 
-  getNextLearningAction(): NextLearningAction {
-    const dueReviews = spacedReviewService.getDue();
-    if (dueReviews.length > 0) {
-      const next = dueReviews[0];
-      const path = next.quizSlug
-        ? `/quiz/${next.quizSlug}`
-        : next.lessonSlug
-          ? `/bai-hoc/${next.lessonSlug}`
-          : '/luyen-tap';
+  private getPreferredLanguage(): LanguageCode {
+    const history = quizSessionStorage.getHistory();
+    return history[0]?.categoryId === 'tieng-trung' ? 'zh' : 'en';
+  }
 
-      return {
+  getNextLearningActions(limit = 3, language: LanguageCode = this.getPreferredLanguage()): NextLearningAction[] {
+    const actions: NextLearningAction[] = [];
+    const add = (action: NextLearningAction) => {
+      if (!actions.some((item) => item.path === action.path && item.type === action.type)) actions.push(action);
+    };
+
+    const dueReviews = spacedReviewService.getDue();
+    dueReviews.slice(0, 2).forEach((next, index) => {
+      const path = next.quizSlug ? `/quiz/${next.quizSlug}` : next.lessonSlug ? `/bai-hoc/${next.lessonSlug}` : '/luyen-tap';
+      add({
         type: 'review',
-        title: 'Ôn tập đúng lúc',
-        description: 'Bạn đang có nội dung đến hạn. Hoàn thành lượt ôn này trước khi mở nội dung mới.',
+        title: index === 0 ? 'Ôn tập đúng lúc' : 'Tiếp tục lượt ôn',
+        description: 'Nội dung này đã đến hạn theo lịch Spaced Review của bạn.',
         cta: 'ÔN NGAY',
         path,
-        reason: `Có ${dueReviews.length} lượt Spaced Review đang đến hạn.`,
+        reason: `${dueReviews.length} lượt ôn đang đến hạn.`,
         priority: 'high',
-      };
-    }
+        durationMinutes: next.reviewType === 'quiz' ? 8 : 10,
+      });
+    });
 
     const mastery = masteryService.getSnapshot();
-    const weakQuestion = mastery.questions
-      .filter((item) => item.mastery < 70)
-      .sort((a, b) => a.mastery - b.mastery)[0];
-
-    if (weakQuestion) {
-      return {
+    const weakQuestions = mastery.questions.filter((item) => item.mastery < 70).sort((a, b) => a.mastery - b.mastery).slice(0, 2);
+    if (weakQuestions.length) {
+      add({
         type: 'weakness',
-        title: 'Củng cố điểm yếu',
-        description: `Câu hỏi “${weakQuestion.label}” đang có mastery ${weakQuestion.mastery}%. Hãy luyện lại để củng cố phản xạ.`,
+        title: 'Củng cố câu hỏi yếu',
+        description: `Bạn có ${weakQuestions.length} câu hỏi dưới ngưỡng mastery 70%. Phiên luyện sẽ tập trung vào các lỗi này.`,
         cta: 'LUYỆN ĐIỂM YẾU',
         path: '/luyen-tap',
-        reason: 'Mastery câu hỏi thấp hơn ngưỡng 70%.',
+        reason: `Câu yếu nhất: “${weakQuestions[0].label}” · mastery ${weakQuestions[0].mastery}%.`,
         priority: 'high',
-      };
+        durationMinutes: 10,
+      });
     }
 
-    const weakTopic = mastery.topics
-      .filter((item) => item.mastery < 80)
-      .sort((a, b) => a.mastery - b.mastery)[0];
-
+    const weakTopic = mastery.topics.filter((item) => item.mastery < 80).sort((a, b) => a.mastery - b.mastery)[0];
     if (weakTopic) {
-      return {
+      add({
         type: 'weakness',
         title: 'Củng cố chủ đề',
-        description: `Chủ đề “${weakTopic.label}” đang ở mức ${weakTopic.mastery}%. Một phiên luyện tập ngắn sẽ giúp củng cố kiến thức.`,
+        description: `Chủ đề “${weakTopic.label}” đang ở mức ${weakTopic.mastery}%. Một phiên luyện ngắn sẽ giúp củng cố kiến thức.`,
         cta: 'MỞ PHÒNG LUYỆN',
         path: '/luyen-tap',
         reason: 'Chủ đề có mastery dưới 80%.',
         priority: 'medium',
-      };
+        durationMinutes: 12,
+      });
     }
 
-    const history = quizSessionStorage.getHistory();
-    const lastCategory = history[0]?.categoryId;
-    const language: LanguageCode = lastCategory === 'tieng-trung' ? 'zh' : 'en';
     const skills = this.getLearningSkillSnapshot(language);
-
-    const nextSkill = skills
-      .slice()
-      .sort((a, b) => {
-        const aCoverage = a.total ? a.activityCount / a.total : 0;
-        const bCoverage = b.total ? b.activityCount / b.total : 0;
-        return (a.score - aCoverage * 15) - (b.score - bCoverage * 15);
-      })[0];
-
-    if (nextSkill && nextSkill.total > 0) {
-      const labels: Record<string, string> = {
-        vocabulary: 'Tăng vốn từ',
-        grammar: 'Củng cố ngữ pháp',
-        listening: 'Luyện nghe',
-        speaking: 'Luyện nói',
-        reading: 'Luyện đọc',
-        writing: 'Luyện viết',
-      };
-
-      return {
-        type: nextSkill.key as LearningActionType,
-        title: labels[nextSkill.key] || 'Tiếp tục học',
-        description: `Bensop đang ưu tiên ${nextSkill.label} vì đây là kỹ năng có dữ liệu luyện tập thấp nhất trong hồ sơ hiện tại.`,
-        cta: 'BẮT ĐẦU NGAY',
-        path: nextSkill.path,
-        reason: `${nextSkill.label}: mastery ${nextSkill.score}% · đã luyện ${nextSkill.activityCount}/${nextSkill.total} nội dung.`,
-        priority: 'normal',
-      };
-    }
-
-    return {
-      type: 'quiz',
-      title: 'Tiếp tục nhịp học',
-      description: 'Duy trì một phiên luyện tập ngắn để Bensop tiếp tục cập nhật hồ sơ học tập của bạn.',
-      cta: 'LUYỆN TẬP TIẾP',
-      path: '/luyen-tap',
-      reason: 'Chưa có tín hiệu ưu tiên rõ ràng từ các phòng học.',
-      priority: 'normal',
+    const labels: Record<string, string> = {
+      vocabulary: 'Tăng vốn từ',
+      grammar: 'Củng cố ngữ pháp',
+      listening: 'Luyện nghe',
+      speaking: 'Luyện nói',
+      reading: 'Luyện đọc',
+      writing: 'Luyện viết',
     };
+    const skillCandidates = skills
+      .filter((skill) => skill.total > 0)
+      .map((skill) => {
+        const coverage = skill.activityCount / skill.total;
+        const scoreSignal = skill.activityCount === 0 ? 50 : skill.score;
+        return { skill, priorityScore: scoreSignal - coverage * 15 };
+      })
+      .sort((a, b) => a.priorityScore - b.priorityScore);
+
+    skillCandidates.forEach(({ skill }) => {
+      if (actions.length >= limit + 2) return;
+      add({
+        type: skill.key as LearningActionType,
+        title: labels[skill.key] || 'Tiếp tục học',
+        description: skill.activityCount === 0
+          ? `Bạn chưa có dữ liệu luyện ${skill.label}. Bắt đầu một phiên ngắn để Bensop có thêm tín hiệu cá nhân hóa.`
+          : `Bensop đang ưu tiên ${skill.label} dựa trên mastery và mức độ bạn đã luyện.`,
+        cta: 'BẮT ĐẦU NGAY',
+        path: skill.path,
+        reason: `${skill.label}: mastery ${skill.score}% · đã luyện ${skill.activityCount}/${skill.total} nội dung.`,
+        priority: skill.activityCount === 0 ? 'medium' : 'normal',
+        durationMinutes: skill.key === 'vocabulary' || skill.key === 'grammar' ? 8 : 10,
+      });
+    });
+
+    if (actions.length < limit) {
+      add({
+        type: 'quiz',
+        title: 'Tiếp tục nhịp học',
+        description: 'Duy trì một phiên luyện tập ngắn để Bensop tiếp tục cập nhật hồ sơ học tập.',
+        cta: 'LUYỆN TẬP TIẾP',
+        path: '/luyen-tap',
+        reason: 'Chưa có tín hiệu ưu tiên rõ ràng từ các phòng học.',
+        priority: 'normal',
+        durationMinutes: 10,
+      });
+    }
+    return actions.slice(0, limit);
+  }
+
+  getNextLearningAction(): NextLearningAction {
+    return this.getNextLearningActions(1)[0];
   }}
 
 export const recommendationService = new RecommendationService();
