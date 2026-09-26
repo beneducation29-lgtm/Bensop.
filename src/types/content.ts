@@ -49,3 +49,13 @@ export interface LessonContentBlueprint {
   sources: ContentSource[];
   aiVideo: AIVideoLesson;
 }
+
+
+export interface SpacedReviewItem {
+  id: string;
+  lessonSlug: string;
+  intervalDays: 1 | 3 | 7;
+  scheduledAt: string;
+  dueAt: string;
+  completedAt?: string;
+}
