@@ -1,5 +1,6 @@
 import { ListeningLesson, ListeningProgress, DictationEvaluation } from '../types/listening';
 import { ALL_LISTENING_LESSONS } from '../data/listening';
+import { learnerActivityService } from './learnerActivityService';
 
 const LISTENING_PROGRESS_KEY = 'bensop_listening_progress';
 
@@ -147,6 +148,7 @@ class ListeningService {
         list.push(progress);
       }
       localStorage.setItem(LISTENING_PROGRESS_KEY, JSON.stringify(list));
+      learnerActivityService.record({skill:'listening',language:progress.language,activityId:progress.listeningLessonId,score:progress.accuracy,evidenceType:'assessment',timestamp:progress.lastAttemptAt,metadata:{completed:progress.completed}});
     } catch (e) {
       console.warn('Failed to save listening progress:', e);
     }
