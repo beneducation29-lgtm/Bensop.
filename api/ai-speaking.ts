@@ -37,7 +37,19 @@ export default async function handler(req:Req,res:Res){
   const topic=cleanText(body.topic,120);
   const scenario=cleanText(body.scenario,220);
   const learnerGoal=cleanText(body.learnerGoal,220);
-  const conversationMemory=body.conversationMemory&&typeof body.conversationMemory==='object'?body.conversationMemory:{};
+  const rawMemory=body.conversationMemory&&typeof body.conversationMemory==='object'?body.conversationMemory:{};
+  const conversationMemory={
+    topicFocus:cleanText(rawMemory.topicFocus,240),
+    scenarioState:cleanText(rawMemory.scenarioState,500),
+    learnerGoal:cleanText(rawMemory.learnerGoal,240),
+    stage:cleanText(rawMemory.stage,80),
+    openThread:cleanText(rawMemory.openThread,300),
+    lastLearnerIntent:cleanText(rawMemory.lastLearnerIntent,240),
+    recentPreferences:Array.isArray(rawMemory.recentPreferences)?rawMemory.recentPreferences.filter((x:any)=>typeof x==='string').slice(-5).map((x:any)=>cleanText(x,180)):[],
+    usedPrompts:Array.isArray(rawMemory.usedPrompts)?rawMemory.usedPrompts.filter((x:any)=>typeof x==='string').slice(-8).map((x:any)=>cleanText(x,180)):[],
+    usefulCorrections:Array.isArray(rawMemory.usefulCorrections)?rawMemory.usefulCorrections.filter((x:any)=>typeof x==='string').slice(-6).map((x:any)=>cleanText(x,220)):[],
+    learnerDetails:Array.isArray(rawMemory.learnerDetails)?rawMemory.learnerDetails.filter((x:any)=>typeof x==='string').slice(-5).map((x:any)=>cleanText(x,180)):[]
+  };
   const transcript=cleanText(body.transcript,2000);
   if(!language||!mode||!level||!transcript){
     res.status(400).json({error:'Missing speaking context'});
