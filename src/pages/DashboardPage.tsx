@@ -11,6 +11,7 @@ import { recommendationService } from '../services/recommendationService';
 import { spacedReviewService } from '../services/spacedReviewService';
 import { LESSONS } from '../data/lessons';
 import { masteryService } from '../services/masteryService';
+import { learnerProfileService } from '../services/learnerProfileService';
 
 interface DashboardPageProps {
   user: UserProgress;
@@ -35,6 +36,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
   const nextLearningActions = recommendationService.getNextLearningActions(3);
   const nextLearningAction = nextLearningActions[0];
   const learningSkillSnapshot = recommendationService.getLearningSkillSnapshot();
+  const learnerProfile = learnerProfileService.getSnapshot();
 
   const handleOpenRecommended = (slug: string, type: 'article' | 'course') => {
     if (type === 'article') {
@@ -250,6 +252,43 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
               </button>
             ))}
           </div>
+        </section>
+
+        {/* LEARNER EVIDENCE TIMELINE */}
+        <section className="mb-12 rounded-3xl border border-[#202020] bg-[#0B0B0B] p-6 sm:p-8">
+          <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <span className="text-[10px] font-mono font-bold tracking-[0.18em] text-[#D9FF3F]">LEARNER EVIDENCE</span>
+              <h3 className="mt-2 text-2xl font-black uppercase text-white">TIẾN BỘ ĐƯỢC GHI NHẬN THEO TỪNG LẦN HỌC.</h3>
+              <p className="mt-2 max-w-2xl text-xs leading-relaxed text-[#777]">
+                Mỗi lần luyện Vocabulary, Grammar, Listening, Speaking hoặc Reading đều tạo evidence để Bensop cập nhật lộ trình cá nhân.
+              </p>
+            </div>
+            <div className="flex gap-2 text-[9px] font-mono">
+              <span className="rounded-lg border border-[#222] bg-[#121212] px-3 py-2 text-[#888]">STREAK EVIDENCE <b className="text-[#D9FF3F]">{learnerProfile.streakDays} NGÀY</b></span>
+              <span className="rounded-lg border border-[#222] bg-[#121212] px-3 py-2 text-[#888]">EVENTS <b className="text-white">{learnerProfile.recentEvidence.length}</b></span>
+            </div>
+          </div>
+          {learnerProfile.recentEvidence.length > 0 ? (
+            <div className="grid gap-2">
+              {learnerProfile.recentEvidence.slice(0, 6).map((event) => (
+                <div key={event.id} className="flex flex-col gap-2 rounded-xl border border-[#1D1D1D] bg-[#101010] p-4 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="flex items-center gap-3">
+                    <span className="min-w-24 rounded-md border border-[#2A2A2A] bg-[#151515] px-2 py-1 text-center text-[9px] font-mono font-bold uppercase text-[#D9FF3F]">{event.skill}</span>
+                    <div>
+                      <div className="text-xs font-bold text-white">{event.activityId}</div>
+                      <div className="text-[9px] font-mono text-[#666]">{new Date(event.timestamp).toLocaleString('vi-VN')}</div>
+                    </div>
+                  </div>
+                  <span className="text-xs font-mono font-bold text-white">{event.score}%</span>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="rounded-xl border border-dashed border-[#2A2A2A] p-6 text-center text-xs text-[#666]">
+              Bắt đầu một phiên luyện tập để tạo evidence đầu tiên cho hồ sơ học tập.
+            </div>
+          )}
         </section>
 
         {/* SPACED REVIEW QUEUE — driven by completed lesson schedules */}
