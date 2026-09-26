@@ -103,6 +103,13 @@ export default async function handler(req:Req,res:Res){
     'pronunciation-coach':'Make the feedback target-specific. Do not claim an audio pronunciation judgment unless actual audio evidence is provided.'
   };
   const feedbackInstruction=feedbackGuidance[mode]||feedbackGuidance['free-conversation'];
+  const adaptationInstruction=performanceSnapshot.trend==='improving'
+    ? 'The learner is improving. Raise challenge slightly and naturally, but do not make a sudden level jump.'
+    : performanceSnapshot.trend==='struggling'
+      ? 'The learner is struggling. Reduce cognitive load, keep one idea at a time, and favor short achievable responses.'
+      : performanceSnapshot.trend==='stable'
+        ? 'The learner is stable. Keep the current level and vary interaction shape without adding unnecessary difficulty.'
+        : 'No reliable performance trend yet. Calibrate difficulty from the current turn and level.';
   const chineseContract=language==='zh'
     ? 'Every AI response MUST contain Simplified Chinese in text, Pinyin with tone marks in pinyin, and a natural Vietnamese translation in vietnameseTranslation. Never put English or another learning language in the Chinese dialogue.'
     : 'Return English only in text. Do not return pinyin. Do not return Chinese characters. Vietnamese translation is optional support only and must not replace the English reply.';
