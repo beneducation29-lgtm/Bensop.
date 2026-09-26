@@ -21,6 +21,10 @@ export function SpeakingLabPage({language,onNavigate}:P){
  const[session,setSession]=useState(()=>aiSpeakingService.getSession(language));
  const[response,setResponse]=useState(''),[loading,setLoading]=useState(false),[listening,setListening]=useState(false),[error,setError]=useState('');
  const modeInfo=track.modes.find(x=>x.id===mode)!;
+ const feedbackTurns=(session?.turns||[]).filter(t=>t.role==='ai'&&t.feedback);
+ const sessionScores=feedbackTurns.map(t=>t.feedback!).map(f=>[f.fluency,f.grammar,f.vocabulary,f.relevance].filter((v):v is number=>typeof v==='number')).filter(a=>a.length).map(a=>Math.round(a.reduce((x,y)=>x+y,0)/a.length));
+ const sessionScore=sessionScores.length?Math.round(sessionScores.reduce((a,b)=>a+b,0)/sessionScores.length):0;
+ const weakMetrics=['fluency','grammar','vocabulary','relevance'].map(key=>({key,label:key==='fluency'?'Fluency':key==='grammar'?'Grammar':key==='vocabulary'?'Vocabulary':'Relevance',score:feedbackTurns.length?Math.round(feedbackTurns.reduce((sum,t)=>sum+(typeof t.feedback?.[key as keyof AISpeakingTurnFeedback]==='number'?(t.feedback?.[key as keyof AISpeakingTurnFeedback] as number):0),0)/feedbackTurns.length):0})).filter(x=>x.score>0).sort((a,b)=>a.score-b.score);
 
  const openRoom=()=>{
    const next=aiSpeakingService.createSession({language,level:levels[0]||'B1',mode,topic:language==='zh'?'日常生活':'Everyday Life'});
@@ -51,6 +55,10 @@ export function SpeakingLabPage({language,onNavigate}:P){
    try{
      const reply=await aiSpeakingService.reply({language,level:session.level,mode:session.mode,topic:session.topic,scenario:session.scenario},transcript,withLearner.turns);
      const aiTurn=aiSpeakingService.addTurn(session.id,{role:'ai',text:reply.text,display:{text:reply.text,pinyin:reply.pinyin,vietnameseTranslation:reply.vietnameseTranslation},feedback:reply.feedback});
+     if(reply.nextPrompt){
+       const promptTurn=aiSpeakingService.addTurn(session.id,{role:'ai',text:reply.nextPrompt,display:{text:reply.nextPrompt,vietnameseTranslation:language==='zh'?'Hãy trả lời câu hỏi này để tiếp tục cuộc hội thoại.':'Answer this question to continue the conversation.'}});
+       if(promptTurn) setSession(promptTurn);
+     }
      if(reply.feedback){
        const f=reply.feedback;
        const scores=[f.fluency,f.grammar,f.vocabulary,f.relevance].filter((v):v is number=>typeof v==='number');
@@ -59,7 +67,7 @@ export function SpeakingLabPage({language,onNavigate}:P){
        learnerActivityService.record({skill:'speaking',language,activityId:`ai-speaking:${session.id}`,score,evidenceType:'assessment',timestamp:new Date().toISOString(),metadata:{mode:session.mode}});
        spacedReviewService.scheduleSkillReview('speaking',session.id,language==='zh'?'中文 AI 口语':'English AI Speaking',language==='zh'?'/tieng-trung/speaking':'/tieng-anh/speaking',score>=80?7:score>=60?3:1,new Date().toISOString(),language);
      }
-     setSession(aiTurn||withLearner);
+     if(!reply.nextPrompt) setSession(aiTurn||withLearner);
    }catch(e){
      setError(e instanceof Error?e.message:'Không thể kết nối AI Speaking lúc này.');
    }finally{setLoading(false);}
@@ -76,6 +84,7 @@ export function SpeakingLabPage({language,onNavigate}:P){
 
   {room&&<section className="mb-12 border border-[#292929] bg-[#0b0b0b] p-5 sm:p-7"><div className="mb-6 flex items-center justify-between gap-4"><div><div className="text-xs font-mono text-[#D9FF3F]">ROOM / {language==='zh'?'中文':'ENGLISH'}</div><h2 className="mt-2 text-2xl font-black">{modeInfo.title}</h2></div><button onClick={()=>setRoom(false)} className="text-xs text-[#777]"><ArrowLeft className="inline h-4 w-4"/> SPEAKING LAB</button></div>
    <div className="mb-6 flex flex-wrap gap-2">{track.modes.map(m=><button key={m.id} onClick={()=>{setMode(m.id);if(session)setSession(aiSpeakingService.createSession({language,level:session.level,mode:m.id,topic:session.topic}))}} className={`border px-3 py-2 text-xs ${mode===m.id?'border-[#D9FF3F] text-[#D9FF3F]':'border-[#292929] text-[#888]'}`}>{m.title}</button>)}</div>
+   {feedbackTurns.length>=2&&<div className="mb-5 border border-[#D9FF3F]/20 bg-[#0d1107] p-5"><div className="text-[10px] font-mono text-[#D9FF3F]">SESSION CHECKPOINT</div><div className="mt-3 flex flex-wrap items-end gap-6"><div><div className="text-[10px] text-[#666]">ĐIỂM PHIÊN</div><div className="text-3xl font-black">{sessionScore}/100</div></div>{weakMetrics.slice(0,3).map(m=><div key={m.key}><div className="text-[10px] text-[#666]">{m.label}</div><div className="text-xl font-bold">{m.score}%</div></div>)}</div><p className="mt-3 text-xs text-[#888]">Điểm yếu hiện tại được lấy từ các lượt AI đã đánh giá trong phiên. Hãy luyện lại kỹ năng thấp nhất thay vì chỉ lặp lại toàn bộ bài.</p><button onClick={()=>onNavigate('/adaptive-session?lang='+language)} className="mt-4 border border-[#D9FF3F] px-4 py-2 text-xs font-black text-[#D9FF3F]">LUYỆN LẠI ĐIỂM YẾU</button></div>}
    <div className="grid gap-5 lg:grid-cols-[1fr_280px]">
     <div className="border border-[#242424] bg-[#111] p-6">
      <div className="mb-4 text-xs text-[#666]">AI COACH · {modeInfo.goal}</div>
