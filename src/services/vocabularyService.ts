@@ -2,6 +2,7 @@ import { VocabularyWord, LanguageCode, VocabularyProgress, MasteryStatus } from 
 import { ENGLISH_VOCABULARY_WORDS } from '../data/vocabulary/english';
 import { CHINESE_VOCABULARY_WORDS } from '../data/vocabulary/chinese';
 import { calculateMasteryStatus, calculateNewMasteryScore } from '../types/learningProgress';
+import { learnerActivityService } from './learnerActivityService';
 
 const STORAGE_KEY_PREFIX = 'bensop_vocab_progress_';
 const STORAGE_KEY_SAVED = 'bensop_vocab_saved';
@@ -132,6 +133,7 @@ class VocabularyService {
     };
     map[wordId] = updated;
     this.saveProgressMap(language, map);
+    learnerActivityService.record({skill:'vocabulary',language,activityId:wordId,score:newScore,evidenceType:'mastery',timestamp:updated.lastReviewedAt||new Date().toISOString(),metadata:{isCorrect,usedHint}});
     return updated;
   }
 
