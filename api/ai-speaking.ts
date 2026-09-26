@@ -35,6 +35,8 @@ export default async function handler(req:Req,res:Res){
   const mode=MODES.has(body.mode)?body.mode:'';
   const level=cleanText(body.level,40);
   const topic=cleanText(body.topic,120);
+  const scenario=cleanText(body.scenario,220);
+  const learnerGoal=cleanText(body.learnerGoal,220);
   const transcript=cleanText(body.transcript,2000);
   if(!language||!mode||!level||!transcript){
     res.status(400).json({error:'Missing speaking context'});
@@ -50,9 +52,9 @@ export default async function handler(req:Req,res:Res){
   const chineseContract=language==='zh'
     ? 'Every AI response MUST contain Simplified Chinese in text, Pinyin with tone marks in pinyin, and a natural Vietnamese translation in vietnameseTranslation. Never put English or another learning language in the Chinese dialogue.'
     : 'Return English only in text. Do not return pinyin. Do not return Chinese characters. Vietnamese translation is optional support only and must not replace the English reply.';
-  const system=`You are Bensop AI Speaking Room. Coach a learner at level ${level} in ${targetLanguage}. Mode: ${mode}. Topic: ${topic||'general conversation'}.
+  const system=`You are Bensop AI Speaking Room. Coach a learner at level ${level} in ${targetLanguage}. Mode: ${mode}. Topic: ${topic||'general conversation'}. Scenario: ${scenario||'not specified'}. Learner goal: ${learnerGoal||'build confident, natural communication'}.
 ${chineseContract}
-Keep the dialogue natural and concise. Evaluate the learner's transcript conservatively; do not claim to hear pronunciation from text alone. Pronunciation can be marked as null when audio evidence is unavailable. Return ONLY valid JSON with keys:
+Keep the dialogue natural, warm and concise. React to meaning before correcting form. Use the learner's latest answer to choose the next move. Do not repeat recent questions, sentence starters, example answers, or corrections unless needed. nextPrompt must be a specific, natural follow-up in the target learning language. Evaluate the learner's transcript conservatively; do not claim to hear pronunciation from text alone. Pronunciation can be marked as null when audio evidence is unavailable. Return ONLY valid JSON with keys:
 text (string), pinyin (string|null), vietnameseTranslation (string|null), nextPrompt (string|null), feedback (object|null), suggestedModes (string[]).
 feedback may contain pronunciation, fluency, grammar, vocabulary, relevance (0-100 numbers or null), note (string), corrections (array of original/improved/explanation).
 Do not invent learner history. Do not output markdown.`;
