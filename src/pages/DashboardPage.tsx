@@ -8,6 +8,8 @@ import { Flame, CheckCircle, Award, Clock, ArrowRight, Play, BookOpen, Bookmark,
 import { quizSessionStorage } from '../services/quizSessionStorage';
 import { learningProgressService } from '../services/learningProgressService';
 import { recommendationService } from '../services/recommendationService';
+import { spacedReviewService } from '../services/spacedReviewService';
+import { LESSONS } from '../data/lessons';
 
 interface DashboardPageProps {
   user: UserProgress;
@@ -27,6 +29,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
   const [activeInterest, setActiveInterest] = useState<'tieng-anh' | 'tieng-trung' | 'phat-trien-ban-than' | 'suc-khoe-doi-song'>('tieng-anh');
 
   const recommendations = getRecommendations(activeInterest);
+  const dueReviews = spacedReviewService.getDue().slice(0, 5);
 
   const handleOpenRecommended = (slug: string, type: 'article' | 'course') => {
     if (type === 'article') {
@@ -172,6 +175,44 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
             </div>
           </div>
         </div>
+
+        {/* SPACED REVIEW QUEUE — driven by completed lesson schedules */}
+        <section className="mb-12 rounded-3xl border border-[#202020] bg-[#0B0B0B] p-6 sm:p-8">
+          <div className="mb-5 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <span className="text-[10px] font-mono font-bold tracking-[0.18em] text-[#D9FF3F]">SPACED REVIEW ENGINE</span>
+              <h3 className="mt-2 text-2xl font-black uppercase text-white">ÔN ĐÚNG LÚC, KHÔNG HỌC LẠI TỪ ĐẦU.</h3>
+              <p className="mt-2 max-w-2xl text-xs leading-relaxed text-[#777]">Mỗi bài đã hoàn thành được Bensop tự lên lịch ôn sau 1, 3 và 7 ngày để chuyển kiến thức từ “đã xem” sang “đã nhớ”.</p>
+            </div>
+            <span className="text-xs font-mono text-[#666]">{dueReviews.length} lượt đang đến hạn</span>
+          </div>
+
+          {dueReviews.length === 0 ? (
+            <div className="rounded-xl border border-[#202020] bg-[#101010] p-5 text-sm text-[#777]">
+              Chưa có lượt ôn đến hạn. Khi bạn hoàn thành bài học mới, lịch ôn sẽ tự động được tạo.
+            </div>
+          ) : (
+            <div className="grid gap-3 md:grid-cols-2">
+              {dueReviews.map((item) => {
+                const lesson = LESSONS.find((entry) => entry.slug === item.lessonSlug);
+                return (
+                  <div key={item.id} className="flex items-center justify-between gap-4 rounded-xl border border-[#252525] bg-[#101010] p-4">
+                    <div className="min-w-0">
+                      <div className="text-[9px] font-mono font-bold text-[#D9FF3F]">ÔN SAU {item.intervalDays} NGÀY · ĐẾN HẠN</div>
+                      <div className="mt-1 truncate text-sm font-bold text-white">{lesson?.title || item.lessonSlug}</div>
+                    </div>
+                    <button
+                      onClick={() => onSelectLesson(item.lessonSlug)}
+                      className="shrink-0 rounded-lg bg-[#D9FF3F] px-3 py-2 text-[10px] font-extrabold text-black"
+                    >
+                      ÔN BÀI →
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </section>
 
         {/* LANGUAGE PROGRESS: Vocabulary + Grammar (Phase 4 Requirement 41) */}
         <div className="p-8 sm:p-10 bg-[#0C0C0C] border border-[#202020] rounded-3xl mb-12 space-y-6">
