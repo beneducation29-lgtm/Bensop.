@@ -32,8 +32,9 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
   const recommendations = getRecommendations(activeInterest);
   const dueReviews = spacedReviewService.getDue().slice(0, 5);
   const masterySnapshot = masteryService.getSnapshot();
-  const nextLearningAction = recommendationService.getNextLearningAction();
-  const learningSkillSnapshot = recommendationService.getLearningSkillSnapshot('en');
+  const nextLearningActions = recommendationService.getNextLearningActions(3);
+  const nextLearningAction = nextLearningActions[0];
+  const learningSkillSnapshot = recommendationService.getLearningSkillSnapshot();
 
   const handleOpenRecommended = (slug: string, type: 'article' | 'course') => {
     if (type === 'article') {
@@ -180,31 +181,43 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
           </div>
         </div>
 
-        {/* NEXT BEST LEARNING ACTION */}
+        {/* NEXT 3 LEARNING ACTIONS */}
         <section className="mb-12 rounded-3xl border border-[#D9FF3F]/20 bg-[#0D0D0D] p-6 sm:p-8">
-          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
-            <div className="min-w-0">
-              <div className="flex items-center gap-2 text-[10px] font-mono font-bold tracking-[0.18em] text-[#D9FF3F]">
-                <Zap className="w-3.5 h-3.5" />
-                NEXT BEST LEARNING ACTION
-              </div>
-              <h2 className="mt-2 text-2xl sm:text-3xl font-black uppercase text-white">
-                {nextLearningAction.title}
-              </h2>
-              <p className="mt-2 max-w-2xl text-xs sm:text-sm leading-relaxed text-[#777]">
-                {nextLearningAction.description}
-              </p>
-              <div className="mt-3 text-[10px] font-mono text-[#555]">
-                VÌ SAO: <span className="text-[#888]">{nextLearningAction.reason}</span>
-              </div>
+          <div className="mb-6">
+            <div className="flex items-center gap-2 text-[10px] font-mono font-bold tracking-[0.18em] text-[#D9FF3F]">
+              <Zap className="w-3.5 h-3.5" />
+              PERSONALIZED LEARNING PATH
             </div>
-            <button
-              onClick={() => onNavigate(nextLearningAction.path)}
-              className="shrink-0 px-6 py-3.5 rounded-xl bg-[#D9FF3F] text-black font-mono text-xs font-extrabold flex items-center justify-center gap-2 hover:bg-[#cbf532] transition-all"
-            >
-              {nextLearningAction.cta}
-              <ArrowRight className="w-4 h-4" />
-            </button>
+            <h2 className="mt-2 text-2xl sm:text-3xl font-black uppercase text-white">3 BƯỚC TIẾP THEO.</h2>
+            <p className="mt-2 max-w-2xl text-xs sm:text-sm leading-relaxed text-[#777]">
+              Bensop xếp thứ tự dựa trên lượt ôn đến hạn, điểm yếu và mức độ luyện của từng kỹ năng.
+            </p>
+          </div>
+          <div className="grid gap-3 md:grid-cols-3">
+            {nextLearningActions.map((action, index) => (
+              <button
+                key={`${action.type}-${action.path}`}
+                onClick={() => onNavigate(action.path)}
+                className={`rounded-2xl border p-5 text-left transition-all hover:-translate-y-0.5 ${
+                  index === 0 ? 'border-[#D9FF3F]/50 bg-[#121212]' : 'border-[#222] bg-[#101010] hover:border-[#383838]'
+                }`}
+              >
+                <div className="flex items-center justify-between gap-3">
+                  <span className="text-[9px] font-mono font-bold tracking-widest text-[#D9FF3F]">BƯỚC {index + 1} · {action.priority.toUpperCase()}</span>
+                  <span className="text-[9px] font-mono text-[#666]">{action.durationMinutes} PHÚT</span>
+                </div>
+                <h3 className="mt-3 text-base font-black uppercase text-white">{action.title}</h3>
+                <p className="mt-2 min-h-[48px] text-xs leading-relaxed text-[#777]">{action.description}</p>
+                <div className="mt-4 border-t border-[#1E1E1E] pt-3">
+                  <div className="text-[9px] font-mono text-[#555]">VÌ SAO</div>
+                  <div className="mt-1 text-[10px] leading-relaxed text-[#888]">{action.reason}</div>
+                </div>
+                <div className="mt-4 flex items-center justify-between text-[10px] font-mono font-bold text-white">
+                  <span>{action.cta}</span>
+                  <ArrowRight className="w-3.5 h-3.5 text-[#D9FF3F]" />
+                </div>
+              </button>
+            ))}
           </div>
         </section>
 
