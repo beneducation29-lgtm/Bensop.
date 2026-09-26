@@ -72,6 +72,15 @@ export interface AISpeakingConversationMemory {
   conversationMove?: 'follow-thread'|'clarify'|'deepen'|'challenge'|'offer-choice'|'transition';
 }
 
+export interface AISpeakingPerformanceSnapshot {
+  fluency?: number;
+  grammar?: number;
+  vocabulary?: number;
+  relevance?: number;
+  average?: number;
+  trend?: 'improving'|'stable'|'struggling';
+}
+
 export interface AISpeakingRoomContext {
   language: LanguageCode;
   level: string;
@@ -79,6 +88,7 @@ export interface AISpeakingRoomContext {
   topic?: string;
   scenario?: string;
   learnerGoal?: string;
+  performanceSnapshot?: AISpeakingPerformanceSnapshot;
 }
 
 export interface AISpeakingReply {
