@@ -54,6 +54,7 @@ import { COURSES } from './data/courses';
 import { LESSONS } from './data/lessons';
 import { Article, Course, SavedItem, UserProgress } from './types';
 import { ArrowRight, BookOpen } from 'lucide-react';
+import { spacedReviewService } from './services/spacedReviewService';
 
 export default function App() {
   const [currentPath, setCurrentPath] = useState<string>(() => {
@@ -199,6 +200,9 @@ export default function App() {
             category: lesson.categoryName,
           }
         : null;
+
+      if (isDone) spacedReviewService.clearLesson(lessonSlug);
+      else spacedReviewService.scheduleLesson(lessonSlug);
 
       return {
         ...prev,
