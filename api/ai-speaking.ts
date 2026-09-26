@@ -18,7 +18,7 @@ const looksLikeBadReply=(text:string,history:Array<{role:string;text:string}>,la
   if(questionCount(text)>1) return 'too-many-questions';
   if(text.length>750) return 'too-long';
   if(language==='en' && /[\u4e00-\u9fff]/u.test(text)) return 'wrong-language';
-  if(language==='zh' && !/[\\u4e00-\\u9fff]/u.test(text)) return 'wrong-language';
+  if(language==='zh' && !/[\u4e00-\u9fff]/u.test(text)) return 'wrong-language';
   return '';
 };
 
