@@ -1,13 +1,14 @@
 import { LESSON_CONTENT_BLUEPRINTS } from '../data/contentBlueprints';
 import { aiVideoService } from './aiVideoService';
 import { CONTENT_EXPANSION } from '../data/contentExpansion';
+import { ContentEcosystemLink } from '../types/content';
 
 const ALL_BLUEPRINTS = [...LESSON_CONTENT_BLUEPRINTS, ...CONTENT_EXPANSION];
 const getBlueprint = (lessonSlug: string) => ALL_BLUEPRINTS.find((item) => item.lessonSlug === lessonSlug);
 
 const languageRoute = (category: string) => category === 'tieng-trung' ? 'tieng-trung' : 'tieng-anh';
 
-const getEcosystemLinks = (lessonSlug: string) => {
+const getEcosystemLinks = (lessonSlug: string): ContentEcosystemLink[] => {
   const blueprint = getBlueprint(lessonSlug);
   if (!blueprint) return [];
 
@@ -29,11 +30,8 @@ const getEcosystemLinks = (lessonSlug: string) => {
     else if (lower.includes('progress') || lower.includes('dashboard') || lower.includes('daily learning')) links.set('progress', { label: 'Dashboard học tập', path: '/dashboard', kind: 'progress' });
   });
 
-  links.set('course', { label: 'Tiếp tục khóa học', path: `/khoa-hoc/${(LESSON_COURSE_SLUGS[lessonSlug] || '')}`, kind: 'course' });
-  return Array.from(links.values()).filter((link) => link.path !== '/khoa-hoc/');
+  return Array.from(links.values());
 };
-
-const LESSON_COURSE_SLUGS: Record<string, string> = {};
 
 export const contentService = {
   getBlueprint,
