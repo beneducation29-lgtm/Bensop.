@@ -45,6 +45,7 @@ import { ReadingPracticePage } from './pages/ReadingPracticePage';
 import { WritingLabPage } from './pages/WritingLabPage';
 import { WritingPracticePage } from './pages/WritingPracticePage';
 import { AITutorPage } from './pages/AITutorPage';
+import { ContentLibraryPage } from './pages/ContentLibraryPage';
 
 
 import { INITIAL_USER } from './data/users';
@@ -119,6 +120,8 @@ export default function App() {
       document.title = les ? `${les.title} — BENSOP` : 'Bài học — BENSOP';
     } else if (currentPath === '/saved') {
       document.title = 'Nội dung đã lưu — BENSOP';
+    } else if (currentPath === '/content-lab') {
+      document.title = 'BENSOP Content Engine — Thư viện học liệu';
     } else if (currentPath === '/dashboard') {
       document.title = `Bảng học tập của ${user.name} — BENSOP`;
     } else if (currentPath === '/luyen-tap') {
@@ -367,6 +370,11 @@ export default function App() {
           onTakeQuiz={(quizSlug) => navigateTo(`/quiz/${quizSlug}`)}
         />
       );
+    }
+
+    // 2.9 Content Engine / AI lesson library
+    if (currentPath === '/content-lab') {
+      return <ContentLibraryPage onNavigate={navigateTo} />;
     }
 
     // 3. Topic Page (/:category/:topic)
