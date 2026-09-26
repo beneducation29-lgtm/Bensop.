@@ -143,7 +143,10 @@ class RecommendationService {
       .map((skill) => {
         const coverage = skill.activityCount / skill.total;
         const scoreSignal = skill.activityCount === 0 ? 50 : skill.score;
-        return { skill, priorityScore: scoreSignal - coverage * 15 };
+        const momentumSignal = skill.activityCount < 2 ? 0 : skill.momentum;
+        const recencySignal = skill.evidenceCount === 0 ? 0 : Math.min(10, skill.evidenceCount / 3);
+        const priorityScore = scoreSignal - coverage * 15 - momentumSignal * 0.8 - recencySignal * 0.5;
+        return { skill, priorityScore };
       })
       .sort((a, b) => a.priorityScore - b.priorityScore);
 
@@ -154,10 +157,10 @@ class RecommendationService {
         title: labels[skill.key] || 'Tiếp tục học',
         description: skill.activityCount === 0
           ? `Bạn chưa có dữ liệu luyện ${skill.label}. Bắt đầu một phiên ngắn để Bensop có thêm tín hiệu cá nhân hóa.`
-          : `Bensop đang ưu tiên ${skill.label} dựa trên mastery và mức độ bạn đã luyện.`,
+          : `Bensop đang ưu tiên ${skill.label} dựa trên mastery, lịch sử evidence và xu hướng gần đây.`,
         cta: 'BẮT ĐẦU NGAY',
         path: skill.path,
-        reason: `${skill.label}: mastery ${skill.score}% · đã luyện ${skill.activityCount}/${skill.total} nội dung.`,
+        reason: `${skill.label}: mastery ${skill.score}% · xu hướng ${skill.trend === 'up' ? 'đang tăng' : skill.trend === 'down' ? 'đang giảm' : 'ổn định'}${skill.momentum ? ` · momentum ${skill.momentum > 0 ? '+' : ''}${skill.momentum}` : ''} · đã luyện ${skill.activityCount}/${skill.total} nội dung.`,
         priority: skill.activityCount === 0 ? 'medium' : 'normal',
         durationMinutes: skill.key === 'vocabulary' || skill.key === 'grammar' ? 8 : 10,
       });
