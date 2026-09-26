@@ -19,7 +19,7 @@ export function SpeakingLabPage({language,onNavigate}:P){
  const track=AI_SPEAKING_TRACKS.find(x=>x.language===language)!;
  const[mode,setMode]=useState<AISpeakingMode>('role-play');
  const[session,setSession]=useState(()=>aiSpeakingService.getSession(language));
- const[response,setResponse]=useState(''),[loading,setLoading]=useState(false),[listening,setListening]=useState(false),[error,setError]=useState('');
+ const[response,setResponse]=useState(''),[loading,setLoading]=useState(false),[listening,setListening]=useState(false),[error,setError]=useState(''),[nextPrompt,setNextPrompt]=useState('');
  const modeInfo=track.modes.find(x=>x.id===mode)!;
  const feedbackTurns=(session?.turns||[]).filter(t=>t.role==='ai'&&t.feedback);
  const sessionScores=feedbackTurns.map(t=>t.feedback!).map(f=>[f.fluency,f.grammar,f.vocabulary,f.relevance].filter((v):v is number=>typeof v==='number')).filter(a=>a.length).map(a=>Math.round(a.reduce((x,y)=>x+y,0)/a.length));
@@ -28,7 +28,7 @@ export function SpeakingLabPage({language,onNavigate}:P){
 
  const openRoom=()=>{
    const next=aiSpeakingService.createSession({language,level:levels[0]||'B1',mode,topic:language==='zh'?'日常生活':'Everyday Life'});
-   setSession(next);setError('');setRoom(true);
+   setSession(next);setNextPrompt('');setError('');setRoom(true);
  };
  const speakPrompt=(text:string)=>{void mediaService.speak(text,language);};
  const addSample=()=>{
@@ -55,10 +55,7 @@ export function SpeakingLabPage({language,onNavigate}:P){
    try{
      const reply=await aiSpeakingService.reply({language,level:session.level,mode:session.mode,topic:session.topic,scenario:session.scenario},transcript,withLearner.turns);
      const aiTurn=aiSpeakingService.addTurn(session.id,{role:'ai',text:reply.text,display:{text:reply.text,pinyin:reply.pinyin,vietnameseTranslation:reply.vietnameseTranslation},feedback:reply.feedback});
-     if(reply.nextPrompt){
-       const promptTurn=aiSpeakingService.addTurn(session.id,{role:'ai',text:reply.nextPrompt,display:{text:reply.nextPrompt,vietnameseTranslation:language==='zh'?'Hãy trả lời câu hỏi này để tiếp tục cuộc hội thoại.':'Answer this question to continue the conversation.'}});
-       if(promptTurn) setSession(promptTurn);
-     }
+     setNextPrompt(reply.nextPrompt||'');
      if(reply.feedback){
        const f=reply.feedback;
        const scores=[f.fluency,f.grammar,f.vocabulary,f.relevance].filter((v):v is number=>typeof v==='number');
@@ -67,7 +64,7 @@ export function SpeakingLabPage({language,onNavigate}:P){
        learnerActivityService.record({skill:'speaking',language,activityId:`ai-speaking:${session.id}`,score,evidenceType:'assessment',timestamp:new Date().toISOString(),metadata:{mode:session.mode}});
        spacedReviewService.scheduleSkillReview('speaking',session.id,language==='zh'?'中文 AI 口语':'English AI Speaking',language==='zh'?'/tieng-trung/speaking':'/tieng-anh/speaking',score>=80?7:score>=60?3:1,new Date().toISOString(),language);
      }
-     if(!reply.nextPrompt) setSession(aiTurn||withLearner);
+     setSession(aiTurn||withLearner);
    }catch(e){
      setError(e instanceof Error?e.message:'Không thể kết nối AI Speaking lúc này.');
    }finally{setLoading(false);}
@@ -88,6 +85,7 @@ export function SpeakingLabPage({language,onNavigate}:P){
    <div className="grid gap-5 lg:grid-cols-[1fr_280px]">
     <div className="border border-[#242424] bg-[#111] p-6">
      <div className="mb-4 text-xs text-[#666]">AI COACH · {modeInfo.goal}</div>
+     {nextPrompt&&<div className="mb-5 border border-[#292929] bg-[#090909] p-4"><div className="text-[9px] font-mono text-[#D9FF3F]">CÂU TIẾP THEO</div><div className="mt-2 text-base font-semibold">{nextPrompt}</div></div>}
      {session?.turns.length?<div className="mb-6 max-h-[520px] space-y-4 overflow-y-auto">{session.turns.map(turn=><div key={turn.id} className={turn.role==='ai'?'border-l-2 border-[#D9FF3F] pl-4':'border-l-2 border-[#333] pl-4'}><div className="mb-1 text-[9px] font-mono text-[#666]">{turn.role==='ai'?'AI':'YOU'}</div><div className="text-lg font-semibold">{turn.display?.text||turn.text}</div>{language==='zh'&&turn.role==='ai'&&turn.display?.pinyin&&<div className="mt-1 text-sm text-[#D9FF3F]">{turn.display.pinyin}</div>}{turn.role==='ai'&&turn.display?.vietnameseTranslation&&<div className="mt-1 text-sm text-[#999]">{turn.display.vietnameseTranslation}</div>}{feedback(turn.feedback)}</div>)}</div>:<div className="border-l-2 border-[#D9FF3F] pl-5"><div className="text-2xl font-bold">{language==='zh'?'你好！今天过得怎么样？':'Hello! How are you doing today?'}</div>{language==='zh'&&<div className="mt-2 text-base text-[#D9FF3F]">Nǐ hǎo! Jīntiān guò de zěnmeyàng?</div>}<div className="mt-2 text-sm text-[#999]">Xin chào! Hôm nay bạn thế nào?</div></div>}
      <div className="flex flex-wrap gap-3"><button onClick={()=>speakPrompt(language==='zh'?'你好！今天过得怎么样？':'Hello! How are you doing today?')} className="flex items-center gap-2 border border-[#333] px-4 py-3 text-xs font-bold"><Volume2 className="h-4 w-4"/>NGHE MẪU</button><button onClick={addSample} className="flex items-center gap-2 border border-[#333] px-4 py-3 text-xs font-bold"><MessageCircle className="h-4 w-4"/>LƯU CÂU MẪU</button></div>
      <div className="mt-7"><textarea value={response} onChange={e=>setResponse(e.target.value)} onKeyDown={e=>{if((e.ctrlKey||e.metaKey)&&e.key==='Enter')void sendResponse()}} placeholder={language==='zh'?'请输入你的回答…':'Type your response…'} className="min-h-28 w-full resize-none border border-[#292929] bg-[#090909] p-4 text-sm outline-none focus:border-[#D9FF3F]"/><div className="mt-3 flex flex-wrap items-center gap-3"><button onClick={()=>void listenForResponse()} disabled={loading} className="flex items-center gap-2 border border-[#333] px-4 py-3 text-xs font-bold disabled:opacity-30"><Mic className="h-4 w-4"/>{listening?'ĐANG NGHE…':'NÓI BẰNG MICRO'}</button><button onClick={()=>void sendResponse()} disabled={!response.trim()||loading} className="flex items-center gap-2 bg-[#D9FF3F] px-5 py-3 text-xs font-black text-black disabled:opacity-30">{loading?<Loader2 className="h-4 w-4 animate-spin"/>:<Send className="h-4 w-4"/>}{loading?'AI ĐANG PHẢN HỒI…':'GỬI CÂU TRẢ LỜI'}</button><span className="text-[10px] text-[#555]">Ctrl/⌘ + Enter để gửi</span></div>{error&&<div className="mt-3 border border-red-900/60 bg-red-950/20 p-3 text-xs text-red-300">{error}</div>}</div>
