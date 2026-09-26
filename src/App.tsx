@@ -62,8 +62,23 @@ export default function App() {
 
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(true);
-  const [user, setUser] = useState<UserProgress>(INITIAL_USER);
+  const [user, setUser] = useState<UserProgress>(() => {
+    try {
+      const saved = localStorage.getItem('bensop_user_progress');
+      return saved ? (JSON.parse(saved) as UserProgress) : INITIAL_USER;
+    } catch {
+      return INITIAL_USER;
+    }
+  });
   const [activeQuizId, setActiveQuizId] = useState<string | null>(null);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('bensop_user_progress', JSON.stringify(user));
+    } catch {
+      // Keep the learning experience usable even when storage is unavailable.
+    }
+  }, [user]);
 
   // Sync with browser history
   useEffect(() => {
@@ -172,10 +187,26 @@ export default function App() {
       const updated = isDone
         ? prev.completedLessons.filter((s) => s !== lessonSlug)
         : [...prev.completedLessons, lessonSlug];
+
+      const lesson = LESSONS.find((item) => item.slug === lessonSlug);
+      const activity = lesson
+        ? {
+            id: `activity-${lessonSlug}-${Date.now()}`,
+            title: isDone ? `Bỏ hoàn thành: ${lesson.title}` : `Hoàn thành bài học: ${lesson.title}`,
+            type: 'lesson' as const,
+            slug: lessonSlug,
+            timestamp: new Date().toISOString(),
+            category: lesson.categoryName,
+          }
+        : null;
+
       return {
         ...prev,
         completedLessons: updated,
-        lessonsCompleted: isDone ? prev.lessonsCompleted - 1 : prev.lessonsCompleted + 1,
+        lessonsCompleted: isDone ? Math.max(0, prev.lessonsCompleted - 1) : prev.lessonsCompleted + 1,
+        recentActivity: activity
+          ? [activity, ...prev.recentActivity.filter((item) => item.slug !== lessonSlug)].slice(0, 12)
+          : prev.recentActivity,
       };
     });
   };
