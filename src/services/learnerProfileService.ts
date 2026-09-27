@@ -75,7 +75,6 @@ export const learnerProfileService = {
     ];
 
     const quizSkills=languageMastery.skills.filter(x=>x.categoryId===(language==='zh'?'tieng-trung':'tieng-anh'));
-    const quizSkills=languageMastery.skills.filter(x=>x.categoryId===(language==='zh'?'tieng-trung':'tieng-anh'));
     const quizOverall=quizSkills.length?average(quizSkills.map(x=>x.mastery)):0;
     const active=skills.filter(x=>x.activityCount>0);
     const overall=active.length?Math.round((average(active.map(x=>x.score))+quizOverall)/2):quizOverall;
