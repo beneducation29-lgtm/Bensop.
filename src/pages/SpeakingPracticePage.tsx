@@ -1,5 +1,5 @@
 import React,{useEffect,useMemo,useState}from'react';
-import{ArrowLeft,Mic,Volume2,Loader2,Send,Sparkles,MessageCircle,Languages,RotateCcw}from'lucide-react';
+import{ArrowLeft,Mic,Volume2,Loader2,Sparkles,MessageCircle,Languages,RotateCcw}from'lucide-react';
 import{speakingService}from'../services/speakingService';
 import{mediaService}from'../services/mediaService';
 import{aiSpeakingService}from'../services/aiSpeakingService';
@@ -16,7 +16,7 @@ const zhOpening={text:'你好！我们一起练习吧。请先告诉我，你今
 export function SpeakingPracticePage({language,slug,onNavigate}:P){
  const activity=useMemo(()=>speakingService.getActivityBySlug(slug,language),[slug,language]);
  const[session,setSession]=useState(()=>{const existing=aiSpeakingService.getSession(language);return existing?.topic===activity?.title?existing:null;});
- const[response,setResponse]=useState(''),[loading,setLoading]=useState(false),[listening,setListening]=useState(false),[error,setError]=useState('');
+ const[response,setResponse]=useState(''),[lastTranscript,setLastTranscript]=useState(''),[loading,setLoading]=useState(false),[listening,setListening]=useState(false),[error,setError]=useState('');
  const[mode,setMode]=useState<AISpeakingMode>('role-play');
 
  useEffect(()=>{mediaService.stop();return()=>mediaService.stop()},[]);
@@ -25,12 +25,13 @@ export function SpeakingPracticePage({language,slug,onNavigate}:P){
  const startRoom=()=>{
    const next=aiSpeakingService.createSession({language,level:activity.level,mode,topic:activity.title,scenario:activity.prompt});
    const seeded=aiSpeakingService.addTurn(next.id,{role:'ai',text:language==='zh'?zhOpening.text:'Hello! Let’s practise this situation together. Tell me one thing you would do first.',display:language==='zh'?{text:zhOpening.text,pinyin:zhOpening.pinyin,vietnameseTranslation:zhOpening.vi}:{text:'Hello! Let’s practise this situation together. Tell me one thing you would do first.',vietnameseTranslation:'Xin chào! Hãy cùng luyện tình huống này nhé. Hãy nói cho mình một việc bạn sẽ làm đầu tiên.'}});
-   setSession(seeded||next);setResponse('');setError('');
+   setSession(seeded||next);setResponse('');setLastTranscript('');setError('');
  };
 
- const send=async()=>{
-   if(!session||!response.trim()||loading)return;
-   const transcript=response.trim();
+ const submitTranscript=async(transcriptInput?:string)=>{
+   const transcript=(transcriptInput??response).trim();
+   if(!session||!transcript||loading)return;
+   setLastTranscript(transcript);
    const learner=aiSpeakingService.addTurn(session.id,{role:'learner',text:transcript});
    if(!learner)return;
    setSession(learner);setResponse('');setLoading(true);setError('');
@@ -54,7 +55,7 @@ export function SpeakingPracticePage({language,slug,onNavigate}:P){
  const listen=async()=>{
    if(listening){browserSpeechRecognitionService.stop();setListening(false);return}
    setListening(true);setError('');
-   try{const r=await browserSpeechRecognitionService.listen(language);setResponse(r.transcription)}
+   try{const r=await browserSpeechRecognitionService.listen(language);setResponse(r.transcription);await submitTranscript(r.transcription)}
    catch(e){setError(e instanceof Error?e.message:'Không thể nhận diện giọng nói.')}
    finally{setListening(false)}
  };
@@ -78,7 +79,7 @@ export function SpeakingPracticePage({language,slug,onNavigate}:P){
    <div className="grid gap-0 lg:grid-cols-[1fr_280px]">
     <div className="p-5 sm:p-7">
      <div className="max-h-[560px] space-y-5 overflow-y-auto pr-1">{session.turns.map(t=><div key={t.id} className={t.role==='ai'?'border-l-2 border-[#D9FF3F] pl-4':'border-l-2 border-[#333] pl-4'}><div className="mb-1 text-[9px] font-mono text-[#666]">{t.role==='ai'?'AI COACH':'BẠN'}</div><div className="text-lg font-semibold leading-8">{t.text}</div>{t.role==='ai'&&language==='zh'&&t.display?.pinyin&&<div className="mt-1 text-sm leading-6 text-[#D9FF3F]">{t.display.pinyin}</div>}{t.role==='ai'&&t.display?.vietnameseTranslation&&<div className="mt-1 text-sm leading-6 text-[#999]">{t.display.vietnameseTranslation}</div>}{t.role==='ai'&&<button onClick={()=>void mediaService.speak(t.text,language)} className="mt-2 text-[10px] text-[#777]"><Volume2 className="mr-1 inline h-3 w-3"/>NGHE AI</button>}{feedback(t.feedback)}</div>)}</div>
-     <div className="mt-6 border-t border-[#242424] pt-5"><textarea value={response} onChange={e=>setResponse(e.target.value)} onKeyDown={e=>{if((e.ctrlKey||e.metaKey)&&e.key==='Enter')void send()}} placeholder={language==='zh'?'Nói câu trả lời bằng tiếng Trung…':'Speak or type your answer…'} className="min-h-24 w-full resize-none border border-[#292929] bg-[#080808] p-4 text-sm outline-none focus:border-[#D9FF3F]"/><div className="mt-3 flex flex-wrap gap-3"><button onClick={()=>void listen()} disabled={loading} className="flex items-center gap-2 border border-[#333] px-4 py-3 text-xs font-black"><Mic className="h-4 w-4"/>{listening?'ĐANG NGHE…':'NÓI VỚI AI'}</button><button onClick={()=>void send()} disabled={!response.trim()||loading} className="flex items-center gap-2 bg-[#D9FF3F] px-5 py-3 text-xs font-black text-black disabled:opacity-30">{loading?<Loader2 className="h-4 w-4 animate-spin"/>:<Send className="h-4 w-4"/>}{loading?'AI ĐANG SUY NGHĨ…':'GỬI CHO AI'}</button></div>{error&&<div className="mt-3 border border-red-900/60 bg-red-950/20 p-3 text-xs text-red-300">{error}</div>}</div>
+  undefined
     </div>
     <aside className="border-t border-[#242424] bg-[#0f0f0f] p-5 lg:border-l lg:border-t-0"><div className="text-xs font-mono text-[#D9FF3F]">LANGUAGE CONTRACT</div>{language==='zh'?<><div className="mt-4 space-y-3 text-xs text-[#aaa]"><div><span className="text-[#D9FF3F]">中文</span><br/>AI trả lời bằng tiếng Trung giản thể.</div><div><span className="text-[#D9FF3F]">Pinyin</span><br/>Luôn hiển thị dưới câu AI để học viên đọc được.</div><div><span className="text-[#D9FF3F]">Tiếng Việt</span><br/>Luôn có bản dịch ngắn, tự nhiên.</div></div></>:<div className="mt-4 space-y-3 text-xs text-[#aaa]"><div><span className="text-[#D9FF3F]">English</span><br/>AI giữ hội thoại bằng English.</div><div><span className="text-[#D9FF3F]">Vietnamese</span><br/>Chỉ dùng để hỗ trợ hiểu nhanh.</div></div>}<div className="mt-6 border-t border-[#222] pt-4 text-[10px] leading-5 text-[#666]">Mục tiêu của AI Lab: không chỉ chấm điểm. AI phải nhớ điều bạn vừa nói, hỏi tiếp hợp lý và thay đổi cách phản hồi theo cuộc hội thoại.</div></aside>
    </div>
