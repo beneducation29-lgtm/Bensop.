@@ -104,14 +104,6 @@ export default function App(){
   if(route.startsWith('/quiz-result/')){const id=route.replace('/quiz-result/','');return <QuizResultPage sessionId={id} onNavigate={navigateTo} onRetakeQuiz={s=>navigateTo(`/quiz/${s}`)} onPracticeWrongQuestions={ids=>{const s=quizService.createReviewQuiz(ids,'Quiz gần nhất');navigateTo(`/quiz/${s}`)}}/>;}
   if(route.startsWith('/quiz-mastery/'))return <QuizMasteryPage sessionId={route.replace('/quiz-mastery/','')} onNavigate={navigateTo}/>;
   if(route==='/ngan-hang-cau-hoi')return <QuestionBankPage onNavigate={navigateTo} onPracticeQuiz={s=>navigateTo(`/quiz/${s}`)}/>;
-  if(route==='/tieng-anh/listening'||route==='/tieng-trung/listening'){const language=route.startsWith('/tieng-anh')?'en':'zh';return <ListeningLabPage language={language} onNavigate={navigateTo}/>;}
-  const lm=route.match(/^\/(tieng-anh|tieng-trung)\/listening\/([a-zA-Z0-9_-]+)$/);if(lm)return <ListeningLessonPage language={lm[1]==='tieng-anh'?'en':'zh'} slug={lm[2]} onNavigate={navigateTo}/>;
-  if(route==='/tieng-anh/speaking'||route==='/tieng-trung/speaking'){const language=route.startsWith('/tieng-anh')?'en':'zh';return <SpeakingLabPage language={language} onNavigate={navigateTo}/>;}
-  const sm=route.match(/^\/(tieng-anh|tieng-trung)\/speaking\/([a-zA-Z0-9_-]+)$/);if(sm)return <SpeakingPracticePage language={sm[1]==='tieng-anh'?'en':'zh'} slug={sm[2]} onNavigate={navigateTo}/>;
-  if(route==='/tieng-anh/reading'||route==='/tieng-trung/reading'){const language=route.startsWith('/tieng-anh')?'en':'zh';return <ReadingLabPage language={language} onNavigate={navigateTo}/>;}
-  const rm=route.match(/^\/(tieng-anh|tieng-trung)\/reading\/([a-zA-Z0-9_-]+)$/);if(rm)return <ReadingPracticePage language={rm[1]==='tieng-anh'?'en':'zh'} slug={rm[2]} onNavigate={navigateTo}/>;
-  if(route==='/tieng-anh/writing'||route==='/tieng-trung/writing'){const language=route.startsWith('/tieng-anh')?'en':'zh';return <WritingLabPage language={language} onNavigate={navigateTo}/>;}
-  const wm=route.match(/^\/(tieng-anh|tieng-trung)\/writing\/([a-zA-Z0-9_-]+)$/);if(wm)return <WritingPracticePage language={wm[1]==='tieng-anh'?'en':'zh'} slug={wm[2]} onNavigate={navigateTo}/>;
   if(route==='/ai-tutor')return <AITutorPage onNavigate={navigateTo}/>;
   return <NotFoundPage onNavigateHome={()=>navigateTo('/')}/>;
  };
