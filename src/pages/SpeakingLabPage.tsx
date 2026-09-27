@@ -84,6 +84,19 @@ export function SpeakingLabPage({language,onNavigate}:P){
      setError(e instanceof Error?e.message:'Không thể kết nối AI Speaking lúc này.');
    }finally{setLoading(false);}
  };
+ const listenForResponse=async()=>{
+   if(listening){browserSpeechRecognitionService.stop();setListening(false);return;}
+   setError('');setListening(true);
+   try{
+     const result=await browserSpeechRecognitionService.listen(language);
+     setResponse(result.transcription);
+     await sendResponse(result.transcription);
+   }catch(e){
+     setError(e instanceof Error?e.message:'Không thể nhận diện giọng nói.');
+   }finally{
+     setListening(false);
+   }
+ };
  const feedback=(f?:AISpeakingTurnFeedback)=>{
    if(!f)return null;
    return <div className="mt-4 border-t border-[#242424] pt-4"><div className="mb-3 text-[10px] font-mono text-[#D9FF3F]">AI FEEDBACK</div><div className="grid grid-cols-2 gap-2 sm:grid-cols-5">{[['Phát âm',f.pronunciation],['Fluency',f.fluency],['Grammar',f.grammar],['Vocabulary',f.vocabulary],['Relevance',f.relevance]].map(([label,value])=><div key={String(label)} className="bg-[#0b0b0b] p-2"><div className="text-[9px] text-[#666]">{label}</div><div className="mt-1 font-bold">{typeof value==='number'?value+'%':'—'}</div></div>)}</div>{f.note&&<p className="mt-3 text-xs leading-5 text-[#aaa]">{f.note}</p>}{f.corrections?.length?<div className="mt-3 space-y-2">{f.corrections.map((c,i)=><div key={i} className="text-xs"><span className="text-[#777]">{c.original}</span><span className="mx-2 text-[#D9FF3F]">→</span><span>{c.improved}</span><div className="mt-1 text-[#666]">{c.explanation}</div></div>)}</div>:null}</div>;
