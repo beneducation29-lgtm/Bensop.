@@ -75,7 +75,7 @@ export const aiSpeakingService = {
     writeSession(next);return next;
   },
   updateMemory(sessionId:string,memory:AISpeakingConversationMemory){
-    const session=readSession();if(!session||session.id!==sessionId)return null;
+    const session=readSessionById(sessionId);if(!session)return null;
     const safeArray=(value:unknown,max:number,itemMax:number)=>{
       if(!Array.isArray(value))return [];
       return value.filter(x=>typeof x==='string').slice(-max).map(x=>x.trim().slice(0,itemMax)).filter(Boolean);
@@ -95,7 +95,7 @@ export const aiSpeakingService = {
     }};
     writeSession(next);return next;
   },
-  completeSession(sessionId:string){const session=readSession();if(!session||session.id!==sessionId)return null;const next={...session,status:'completed' as const};writeSession(next);return next;},
+  completeSession(sessionId:string){const session=readSessionById(sessionId);if(!session)return null;const next={...session,status:'completed' as const};writeSession(next);return next;},
   async reply(context:AISpeakingRoomContext,transcript:string,history:AISpeakingSession['turns']):Promise<AISpeakingReply>{
     const controller=new AbortController();
     const timeout=window.setTimeout(()=>controller.abort(),18000);
