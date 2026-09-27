@@ -1,5 +1,5 @@
 import React,{useMemo,useState}from'react';
-import{Mic,Search,ChevronRight,Sparkles,Volume2,Languages,MessageCircle,ArrowLeft,Loader2,Send}from'lucide-react';
+import{Mic,Search,ChevronRight,Sparkles,Volume2,Languages,MessageCircle,ArrowLeft,Loader2}from'lucide-react';
 import{speakingService}from'../services/speakingService';
 import{mediaService}from'../services/mediaService';
 import{aiSpeakingService}from'../services/aiSpeakingService';
@@ -59,18 +59,10 @@ export function SpeakingLabPage({language,onNavigate}:P){
    const next=aiSpeakingService.addTurn(session.id,{role:'ai',text,display:language==='zh'?{text,pinyin:'Nǐ hǎo! Jīntiān guò de zěnmeyàng?',vietnameseTranslation:'Xin chào! Hôm nay bạn thế nào?'}:{text,vietnameseTranslation:'Xin chào! Hôm nay bạn thế nào?'}});
    setSession(next);
  };
- const listenForResponse=async()=>{
-   if(listening){browserSpeechRecognitionService.stop();setListening(false);return;}
-   setError('');setListening(true);
-   try{
-     const result=await browserSpeechRecognitionService.listen(language);
-     setResponse(result.transcription);
-   }catch(e){setError(e instanceof Error?e.message:'Không thể nhận diện giọng nói.');}
-   finally{setListening(false);}
- };
- const sendResponse=async()=>{
-   if(!session||!response.trim()||loading)return;
-   const transcript=response.trim();
+ const sendResponse=async(input?:string)=>{
+   if(!session||loading)return;
+   const transcript=(input??response).trim();
+   if(!transcript)return;
    const withLearner=aiSpeakingService.addTurn(session.id,{role:'learner',text:transcript});
    if(!withLearner)return;
    setSession(withLearner);setResponse('');setError('');setLoading(true);
@@ -111,7 +103,10 @@ export function SpeakingLabPage({language,onNavigate}:P){
      {showNextPrompt&&<div className="mb-5 border border-[#292929] bg-[#090909] p-4"><div className="text-[9px] font-mono text-[#D9FF3F]">GỢI Ý CHO LƯỢT TIẾP</div><div className="mt-2 text-base font-semibold">{nextPrompt}</div></div>}
      {session?.turns.length?<div className="mb-6 max-h-[520px] space-y-4 overflow-y-auto">{session.turns.map(turn=><div key={turn.id} className={turn.role==='ai'?'border-l-2 border-[#D9FF3F] pl-4':'border-l-2 border-[#333] pl-4'}><div className="mb-1 text-[9px] font-mono text-[#666]">{turn.role==='ai'?'AI':'YOU'}</div><div className="text-lg font-semibold">{turn.display?.text||turn.text}</div>{language==='zh'&&turn.role==='ai'&&turn.display?.pinyin&&<div className="mt-1 text-sm text-[#D9FF3F]">{turn.display.pinyin}</div>}{turn.role==='ai'&&turn.display?.vietnameseTranslation&&<div className="mt-1 text-sm text-[#999]">{turn.display.vietnameseTranslation}</div>}{feedback(turn.feedback)}</div>)}</div>:<div className="border-l-2 border-[#D9FF3F] pl-5"><div className="text-2xl font-bold">{language==='zh'?'你好！今天过得怎么样？':'Hello! How are you doing today?'}</div>{language==='zh'&&<div className="mt-2 text-base text-[#D9FF3F]">Nǐ hǎo! Jīntiān guò de zěnmeyàng?</div>}<div className="mt-2 text-sm text-[#999]">Xin chào! Hôm nay bạn thế nào?</div></div>}
      <div className="flex flex-wrap gap-3"><button onClick={()=>speakPrompt(language==='zh'?'你好！今天过得怎么样？':'Hello! How are you doing today?')} className="flex items-center gap-2 border border-[#333] px-4 py-3 text-xs font-bold"><Volume2 className="h-4 w-4"/>NGHE MẪU</button><button onClick={addSample} className="flex items-center gap-2 border border-[#333] px-4 py-3 text-xs font-bold"><MessageCircle className="h-4 w-4"/>LƯU CÂU MẪU</button></div>
-     <div className="mt-7"><textarea value={response} onChange={e=>setResponse(e.target.value)} onKeyDown={e=>{if((e.ctrlKey||e.metaKey)&&e.key==='Enter')void sendResponse()}} placeholder={language==='zh'?'请输入你的回答…':'Type your response…'} className="min-h-28 w-full resize-none border border-[#292929] bg-[#090909] p-4 text-sm outline-none focus:border-[#D9FF3F]"/><div className="mt-3 flex flex-wrap items-center gap-3"><button onClick={()=>void listenForResponse()} disabled={loading} className="flex items-center gap-2 border border-[#333] px-4 py-3 text-xs font-bold disabled:opacity-30"><Mic className="h-4 w-4"/>{listening?'ĐANG NGHE…':'NÓI BẰNG MICRO'}</button><button onClick={()=>void sendResponse()} disabled={!response.trim()||loading} className="flex items-center gap-2 bg-[#D9FF3F] px-5 py-3 text-xs font-black text-black disabled:opacity-30">{loading?<Loader2 className="h-4 w-4 animate-spin"/>:<Send className="h-4 w-4"/>}{loading?'AI ĐANG PHẢN HỒI…':'GỬI CÂU TRẢ LỜI'}</button><span className="text-[10px] text-[#555]">Ctrl/⌘ + Enter để gửi</span></div>{error&&<div className="mt-3 border border-red-900/60 bg-red-950/20 p-3 text-xs text-red-300">{error}</div>}</div>
+     <div className="mt-7"><div className="min-h-28 w-full border border-[#292929] bg-[#090909] p-4 text-sm">
+       <div className="mb-2 text-[9px] font-mono text-[#555]">LIVE TRANSCRIPT · TỰ ĐỘNG GỬI AI</div>
+       <div className={response?'text-[#ddd]':'text-[#555]'}>{response||'Bấm “NÓI BẰNG MICRO”, nói tự nhiên. Bensop sẽ tự nhận diện câu nói và chuyển thẳng cho AI.'}</div>
+     </div><div className="mt-3 flex flex-wrap items-center gap-3"><button onClick={()=>void listenForResponse()} disabled={loading} className="flex items-center gap-2 border border-[#333] px-4 py-3 text-xs font-bold disabled:opacity-30"><Mic className="h-4 w-4"/>{listening?'ĐANG NGHE…':'NÓI BẰNG MICRO'}</button>{loading&&<div className="flex items-center gap-2 text-[10px] text-[#777]"><Loader2 className="h-4 w-4 animate-spin text-[#D9FF3F]"/> AI đang hiểu và phản hồi…</div>}<span className="text-[10px] text-[#555]">Không cần bấm gửi.</span></div>{error&&<div className="mt-3 border border-red-900/60 bg-red-950/20 p-3 text-xs text-red-300">{error}</div>}</div>
     </div>
     <aside className="border border-[#242424] bg-[#0f0f0f] p-5"><div className="flex items-center gap-2 text-xs font-mono text-[#D9FF3F]"><Languages className="h-4 w-4"/>LANGUAGE CONTRACT</div>{language==='zh'?<><p className="mt-4 text-sm font-bold">Chinese AI Room</p><ul className="mt-3 space-y-3 text-xs text-[#999]"><li>✓ 中文简体</li><li>✓ Pinyin có dấu thanh</li><li>✓ Dịch tiếng Việt</li><li>✓ Không trộn English vào hội thoại</li></ul></>:<><p className="mt-4 text-sm font-bold">English AI Room</p><ul className="mt-3 space-y-3 text-xs text-[#999]"><li>✓ English conversation</li><li>✓ Vietnamese support</li><li>✓ Không sinh Pinyin/Chinese</li></ul></>}<div className="mt-6 border-t border-[#222] pt-4 text-[11px] leading-5 text-[#666]">AI thật đã nối qua server endpoint. API key chỉ ở server; AI không được phép tự chọn route ngoài contract.</div></aside>
    </div>
