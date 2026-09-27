@@ -38,6 +38,14 @@ const readSession = (language?:LanguageCode): AISpeakingSession | null => {
   } catch { return null; }
 };
 const writeSession = (session: AISpeakingSession) => { try { localStorage.setItem(SESSION_KEYS[session.language], JSON.stringify(session)); } catch {} };
+const readSessionById = (sessionId:string): AISpeakingSession | null => {
+  for(const language of ['en','zh'] as LanguageCode[]){
+    const session=readSession(language);
+    if(session?.id===sessionId)return session;
+  }
+  const legacy=readSession();
+  return legacy?.id===sessionId?legacy:null;
+};
 const createId = () => `ai-speaking-${Date.now()}-${Math.random().toString(36).slice(2,8)}`;
 
 const normalizeChineseDisplay = (turn: AISpeakingTurn): AISpeakingTurn => {
@@ -60,7 +68,7 @@ export const aiSpeakingService = {
   },
   getSession(language?:LanguageCode){const session=readSession(language);return !session||(language&&session.language!==language)?null:session;},
   addTurn(sessionId:string,turn:Omit<AISpeakingSession['turns'][number],'id'|'createdAt'>){
-    const session=readSession();if(!session||session.id!==sessionId)return null;
+    const session=readSessionById(sessionId);if(!session)return null;
     const nextTurn:AISpeakingTurn={...turn,id:createId(),createdAt:new Date().toISOString()};
     const normalized=session.language==='zh'?normalizeChineseDisplay(nextTurn):nextTurn;
     const next={...session,status:'active' as const,turns:[...session.turns,normalized]};
