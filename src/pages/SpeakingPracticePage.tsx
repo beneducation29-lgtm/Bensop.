@@ -15,7 +15,7 @@ const zhOpening={text:'你好！我们一起练习吧。请先告诉我，你今
 
 export function SpeakingPracticePage({language,slug,onNavigate}:P){
  const activity=useMemo(()=>speakingService.getActivityBySlug(slug,language),[slug,language]);
- const[session,setSession]=useState(()=>aiSpeakingService.getSession(language));
+ const[session,setSession]=useState(()=>{const existing=aiSpeakingService.getSession(language);return existing?.topic===activity?.title?existing:null;});
  const[response,setResponse]=useState(''),[loading,setLoading]=useState(false),[listening,setListening]=useState(false),[error,setError]=useState('');
  const[mode,setMode]=useState<AISpeakingMode>('role-play');
 
