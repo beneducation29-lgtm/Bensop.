@@ -9,6 +9,7 @@ export interface MasteryRecord {
   label: string;
   categoryId: string;
   skill?: SkillType;
+  topicId?: string;
   mastery: number;
   attempts: number;
   correct: number;
