@@ -72,9 +72,15 @@ const upsert = (records: MasteryRecord[], input: Omit<MasteryRecord,'mastery'|'a
   if(index<0)return[...records,next];
   const clone=[...records];clone[index]=next;return clone;
 };
+const refreshForLearning = (snapshot: MasterySnapshot): MasterySnapshot => ({
+  ...snapshot,
+  skills: snapshot.skills.map(applyForgettingSignal),
+  topics: snapshot.topics.map(applyForgettingSignal),
+  questions: snapshot.questions.map(applyForgettingSignal),
+});
 export const masteryService = {
   getSnapshot(language?: LanguageCode): MasterySnapshot {
-    const snapshot=read(); if(!language)return snapshot;
+    const snapshot=refreshForLearning(read()); if(!language)return snapshot;
     const categoryId=categoryForLanguage(language);
     const skills=snapshot.skills.filter(item=>item.categoryId===categoryId).map(applyForgettingSignal);
     const topics=snapshot.topics.filter(item=>item.categoryId===categoryId).map(applyForgettingSignal);
@@ -83,17 +89,14 @@ export const masteryService = {
     return {overall,skills,topics,questions,updatedAt:snapshot.updatedAt};
   },
   recordQuizResult(result: QuizResult): MasterySnapshot {
-    const snapshot=read();
-    snapshot.skills=snapshot.skills.map(applyForgettingSignal);
-    snapshot.topics=snapshot.topics.map(applyForgettingSignal);
-    snapshot.questions=snapshot.questions.map(applyForgettingSignal);
+    const snapshot=refreshForLearning(read());
     Object.entries(result.skillBreakdown).forEach(([skill,stat])=>{snapshot.skills=upsert(snapshot.skills,{id:`skill:${result.categoryId}:${skill}`,entityType:'skill',entityId:skill,label:skill,categoryId:result.categoryId,skill:skill as MasteryRecord['skill']},stat.percentage,stat.correct,stat.total);});
     Object.entries(result.topicBreakdown).forEach(([topic,stat])=>{snapshot.topics=upsert(snapshot.topics,{id:`topic:${result.categoryId}:${topic}`,entityType:'topic',entityId:topic,label:topic,categoryId:result.categoryId},stat.percentage,stat.correct,stat.total);});
     result.questionBreakdowns.forEach(item=>{const q=item.question;const score=item.possiblePoints>0?Math.round(item.earnedPoints/item.possiblePoints*100):0;snapshot.questions=upsert(snapshot.questions,{id:`question:${q.id}`,entityType:'question',entityId:q.id,label:q.question,categoryId:q.categoryId,skill:q.skill,topicId:q.topicId},score,item.isCorrect?1:0,1);});
     snapshot.overall=snapshot.skills.length?Math.round(snapshot.skills.reduce((sum,item)=>sum+item.mastery,0)/snapshot.skills.length):result.accuracy;snapshot.updatedAt=new Date().toISOString();write(snapshot);return snapshot;
   },
   recordSpeakingEvaluation(input:{language:LanguageCode;sessionId:string;score:number;fluency?:number;grammar?:number;vocabulary?:number;relevance?:number;pronunciation?:number}): MasterySnapshot {
-    const snapshot=read();const categoryId=categoryForLanguage(input.language);
+    const snapshot=refreshForLearning(read());const categoryId=categoryForLanguage(input.language);
     const metrics:[string,number|undefined][]=[['speaking',input.score],['fluency',input.fluency],['grammar',input.grammar],['vocabulary',input.vocabulary],['pronunciation',input.pronunciation],['relevance',input.relevance]];
     metrics.forEach(([skill,value])=>{if(typeof value!=='number')return;snapshot.skills=upsert(snapshot.skills,{id:`skill:${categoryId}:${skill}`,entityType:'skill',entityId:skill,label:skill,categoryId},value,value>=60?1:0,1);});
     snapshot.topics=upsert(snapshot.topics,{id:`topic:${categoryId}:ai-speaking`,entityType:'topic',entityId:'ai-speaking',label:input.language==='zh'?'中文 AI 口语':'English AI Speaking',categoryId},input.score,input.score>=60?1:0,1);
@@ -101,7 +104,7 @@ export const masteryService = {
     snapshot.updatedAt=new Date().toISOString();write(snapshot);return snapshot;
   },
   recordReadingEvaluation(input:{language:LanguageCode;passageId:string;score:number}): MasterySnapshot {
-    const snapshot=read(); const categoryId=categoryForLanguage(input.language);
+    const snapshot=refreshForLearning(read()); const categoryId=categoryForLanguage(input.language);
     snapshot.skills=upsert(snapshot.skills,{id:`skill:${categoryId}:reading`,entityType:'skill',entityId:'reading',label:'reading',categoryId},input.score,input.score>=60?1:0,1);
     snapshot.topics=upsert(snapshot.topics,{id:`topic:${categoryId}:reading`,entityType:'topic',entityId:'reading',label:input.language==='zh'?'中文阅读':'English Reading',categoryId},input.score,input.score>=60?1:0,1);
     const categorySkills=snapshot.skills.filter(item=>item.categoryId===categoryId);
@@ -109,7 +112,7 @@ export const masteryService = {
     snapshot.updatedAt=new Date().toISOString(); write(snapshot); return snapshot;
   },
   recordListeningEvaluation(input:{language:LanguageCode;lessonId:string;score:number}): MasterySnapshot {
-    const snapshot=read(); const categoryId=categoryForLanguage(input.language);
+    const snapshot=refreshForLearning(read()); const categoryId=categoryForLanguage(input.language);
     snapshot.skills=upsert(snapshot.skills,{id:`skill:${categoryId}:listening`,entityType:'skill',entityId:'listening',label:'listening',categoryId},input.score,input.score>=60?1:0,1);
     snapshot.topics=upsert(snapshot.topics,{id:`topic:${categoryId}:listening`,entityType:'topic',entityId:'listening',label:input.language==='zh'?'中文听力':'English Listening',categoryId},input.score,input.score>=60?1:0,1);
     const categorySkills=snapshot.skills.filter(item=>item.categoryId===categoryId);
@@ -117,7 +120,7 @@ export const masteryService = {
     snapshot.updatedAt=new Date().toISOString(); write(snapshot); return snapshot;
   },
   recordWritingEvaluation(input:{language:LanguageCode;promptId:string;score:number;task?:number;organization?:number;grammar?:number;vocabulary?:number}): MasterySnapshot {
-    const snapshot=read();
+    const snapshot=refreshForLearning(read());
     const categoryId=categoryForLanguage(input.language);
     const metrics:[string,number|undefined][]=[['writing',input.score],['writing-task',input.task],['writing-organization',input.organization],['writing-grammar',input.grammar],['writing-vocabulary',input.vocabulary]];
     metrics.forEach(([skill,value])=>{if(typeof value!=='number')return;snapshot.skills=upsert(snapshot.skills,{id:`skill:${categoryId}:${skill}`,entityType:'skill',entityId:skill,label:skill,categoryId},value,value>=60?1:0,1);});
