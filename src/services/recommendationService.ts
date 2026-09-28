@@ -7,6 +7,7 @@ import { spacedReviewService } from './spacedReviewService';
 import { quizSessionStorage } from './quizSessionStorage';
 import { learnerActivityService } from './learnerActivityService';
 import { learnerProfileService } from './learnerProfileService';
+import { quizService } from './quizService';
 
 export type LearningActionType='review'|'weakness'|'lesson'|'vocabulary'|'grammar'|'listening'|'speaking'|'reading'|'writing'|'quiz';
 export interface NextLearningAction{type:LearningActionType;title:string;description:string;cta:string;path:string;reason:string;priority:'high'|'medium'|'normal';durationMinutes:number}
@@ -41,7 +42,10 @@ class RecommendationService{
   });
   const mastery=masteryService.getSnapshot(language);
   const weakQuestions=mastery.questions.filter(x=>x.mastery<70).sort((a,b)=>a.mastery-b.mastery).slice(0,2);
-  if(weakQuestions.length)add({type:'weakness',title:'Củng cố câu hỏi yếu',description:`Bạn có ${weakQuestions.length} câu hỏi dưới ngưỡng mastery 70%. Phiên luyện sẽ tập trung vào các lỗi này.`,cta:'LUYỆN ĐIỂM YẾU',path:`/ngan-hang-cau-hoi?focus=weak&lang=${language}`,reason:`Câu yếu nhất: “${weakQuestions[0].label}” · mastery ${weakQuestions[0].mastery}%.`,priority:'high',durationMinutes:10});
+  if(weakQuestions.length){
+   const adaptiveQuizSlug=quizService.createAdaptiveQuiz(language,10);
+   add({type:'weakness',title:'Adaptive Quiz · Củng cố điểm yếu',description:`Bài luyện tự chọn từ ${weakQuestions.length} câu yếu nhất và các chủ đề cần củng cố.`,cta:'LÀM ADAPTIVE QUIZ',path:`/quiz/${adaptiveQuizSlug}`,reason:`Ưu tiên câu yếu nhất: “${weakQuestions[0].label}” · mastery ${weakQuestions[0].mastery}%.`,priority:'high',durationMinutes:10});
+  }
   const weakTopic=mastery.topics.filter(x=>x.mastery<80).sort((a,b)=>a.mastery-b.mastery)[0];
   if(weakTopic)add({type:'weakness',title:'Củng cố chủ đề',description:`Chủ đề “${weakTopic.label}” đang ở mức ${weakTopic.mastery}%. Một phiên luyện ngắn sẽ giúp củng cố kiến thức.`,cta:'MỞ PHÒNG LUYỆN',path:'/luyen-tap',reason:'Chủ đề có mastery dưới 80%.',priority:'medium',durationMinutes:12});
   const skills=this.getLearningSkillSnapshot(language),labels:Record<string,string>={vocabulary:'Tăng vốn từ',grammar:'Củng cố ngữ pháp',listening:'Luyện nghe',speaking:'Luyện nói',reading:'Luyện đọc',writing:'Luyện viết'};

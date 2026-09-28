@@ -3,6 +3,7 @@ import { QUIZ_MODELS } from '../data/quizModels';
 import { VocabularyWord, LanguageCode } from '../types/vocabulary';
 import { GrammarConcept } from '../types/grammar';
 import { QUESTIONS_BANK } from '../data/questions';
+import { masteryService } from './masteryService';
 
 class QuizService {
   getQuizBySlug(slug: string): QuizModel | undefined {
@@ -126,6 +127,46 @@ class QuizService {
     QUIZ_MODELS.push(newQuiz);
     return newQuiz.slug;
   }
+  createAdaptiveQuiz(language: LanguageCode, limit = 10): string {
+    const categoryId = language === 'en' ? 'tieng-anh' : 'tieng-trung';
+    const mastery = masteryService.getSnapshot(language);
+    const weakIds = new Set(mastery.questions.filter((q) => q.mastery < 70).sort((a, b) => a.mastery - b.mastery || b.attempts - a.attempts).map((q) => q.entityId));
+    const languageQuestions = QUESTIONS_BANK.filter((q) => q.categoryId === categoryId);
+    const weakQuestions = languageQuestions.filter((q) => weakIds.has(q.id));
+    const topicIds = mastery.topics.filter((topic) => topic.mastery < 80).sort((a, b) => a.mastery - b.mastery).map((topic) => topic.entityId);
+    const topicQuestions = topicIds.flatMap((topicId) => languageQuestions.filter((q) => q.topicId === topicId));
+    const selected = Array.from(new Map([...weakQuestions, ...topicQuestions, ...languageQuestions].map((q) => [q.id, q])).values()).slice(0, Math.max(5, Math.min(limit, 15)));
+    if (!selected.length) return 'daily-challenge';
+    const slug = `quiz-adaptive-${language}-${selected.map((q) => q.id).sort().join('-')}`;
+    const existing = this.getQuizBySlug(slug);
+    if (existing) return existing.slug;
+    const newQuiz: QuizModel = {
+      id: slug,
+      slug,
+      title: language === 'zh' ? 'Adaptive Quiz · Ôn đúng điểm yếu' : 'Adaptive Quiz · Targeted Practice',
+      categoryId,
+      categoryName: language === 'zh' ? 'TIẾNG TRUNG' : 'TIẾNG ANH',
+      description: language === 'zh'
+        ? 'Bài luyện được chọn từ những câu và chủ đề tiếng Trung bạn đang cần củng cố.'
+        : 'Bài luyện được chọn từ những câu và chủ đề tiếng Anh bạn đang cần củng cố.',
+      type: 'practice',
+      skills: Array.from(new Set(selected.map((q) => q.skill))),
+      topics: Array.from(new Set(selected.map((q) => q.topicId))),
+      questionIds: selected.map((q) => q.id),
+      questionCount: selected.length,
+      difficulty: 'Intermediate',
+      duration: Math.max(6, Math.ceil(selected.length * 1.2)),
+      passingScore: 70,
+      randomizeQuestions: true,
+      randomizeOptions: true,
+      showExplanation: true,
+      allowRetry: true,
+      createdAt: new Date().toISOString(),
+    };
+    QUIZ_MODELS.push(newQuiz);
+    return newQuiz.slug;
+  }
+
   createReviewQuiz(questionIds: string[], sourceQuizTitle = 'Quiz Review'): string {
     const validIds = questionIds.filter((id, index, arr) => arr.indexOf(id) === index);
     const slug = `quiz-review-${validIds.slice().sort().join('-')}`;
