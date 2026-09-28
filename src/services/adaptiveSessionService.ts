@@ -94,6 +94,7 @@ class AdaptiveSessionService {
       });
     });
 
+    const forgettingRisk = masteryService.getForgettingRisks(1, language)[0];
     const weakQuestion = masteryService.getWeakQuestions(1, language)[0];
     if (weakQuestion) {
       const adaptiveQuizPath = '/quiz/' + quizService.createAdaptiveQuiz(language, 10);
@@ -107,7 +108,9 @@ class AdaptiveSessionService {
           description: 'Luyện lại các dạng câu hỏi có mastery thấp trước khi chuyển sang nội dung mới.',
           path: adaptiveQuizPath,
           durationMinutes: 8,
-          reason: 'Câu yếu nhất: ' + weakQuestion.label + ' · mastery ' + weakQuestion.mastery + '% · ' + (weakQuestion.skill || 'kỹ năng') + '.',
+          reason: forgettingRisk?.entityId === weakQuestion.entityId
+            ? 'Kiến thức này đã lâu chưa được kiểm tra và có nguy cơ giảm khả năng nhớ.'
+            : 'Câu yếu nhất: ' + weakQuestion.label + ' · mastery ' + weakQuestion.mastery + '% · ' + (weakQuestion.skill || 'kỹ năng') + '.',
         });
       }
     }
