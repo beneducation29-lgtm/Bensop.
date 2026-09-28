@@ -79,6 +79,17 @@ export interface DependencyImpact {
   priorityScore: number;
 }
 
+export interface RecoveryReturnRecommendation {
+  language: LanguageCode;
+  sourceId: string;
+  sourceKind: PrerequisiteKind;
+  parentId: string;
+  parentLabel: string;
+  path: string;
+  readiness: RecoveryReadiness;
+  reason: string;
+}
+
 const levelRank: Record<string, number> = {
   'A1': 1, 'A2': 2, 'B1': 3, 'B2': 4, 'C1': 5, 'C2': 6,
   'HSK 1': 1, 'HSK 2': 2, 'HSK 3': 3, 'HSK 4': 4, 'HSK 5': 5, 'HSK 6': 6,
@@ -284,6 +295,39 @@ class PrerequisiteService {
     };
   }
 
+
+  getReturnToParentRecommendation(
+    source: GrammarConcept | VocabularyWord,
+    language: LanguageCode,
+  ): RecoveryReturnRecommendation | undefined {
+    if (source.language !== language) return undefined;
+
+    const direct = this.isGrammarConcept(source)
+      ? this.getDeepGrammarPrerequisites(source, language, 1)
+      : this.getDeepVocabularyPrerequisites(source, language, 1);
+
+    const recovered = direct
+      .map((node) => ({ node, gate: this.getRecoveryReadiness(node, language) }))
+      .filter(({ gate }) => gate.readiness === 'ready-to-return')
+      .sort((a, b) => b.node.mastery - a.node.mastery)[0];
+
+    if (!recovered) return undefined;
+
+    const path = this.isGrammarConcept(source)
+      ? '/quiz/' + quizService.createQuizFromGrammar(source)
+      : '/quiz/' + quizService.createQuizFromVocabulary(source);
+
+    return {
+      language,
+      sourceId: source.id,
+      sourceKind: recovered.node.kind,
+      parentId: source.id,
+      parentLabel: this.isGrammarConcept(source) ? source.title : source.word,
+      path,
+      readiness: recovered.gate.readiness,
+      reason: 'Nền tảng liên quan đã phục hồi đủ ổn định. Bensop đưa bạn quay lại kiến thức cấp trên để kiểm tra khả năng áp dụng.',
+    };
+  }
 
   private isGrammarConcept(source: GrammarConcept | VocabularyWord): source is GrammarConcept {
     return 'title' in source && 'rules' in source && Array.isArray(source.rules);
