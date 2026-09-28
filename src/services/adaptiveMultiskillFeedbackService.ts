@@ -1,5 +1,6 @@
 import { LanguageCode } from '../types/vocabulary';
-import { adaptiveLearningOrchestrator, AdaptiveLearningPlan } from './adaptiveLearningOrchestrator';
+import { AdaptiveLearningPlan } from './adaptiveLearningOrchestrator';
+import { adaptiveSessionPlannerService } from './adaptiveSessionPlannerService';
 import { adaptiveSessionMemoryService } from './adaptiveSessionMemoryService';
 import { adaptiveSessionGoalService } from './adaptiveSessionGoalService';
 import { dailyLearningContinuityService } from './dailyLearningContinuityService';
@@ -49,7 +50,7 @@ class AdaptiveMultiskillFeedbackService {
       completedAt: result.completedAt || new Date().toISOString(),
     });
 
-    return adaptiveLearningOrchestrator.buildPlan(result.language);
+    return adaptiveSessionPlannerService.build(result.language).current;
   }
 }
 
