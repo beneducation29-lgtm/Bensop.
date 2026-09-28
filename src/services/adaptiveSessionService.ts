@@ -93,9 +93,9 @@ class AdaptiveSessionService {
         skill: 'quiz',
         skillKey: 'quiz',
         language,
-        title: 'Sửa lỗi câu hỏi yếu',
+        title: 'Adaptive Quiz · Sửa điểm yếu',
         description: 'Luyện lại các dạng câu hỏi có mastery thấp trước khi chuyển sang nội dung mới.',
-        path: '/ngan-hang-cau-hoi?focus=weak&lang=' + language,
+        path: '/quiz/' + quizService.createAdaptiveQuiz(language, 10),
         durationMinutes: 8,
         reason: 'Câu yếu nhất: ' + weakQuestion.label + ' · mastery ' + weakQuestion.mastery + '% · ' + (weakQuestion.skill || 'kỹ năng') + '.',
       });
