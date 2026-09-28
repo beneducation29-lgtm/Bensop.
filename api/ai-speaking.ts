@@ -188,12 +188,18 @@ Do not invent learner history. Do not output markdown.`;
       qualityFallback:false,
     };
     if(language==='zh'){
+      if(!/[\u4e00-\u9fff]/u.test(text) || /[A-Za-z]{3,}/u.test(text)){
+        res.status(502).json({error:'Chinese speaking response violated language contract'});return;
+      }
       reply.pinyin=cleanText(parsed.pinyin,900)||undefined;
       reply.vietnameseTranslation=cleanText(parsed.vietnameseTranslation,900)||undefined;
       if(!reply.pinyin||!reply.vietnameseTranslation){
         res.status(502).json({error:'Chinese speaking response must include Pinyin and Vietnamese translation'});return;
       }
     }else{
+      if(/[\u4e00-\u9fff]/u.test(text)){
+        res.status(502).json({error:'English speaking response violated language contract'});return;
+      }
       reply.pinyin=undefined;
       reply.vietnameseTranslation=cleanText(parsed.vietnameseTranslation,900)||undefined;
     }
