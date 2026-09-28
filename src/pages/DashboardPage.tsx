@@ -15,6 +15,7 @@ import { learnerProfileService } from '../services/learnerProfileService';
 import { adaptiveSessionService } from '../services/adaptiveSessionService';
 import { adaptiveSessionGoalService } from '../services/adaptiveSessionGoalService';
 import { dailyLearningContinuityService } from '../services/dailyLearningContinuityService';
+import { adaptiveLearningHistoryService } from '../services/adaptiveLearningHistoryService';
 
 interface DashboardPageProps {
   user: UserProgress;
@@ -44,6 +45,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
   const adaptiveSession = adaptiveSessionService.buildSession(learningLanguage);
   const adaptiveSessionGoal = adaptiveSessionGoalService.getProgress(learningLanguage);
   const dailyContinuity = dailyLearningContinuityService.getContinuity(learningLanguage);
+  const learningHistory = adaptiveLearningHistoryService.getSummary(learningLanguage, 30);
   const learningSkillSnapshot = recommendationService.getLearningSkillSnapshot(learningLanguage);
   const learnerProfile = learnerProfileService.getSnapshot(learningLanguage);
   const weakQuestions = masteryService.getWeakQuestions(3, learningLanguage);
@@ -311,6 +313,43 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
             </div>
             <div className="mt-3 text-[10px] font-mono text-[#D9FF3F]">{dailyContinuity.nextFocus}</div>
           </div>
+          <div className="mb-5 rounded-2xl border border-[#2A2A2A] bg-[#101010] p-5">
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+              <div>
+                <div className="text-[9px] font-mono font-bold tracking-[0.18em] text-[#D9FF3F]">TIẾN BỘ THEO THỜI GIAN · 30 NGÀY</div>
+                <h3 className="mt-2 text-sm font-black uppercase text-white">EVIDENCE TIẾN BỘ THỰC</h3>
+                <p className="mt-1 max-w-2xl text-xs leading-relaxed text-[#888]">
+                  Bensop tách số hoạt động khỏi tiến bộ thực: mastery thay đổi, số ngày học và chất lượng evidence được ghi nhận riêng.
+                </p>
+              </div>
+              <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                <div className="rounded-lg border border-[#222] bg-[#151515] px-3 py-2 text-center">
+                  <div className="text-sm font-black text-white">{learningHistory.totalActivities}</div>
+                  <div className="text-[8px] font-mono font-bold tracking-wider text-[#666]">HOẠT ĐỘNG</div>
+                </div>
+                <div className="rounded-lg border border-[#222] bg-[#151515] px-3 py-2 text-center">
+                  <div className="text-sm font-black text-white">{learningHistory.activeDays}</div>
+                  <div className="text-[8px] font-mono font-bold tracking-wider text-[#666]">NGÀY HỌC</div>
+                </div>
+                <div className="rounded-lg border border-[#222] bg-[#151515] px-3 py-2 text-center">
+                  <div className="text-sm font-black text-white">{learningHistory.averageScore}%</div>
+                  <div className="text-[8px] font-mono font-bold tracking-wider text-[#666]">ĐIỂM TB</div>
+                </div>
+                <div className="rounded-lg border border-[#222] bg-[#151515] px-3 py-2 text-center">
+                  <div className={`text-sm font-black ${learningHistory.masteryDelta > 0 ? 'text-emerald-400' : learningHistory.masteryDelta < 0 ? 'text-amber-400' : 'text-white'}`}>
+                    {learningHistory.masteryDelta > 0 ? '+' : ''}{learningHistory.masteryDelta}%
+                  </div>
+                  <div className="text-[8px] font-mono font-bold tracking-wider text-[#666]">MASTERY Δ</div>
+                </div>
+              </div>
+            </div>
+            <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-2 text-[9px] font-mono text-[#777]">
+              <span>MASTERY HIỆN TẠI <strong className="text-white">{learningHistory.mastery}%</strong></span>
+              <span>MASTERY CÓ THAY ĐỔI <strong className="text-white">{learningHistory.masteryChanges}</strong> lượt</span>
+              <span>EVIDENCE ỔN ĐỊNH <strong className="text-[#D9FF3F]">{learningHistory.evidenceGains}</strong> lượt</span>
+            </div>
+          </div>
+
           <div className="mb-5 rounded-2xl border border-[#2A2A2A] bg-[#101010] p-5">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
               <div>
