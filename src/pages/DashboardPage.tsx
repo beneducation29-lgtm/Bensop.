@@ -35,7 +35,8 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
   const dueReviews = activeInterest === 'tieng-anh' || activeInterest === 'tieng-trung'
     ? spacedReviewService.getDue(new Date(), activeInterest === 'tieng-trung' ? 'zh' : 'en').slice(0, 5)
     : [];
-  const masterySnapshot = masteryService.getSnapshot();
+  const masteryLanguage = activeInterest === 'tieng-trung' ? 'zh' : activeInterest === 'tieng-anh' ? 'en' : undefined;
+  const masterySnapshot = masteryService.getSnapshot(masteryLanguage);
   const nextLearningActions = recommendationService.getNextLearningActions(3);
   const adaptiveSession = adaptiveSessionService.buildSession();
   const learningSkillSnapshot = recommendationService.getLearningSkillSnapshot();
