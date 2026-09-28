@@ -111,6 +111,8 @@ export const aiSpeakingService = {
       window.clearTimeout(timeout);
     }
     const data=await response.json().catch(()=>({}));
+    if(context.language==='zh'&&!/[\u4e00-\u9fff]/u.test(transcript)) throw new Error('Phòng tiếng Trung cần transcript bằng tiếng Trung. Hãy nói lại rõ hơn bằng tiếng Trung phổ thông.');
+    if(context.language==='en'&&/[\u4e00-\u9fff]/u.test(transcript)) throw new Error('English Speaking Room cần transcript bằng tiếng Anh. Hãy nói lại bằng tiếng Anh.');
     if(!response.ok) throw new Error(typeof data?.error==='string'?data.error:'AI speaking request failed');
     if(typeof data?.text!=='string'||!data.text.trim()) throw new Error('AI speaking returned an empty response');
     if(context.language==='zh'&&(!data.pinyin||!data.vietnameseTranslation)) throw new Error('Chinese AI reply is missing Pinyin or Vietnamese translation');

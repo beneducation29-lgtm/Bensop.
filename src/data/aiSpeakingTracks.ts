@@ -35,6 +35,9 @@ export const AI_SPEAKING_TRACKS: AISpeakingTrack[] = [
       { id: 'en-travel', title: 'Travel problem', context: 'You are at a train station and need help with a travel problem.', starter: 'Hi, I think I may have a problem with my ticket. Could you help me?' },
       { id: 'en-job-interview', title: 'Job interview', context: 'You are answering questions in a short interview for a part-time role.', starter: 'Thanks for coming in. Could you tell me a little about yourself?' },
       { id: 'en-friends', title: 'Weekend plans', context: 'You are chatting with a friend about what to do this weekend.', starter: 'I have a free weekend. What would you like to do?' },
+      { id: 'en-study', title: 'Study problem', context: 'You are discussing a difficult assignment and deciding how to solve it.', starter: 'I am stuck on this assignment. How would you approach it?' },
+      { id: 'en-meeting', title: 'Team meeting', context: 'You are in a short team meeting and need to give an opinion and respond to another idea.', starter: 'We have two options for this project. Which one do you prefer?' },
+      { id: 'en-hotel', title: 'Hotel check-in', context: 'You are checking into a hotel and need to ask for information or solve a small issue.', starter: 'Welcome to the hotel. May I have your name, please?' },
     ],
     modes: [
       { id: 'shadowing', title: 'Shadowing', goal: 'Nghe – bắt chước – đồng bộ nhịp nói.', promptStyle: 'Short natural English model lines followed by one focused retry.' },
@@ -57,6 +60,9 @@ export const AI_SPEAKING_TRACKS: AISpeakingTrack[] = [
       { id: 'zh-travel', title: '车站问路', context: '你在车站，需要询问路线或解决一个小问题。', starter: '你好，我好像找不到我的车次。你可以帮我看看吗？' },
       { id: 'zh-shopping', title: '买东西', context: '你在商店比较两个商品并询问价格。', starter: '你好，这两件商品有什么区别？' },
       { id: 'zh-weekend', title: '周末计划', context: '你和朋友聊天，讨论周末做什么。', starter: '这个周末你有什么计划？' },
+      { id: 'zh-study', title: '学习问题', context: '你和同学讨论一个比较难的作业，并一起想办法。', starter: '这个作业有点难。你觉得我们应该怎么做？' },
+      { id: 'zh-meeting', title: '小组会议', context: '你在小组会议中表达自己的看法，并回应别人的建议。', starter: '我们有两个方案。你比较喜欢哪一个？' },
+      { id: 'zh-hotel', title: '酒店入住', context: '你正在办理入住，并需要询问信息或解决一个小问题。', starter: '您好，欢迎入住。请问您怎么称呼？' },
     ],
     modes: [
       { id: 'shadowing', title: '影子跟读', goal: '听 – 模仿 – 同步语速和节奏。', promptStyle: '给出短中文示范并一次只练一个重点；每句必须有 Pinyin + 越南语。' },
