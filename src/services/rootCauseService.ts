@@ -30,7 +30,10 @@ class RootCauseService {
     language: LanguageCode,
     sourceQuestionId: string,
   ): RootCauseRecommendation {
-    const prerequisite = prerequisiteService.getDeepRecommendation(concept, language) || prerequisiteService.getRecommendation(concept, language);
+    const prerequisite =
+      prerequisiteService.getPriorityPrerequisiteRecommendation(concept, language) ||
+      prerequisiteService.getDeepRecommendation(concept, language) ||
+      prerequisiteService.getRecommendation(concept, language);
     if (prerequisite) {
       return {
         language,
@@ -59,7 +62,10 @@ class RootCauseService {
     language: LanguageCode,
     sourceQuestionId: string,
   ): RootCauseRecommendation {
-    const prerequisite = prerequisiteService.getDeepRecommendation(word, language) || prerequisiteService.getVocabularyRecommendation(word, language);
+    const prerequisite =
+      prerequisiteService.getPriorityPrerequisiteRecommendation(word, language) ||
+      prerequisiteService.getDeepRecommendation(word, language) ||
+      prerequisiteService.getVocabularyRecommendation(word, language);
     if (prerequisite) {
       return {
         language,
