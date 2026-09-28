@@ -59,7 +59,7 @@ class RootCauseService {
     language: LanguageCode,
     sourceQuestionId: string,
   ): RootCauseRecommendation {
-    const prerequisite = prerequisiteService.getVocabularyRecommendation(word, language);
+    const prerequisite = prerequisiteService.getDeepRecommendation(word, language) || prerequisiteService.getVocabularyRecommendation(word, language);
     if (prerequisite) {
       return {
         language,
