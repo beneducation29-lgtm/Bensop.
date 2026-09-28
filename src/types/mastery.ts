@@ -16,6 +16,9 @@ export interface MasteryRecord {
   lastScore: number;
   lastAttemptAt: string;
   trend: 'up' | 'down' | 'stable';
+  accuracy?: number;
+  confidence?: number;
+  evidenceLevel?: 'new' | 'developing' | 'established' | 'mastered';
 }
 
 export interface MasterySnapshot {
