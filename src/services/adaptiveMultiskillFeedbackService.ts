@@ -3,6 +3,7 @@ import { adaptiveLearningOrchestrator, AdaptiveLearningPlan } from './adaptiveLe
 import { adaptiveSessionMemoryService } from './adaptiveSessionMemoryService';
 import { adaptiveSessionGoalService } from './adaptiveSessionGoalService';
 import { dailyLearningContinuityService } from './dailyLearningContinuityService';
+import { adaptiveLearningHistoryService } from './adaptiveLearningHistoryService';
 
 export type AdaptiveSkill = 'listening' | 'reading' | 'writing' | 'speaking';
 
@@ -33,6 +34,14 @@ class AdaptiveMultiskillFeedbackService {
     });
 
     adaptiveSessionMemoryService.recordStep({
+      skill: result.skill,
+      language: result.language,
+      activityId: result.activityId,
+      score: result.score,
+      completedAt: result.completedAt || new Date().toISOString(),
+    });
+
+    adaptiveLearningHistoryService.recordResult({
       skill: result.skill,
       language: result.language,
       activityId: result.activityId,
