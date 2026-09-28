@@ -14,6 +14,7 @@ import { masteryService } from '../services/masteryService';
 import { learnerProfileService } from '../services/learnerProfileService';
 import { adaptiveSessionService } from '../services/adaptiveSessionService';
 import { adaptiveSessionGoalService } from '../services/adaptiveSessionGoalService';
+import { dailyLearningContinuityService } from '../services/dailyLearningContinuityService';
 
 interface DashboardPageProps {
   user: UserProgress;
@@ -42,6 +43,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
   const nextLearningActions = recommendationService.getNextLearningActions(3, learningLanguage);
   const adaptiveSession = adaptiveSessionService.buildSession(learningLanguage);
   const adaptiveSessionGoal = adaptiveSessionGoalService.getProgress(learningLanguage);
+  const dailyContinuity = dailyLearningContinuityService.getContinuity(learningLanguage);
   const learningSkillSnapshot = recommendationService.getLearningSkillSnapshot(learningLanguage);
   const learnerProfile = learnerProfileService.getSnapshot(learningLanguage);
   const weakQuestions = masteryService.getWeakQuestions(3, learningLanguage);
@@ -292,6 +294,22 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                 BẮT ĐẦU PHIÊN →
               </button>
             </div>
+          </div>
+          <div className="mb-5 rounded-2xl border border-[#2A2A2A] bg-[#101010] p-5">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <div className="text-[9px] font-mono font-bold tracking-[0.18em] text-[#D9FF3F]">NHỊP HỌC HÔM NAY</div>
+                <h3 className="mt-2 text-sm font-black uppercase text-white">
+                  {dailyContinuity.today.completed ? 'ĐÃ GIỮ NHỊP HÔM NAY' : 'ĐANG XÂY NHỊP HỌC'}
+                </h3>
+                <p className="mt-1 text-xs leading-relaxed text-[#888]">{dailyContinuity.reason}</p>
+              </div>
+              <div className="shrink-0 text-right">
+                <div className="text-xl font-black text-white">{dailyContinuity.streakDays}</div>
+                <div className="text-[9px] font-mono font-bold tracking-widest text-[#777]">NGÀY LIÊN TỤC</div>
+              </div>
+            </div>
+            <div className="mt-3 text-[10px] font-mono text-[#D9FF3F]">{dailyContinuity.nextFocus}</div>
           </div>
           <div className="mb-5 rounded-2xl border border-[#2A2A2A] bg-[#101010] p-5">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
