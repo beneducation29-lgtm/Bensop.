@@ -5,6 +5,7 @@ import { rootCauseService } from './rootCauseService';
 import { learningStateService, LearningStateDecision } from './learningStateService';
 import { quizService } from './quizService';
 import { adaptiveSessionMemoryService, AdaptiveMemorySkill } from './adaptiveSessionMemoryService';
+import { crossSkillMasteryBalanceService } from './crossSkillMasteryBalanceService';
 
 export type AdaptivePhase =
   | 'review-due'
@@ -32,33 +33,15 @@ export interface AdaptiveLearningPlan {
 
 const SKILL_PATHS: Record<LanguageCode, Record<AdaptiveMemorySkill, string>> = {
   en: {
-    vocabulary: '/tieng-anh/vocabulary/practice',
-    grammar: '/tieng-anh/grammar',
-    listening: '/tieng-anh/listening',
-    speaking: '/tieng-anh/speaking',
-    reading: '/tieng-anh/reading',
-    writing: '/tieng-anh/writing',
-    quiz: '/luyen-tap',
+    vocabulary: '/tieng-anh/vocabulary/practice', grammar: '/tieng-anh/grammar', listening: '/tieng-anh/listening', speaking: '/tieng-anh/speaking', reading: '/tieng-anh/reading', writing: '/tieng-anh/writing', quiz: '/luyen-tap',
   },
   zh: {
-    vocabulary: '/tieng-trung/vocabulary/practice',
-    grammar: '/tieng-trung/grammar',
-    listening: '/tieng-trung/listening',
-    speaking: '/tieng-trung/speaking',
-    reading: '/tieng-trung/reading',
-    writing: '/tieng-trung/writing',
-    quiz: '/luyen-tap',
+    vocabulary: '/tieng-trung/vocabulary/practice', grammar: '/tieng-trung/grammar', listening: '/tieng-trung/listening', speaking: '/tieng-trung/speaking', reading: '/tieng-trung/reading', writing: '/tieng-trung/writing', quiz: '/luyen-tap',
   },
 };
 
 const SKILL_LABELS: Record<AdaptiveMemorySkill, string> = {
-  vocabulary: 'Từ vựng',
-  grammar: 'Ngữ pháp',
-  listening: 'Listening',
-  speaking: 'Speaking',
-  reading: 'Reading',
-  writing: 'Writing',
-  quiz: 'Quiz',
+  vocabulary: 'Từ vựng', grammar: 'Ngữ pháp', listening: 'Listening', speaking: 'Speaking', reading: 'Reading', writing: 'Writing', quiz: 'Quiz',
 };
 
 class AdaptiveLearningOrchestrator {
@@ -69,151 +52,67 @@ class AdaptiveLearningOrchestrator {
 
     if (due.length) {
       const review = due[0];
-      const path = review.quizSlug
-        ? '/quiz/' + review.quizSlug
-        : review.lessonSlug
-          ? '/bai-hoc/' + review.lessonSlug
-          : review.path || '/luyen-tap';
-
-      return {
-        language,
-        phase: 'review-due',
-        state,
-        title: 'Ôn nội dung đã đến hạn',
-        description: review.title || review.quizSlug || review.lessonSlug || 'Spaced Review',
-        reason: 'Có ' + due.length + ' nội dung đến hạn. Bensop kiểm tra khả năng nhớ trước khi mở rộng kiến thức mới.',
-        path,
-        durationMinutes: review.reviewType === 'quiz' ? 8 : 10,
-        sourceQuestionId: state.source?.entityType === 'question' ? state.source.entityId : undefined,
-      };
+      const path = review.quizSlug ? '/quiz/' + review.quizSlug : review.lessonSlug ? '/bai-hoc/' + review.lessonSlug : review.path || '/luyen-tap';
+      return { language, phase: 'review-due', state, title: 'Ôn nội dung đã đến hạn', description: review.title || review.quizSlug || review.lessonSlug || 'Spaced Review', reason: 'Có ' + due.length + ' nội dung đến hạn. Bensop kiểm tra khả năng nhớ trước khi mở rộng kiến thức mới.', path, durationMinutes: review.reviewType === 'quiz' ? 8 : 10, sourceQuestionId: state.source?.entityType === 'question' ? state.source.entityId : undefined };
     }
 
     if (rootCause && (state.state === 'recovering' || state.state === 'weak' || state.state === 'developing')) {
       const isReturn = rootCause.title.startsWith('Đã phục hồi');
-      return {
-        language,
-        phase: isReturn ? 'return-to-parent' : 'recover-foundation',
-        state,
-        title: rootCause.title,
-        description: rootCause.description,
-        reason: rootCause.reason,
-        path: rootCause.path,
-        durationMinutes: 7,
-        sourceQuestionId: rootCause.sourceQuestionId,
-      };
+      return { language, phase: isReturn ? 'return-to-parent' : 'recover-foundation', state, title: rootCause.title, description: rootCause.description, reason: rootCause.reason, path: rootCause.path, durationMinutes: 7, sourceQuestionId: rootCause.sourceQuestionId };
     }
 
     if (state.recommendedAction === 'recovery') {
-      return {
-        language,
-        phase: 'recover-foundation',
-        state,
-        title: 'Phục hồi kiến thức nền',
-        description: state.reason,
-        reason: 'Trạng thái hiện tại yêu cầu phục hồi trước khi quay lại kiến thức cấp trên.',
-        path: '/ngan-hang-cau-hoi?focus=weak&lang=' + language,
-        durationMinutes: 7,
-        sourceQuestionId: state.source?.entityType === 'question' ? state.source.entityId : undefined,
-      };
+      return { language, phase: 'recover-foundation', state, title: 'Phục hồi kiến thức nền', description: state.reason, reason: 'Trạng thái hiện tại yêu cầu phục hồi trước khi quay lại kiến thức cấp trên.', path: '/ngan-hang-cau-hoi?focus=weak&lang=' + language, durationMinutes: 7, sourceQuestionId: state.source?.entityType === 'question' ? state.source.entityId : undefined };
     }
 
     if (state.recommendedAction === 'spaced-review') {
-      return {
-        language,
-        phase: 'review-due',
-        state,
-        title: 'Kiểm tra lại kiến thức có nguy cơ quên',
-        description: state.reason,
-        reason: 'Ưu tiên truy hồi trước khi học thêm để phân biệt quên thật với mastery chưa ổn định.',
-        path: '/ngan-hang-cau-hoi?focus=weak&lang=' + language,
-        durationMinutes: 6,
-      };
+      return { language, phase: 'review-due', state, title: 'Kiểm tra lại kiến thức có nguy cơ quên', description: state.reason, reason: 'Ưu tiên truy hồi trước khi học thêm để phân biệt quên thật với mastery chưa ổn định.', path: '/ngan-hang-cau-hoi?focus=weak&lang=' + language, durationMinutes: 6 };
     }
 
     if (state.recommendedAction === 'targeted-practice') {
       const weak = masteryService.getWeakQuestions(1, language)[0];
-      return {
-        language,
-        phase: 'targeted-practice',
-        state,
-        title: 'Luyện đúng điểm yếu',
-        description: weak?.label || state.reason,
-        reason: state.reason,
-        path: '/ngan-hang-cau-hoi?focus=weak&lang=' + language,
-        durationMinutes: 8,
-        sourceQuestionId: weak?.entityId,
-      };
+      return { language, phase: 'targeted-practice', state, title: 'Luyện đúng điểm yếu', description: weak?.label || state.reason, reason: state.reason, path: '/ngan-hang-cau-hoi?focus=weak&lang=' + language, durationMinutes: 8, sourceQuestionId: weak?.entityId };
+    }
+
+    const balance = crossSkillMasteryBalanceService.getDecision(language);
+    if ((state.recommendedAction === 'challenge' || state.recommendedAction === 'continue') && balance.shouldSwitch && balance.skill) {
+      return this.buildBalancedSkillPlan(language, state, balance.skill, balance.reason);
     }
 
     if (state.recommendedAction === 'challenge') {
       const rotation = adaptiveSessionMemoryService.getCrossSkillDecision(language);
-      if (rotation.shouldSwitch && rotation.suggestedSkill) {
-        return this.buildCrossSkillPlan(language, state, rotation.suggestedSkill, rotation.reason);
-      }
-
-      return {
-        language,
-        phase: 'challenge',
-        state,
-        title: 'Mở rộng kiến thức',
-        description: 'Mastery và evidence đã ổn định; chuyển sang nội dung khó hơn để kiểm tra khả năng áp dụng.',
-        reason: state.reason,
-        path: language === 'zh' ? '/tieng-trung' : '/tieng-anh',
-        durationMinutes: 10,
-      };
+      if (rotation.shouldSwitch && rotation.suggestedSkill) return this.buildCrossSkillPlan(language, state, rotation.suggestedSkill, rotation.reason);
+      return { language, phase: 'challenge', state, title: 'Mở rộng kiến thức', description: 'Mastery và evidence đã ổn định; chuyển sang nội dung khó hơn để kiểm tra khả năng áp dụng.', reason: state.reason, path: language === 'zh' ? '/tieng-trung' : '/tieng-anh', durationMinutes: 10 };
     }
 
     if (state.recommendedAction === 'continue') {
       const rotation = adaptiveSessionMemoryService.getCrossSkillDecision(language);
-      if (rotation.shouldSwitch && rotation.suggestedSkill) {
-        return this.buildCrossSkillPlan(language, state, rotation.suggestedSkill, rotation.reason);
-      }
-
+      if (rotation.shouldSwitch && rotation.suggestedSkill) return this.buildCrossSkillPlan(language, state, rotation.suggestedSkill, rotation.reason);
       const weak = masteryService.getWeakQuestions(1, language)[0];
       if (weak) {
         const slug = quizService.createAdaptiveQuiz(language, 10);
-        return {
-          language,
-          phase: 'adaptive-quiz',
-          state,
-          title: 'Adaptive Quiz · kiểm tra tiếp',
-          description: 'Kiểm tra lại các điểm chưa đủ evidence trước khi mở rộng.',
-          reason: state.reason,
-          path: '/quiz/' + slug,
-          durationMinutes: 8,
-          sourceQuestionId: weak.entityId,
-        };
+        return { language, phase: 'adaptive-quiz', state, title: 'Adaptive Quiz · kiểm tra tiếp', description: 'Kiểm tra lại các điểm chưa đủ evidence trước khi mở rộng.', reason: state.reason, path: '/quiz/' + slug, durationMinutes: 8, sourceQuestionId: weak.entityId };
       }
     }
 
-    return {
-      language,
-      phase: 'start',
-      state,
-      title: 'Khởi động phiên học',
-      description: 'Một lượt luyện ngắn để tạo evidence cho hồ sơ học tập.',
-      reason: 'Chưa có tín hiệu đủ mạnh để cá nhân hóa sâu hơn.',
-      path: '/luyen-tap',
-      durationMinutes: 10,
-    };
+    return { language, phase: 'start', state, title: 'Khởi động phiên học', description: 'Một lượt luyện ngắn để tạo evidence cho hồ sơ học tập.', reason: 'Chưa có tín hiệu đủ mạnh để cá nhân hóa sâu hơn.', path: '/luyen-tap', durationMinutes: 10 };
   }
 
-  private buildCrossSkillPlan(
-    language: LanguageCode,
-    state: LearningStateDecision,
-    skill: AdaptiveMemorySkill,
-    reason: string
-  ): AdaptiveLearningPlan {
+  private buildBalancedSkillPlan(language: LanguageCode, state: LearningStateDecision, skill: AdaptiveMemorySkill, reason: string): AdaptiveLearningPlan {
     return {
       language,
       phase: 'cross-skill',
       state,
-      title: 'Đổi kỹ năng · ' + SKILL_LABELS[skill],
-      description: 'Chuyển sang một kỹ năng khác để tạo thêm evidence mà không lặp lại cùng một dạng hoạt động.',
+      title: 'Cân bằng kỹ năng · ' + SKILL_LABELS[skill],
+      description: 'Bensop ưu tiên kỹ năng đang thiếu evidence hoặc có mastery thấp hơn để hồ sơ học tập cân bằng hơn.',
       reason,
       path: SKILL_PATHS[language][skill],
       durationMinutes: skill === 'vocabulary' || skill === 'grammar' ? 6 : 8,
     };
+  }
+
+  private buildCrossSkillPlan(language: LanguageCode, state: LearningStateDecision, skill: AdaptiveMemorySkill, reason: string): AdaptiveLearningPlan {
+    return { language, phase: 'cross-skill', state, title: 'Đổi kỹ năng · ' + SKILL_LABELS[skill], description: 'Chuyển sang một kỹ năng khác để tạo thêm evidence mà không lặp lại cùng một dạng hoạt động.', reason, path: SKILL_PATHS[language][skill], durationMinutes: skill === 'vocabulary' || skill === 'grammar' ? 6 : 8 };
   }
 }
 
