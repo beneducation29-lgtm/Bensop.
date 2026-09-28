@@ -2,6 +2,7 @@ import { LanguageCode } from '../types/vocabulary';
 import { AdaptiveLearningPlan, adaptiveLearningOrchestrator } from './adaptiveLearningOrchestrator';
 import { adaptiveSessionGoalService } from './adaptiveSessionGoalService';
 import { adaptiveSessionMemoryService, AdaptiveMemorySkill } from './adaptiveSessionMemoryService';
+import { adaptiveEvidenceGateService } from './adaptiveEvidenceGateService';
 
 export interface AdaptiveSessionPlan {
   language: LanguageCode;
@@ -47,12 +48,18 @@ class AdaptiveSessionPlannerService {
   build(language: LanguageCode): AdaptiveSessionPlan {
     const current = adaptiveLearningOrchestrator.buildPlan(language);
     const goal = adaptiveSessionGoalService.getProgress(language);
-    const recent = adaptiveSessionMemoryService.getRecentSteps(language, 6).map((step) => step.skill);
-    const upcoming = this.buildUpcoming(language, current, recent, Math.max(0, goal.remainingSteps - 1));
+    const recentSteps = adaptiveSessionMemoryService.getRecentSteps(language, 6);
+    const recent = recentSteps.map((step) => step.skill);
+    const lastStep = adaptiveSessionGoalService.getGoal(language).completedSteps.at(-1);
+    const evidenceGate = adaptiveEvidenceGateService.evaluate(language, lastStep);
+    const gatedCurrent = evidenceGate && !evidenceGate.shouldAdvance
+      ? this.buildEvidenceGatePlan(language, current, evidenceGate)
+      : current;
+    const upcoming = this.buildUpcoming(language, gatedCurrent, recent, Math.max(0, goal.remainingSteps - 1));
 
     return {
       language,
-      current,
+      current: gatedCurrent,
       upcoming,
       completedSteps: goal.completedSteps,
       targetSteps: goal.targetSteps,
@@ -61,6 +68,21 @@ class AdaptiveSessionPlannerService {
         : upcoming.length
           ? 'Bensop giữ bước hiện tại theo Orchestrator và chuẩn bị trước một vài hướng tiếp theo, nhưng sẽ tính lại sau mỗi kết quả.'
           : 'Bước tiếp theo sẽ được tính lại sau khi có evidence mới.',
+    };
+  }
+
+  private buildEvidenceGatePlan(language: LanguageCode, current: AdaptiveLearningPlan, gate: { status: string; label: string; reason: string; skill: AdaptiveMemorySkill }): AdaptiveLearningPlan {
+    const path = gate.skill === 'quiz'
+      ? '/luyen-tap'
+      : SKILL_PATHS[language][gate.skill];
+    return {
+      ...current,
+      phase: 'targeted-practice',
+      title: gate.status === 'insufficient' ? 'Củng cố trước khi chuyển bước' : 'Ổn định evidence · ' + LABELS[gate.skill],
+      description: gate.label,
+      reason: gate.reason,
+      path,
+      durationMinutes: gate.skill === 'vocabulary' || gate.skill === 'grammar' ? 6 : 8,
     };
   }
 
