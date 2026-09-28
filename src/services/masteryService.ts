@@ -77,6 +77,21 @@ const upsert = (records: MasteryRecord[], input: Omit<MasteryRecord,'mastery'|'a
     accuracy,
     confidence,
     evidenceLevel,
+    recoveryStatus,
+    recoveryCount: (previous?.recoveryCount || 0) + (previous?.recoveryStatus === 'relearning' && score >= 70 ? 1 : 0),
+    lastRecoveryAt: recoveryStatus === 'relearning' || recoveryStatus === 'recovered'
+      ? new Date().toISOString()
+      : previous?.lastRecoveryAt,
+    failureStreak: score < 70 ? (previous?.failureStreak || 0) + 1 : 0,
+    persistenceScore: Math.min(
+      100,
+      Math.round(
+        (score < 70 ? ((previous?.failureStreak || 0) + 1) * 15 : 0) +
+        (attempts >= 5 ? 20 : attempts * 4) +
+        (accuracy < 70 ? 25 : 0) +
+        (boundedMastery < 70 ? 40 : 0)
+      )
+    ),
   };
   if(index<0)return[...records,next];
   const clone=[...records];clone[index]=next;return clone;
