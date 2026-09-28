@@ -89,7 +89,7 @@ class AdaptiveLearningOrchestrator {
         description: goalProgress.label,
         reason: goalProgress.reason,
         path: language === 'zh' ? '/tieng-trung' : '/tieng-anh',
-        sourceQuestionId: continuity.recentActivities[0],
+        sourceQuestionId: undefined,
         durationMinutes: 0,
       };
     }
