@@ -5,9 +5,9 @@ export interface AISpeakingTrack {
   language: LanguageCode;
   title: string;
   description: string;
-  defaultLevel: 'B1',
-    levelOptions: ['A2','B1','B2','C1'],
-    displayPolicy: {
+  defaultLevel: string;
+  levelOptions: string[];
+  displayPolicy: {
     showPinyin: boolean;
     showVietnameseTranslation: boolean;
     translationLanguage: 'vi';
@@ -26,6 +26,8 @@ export const AI_SPEAKING_TRACKS: AISpeakingTrack[] = [
     language: 'en',
     title: 'English AI Speaking Room',
     description: 'A real conversation lab: speak naturally, let AI react to what you just said, and keep the situation moving.',
+    defaultLevel: 'B1',
+    levelOptions: ['A2','B1','B2','C1'],
     displayPolicy: { showPinyin: false, showVietnameseTranslation: true, translationLanguage: 'vi' },
     scenarios: [
       { id: 'en-cafe', title: 'At a café', context: 'You are ordering a drink and deciding between two options.', starter: 'Hi! Welcome. What would you like to order today?' },
@@ -46,6 +48,8 @@ export const AI_SPEAKING_TRACKS: AISpeakingTrack[] = [
     language: 'zh',
     title: '中文 AI 口语房',
     description: '真实中文对话实验室：你说一句，AI 听懂后自然回应，并用下一步情景继续带你练习。',
+    defaultLevel: 'HSK 3',
+    levelOptions: ['HSK 2','HSK 3','HSK 4','HSK 5'],
     displayPolicy: { showPinyin: true, showVietnameseTranslation: true, translationLanguage: 'vi' },
     scenarios: [
       { id: 'zh-cafe', title: '在咖啡店', context: '你在咖啡店点饮料，并决定要哪一种。', starter: '你好，欢迎光临。你今天想喝什么？' },
