@@ -60,6 +60,12 @@ const upsert = (records: MasteryRecord[], input: Omit<MasteryRecord,'mastery'|'a
     attempts < 3 || boundedMastery < 70 ? 'developing' :
     attempts < 5 || boundedMastery < 85 || accuracy < 80 ? 'established' :
     'mastered';
+  const recoveryStatus: MasteryRecord['recoveryStatus'] =
+    previous && previous.mastery >= 70 && score < 70
+      ? 'relearning'
+      : previous?.recoveryStatus === 'relearning' && score >= 70
+        ? 'recovered'
+        : previous?.recoveryStatus || 'none';
   const next:MasteryRecord={
     ...input,
     mastery:boundedMastery,
@@ -150,6 +156,12 @@ export const masteryService = {
     return this.getSnapshot(language).questions
       .filter(item=>item.mastery>=70 && (now-new Date(item.lastAttemptAt).getTime())/86400000>=14)
       .sort((a,b)=>new Date(a.lastAttemptAt).getTime()-new Date(b.lastAttemptAt).getTime())
+      .slice(0,limit);
+  },
+  getRecoveryRisks(limit=5,language?:LanguageCode):MasteryRecord[]{
+    return this.getSnapshot(language).questions
+      .filter(item=>item.recoveryStatus === 'relearning' || item.recoveryStatus === 'recovering')
+      .sort((a,b)=>a.mastery-b.mastery || (a.confidence??0)-(b.confidence??0))
       .slice(0,limit);
   }
 };
