@@ -46,6 +46,20 @@ export interface VocabularyPrerequisiteRecommendation {
   reason: string;
 }
 
+export type RecoveryReadiness = 'needs-relearning' | 'recovering' | 'ready-to-return';
+
+export interface RecoveryGate {
+  language: LanguageCode;
+  kind: PrerequisiteKind;
+  entityId: string;
+  label: string;
+  mastery: number;
+  confidence: number;
+  evidenceLevel?: string;
+  readiness: RecoveryReadiness;
+  reason: string;
+}
+
 export interface DeepPrerequisiteRecommendation {
   language: LanguageCode;
   sourceId: string;
@@ -232,6 +246,33 @@ class PrerequisiteService {
 
     walk(word, 1);
     return results;
+  }
+
+  getRecoveryReadiness(node: KnowledgePrerequisiteNode, language: LanguageCode): RecoveryGate {
+    const mastery = node.mastery;
+    const progress = node.kind === 'grammar'
+      ? grammarService.getProgress(node.conceptId, language)
+      : vocabularyService.getProgress(node.wordId, language);
+    const attempts = node.kind === 'grammar' ? progress.practiceCount : progress.reviewCount;
+    const confidence = Math.min(100, attempts * 20);
+    const readiness: RecoveryReadiness =
+      mastery < 50 || attempts < 2 ? 'needs-relearning' : mastery < 70 || attempts < 3 ? 'recovering' : 'ready-to-return';
+
+    return {
+      language,
+      kind: node.kind,
+      entityId: node.kind === 'grammar' ? node.conceptId : node.wordId,
+      label: node.kind === 'grammar' ? node.title : node.word,
+      mastery,
+      confidence,
+      evidenceLevel: attempts < 2 ? 'new' : mastery < 70 || attempts < 3 ? 'developing' : mastery < 85 ? 'established' : 'mastered',
+      readiness,
+      reason: readiness === 'needs-relearning'
+        ? 'Nền tảng vẫn yếu, cần học lại trước khi quay lên kiến thức cấp trên.'
+        : readiness === 'recovering'
+          ? 'Nền tảng đang phục hồi; cần thêm một lượt kiểm tra ổn định.'
+          : 'Nền tảng đã đạt ngưỡng để quay lại kiến thức cấp trên.'
+    };
   }
 
   getDeepRecommendation(

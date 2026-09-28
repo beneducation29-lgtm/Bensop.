@@ -38,7 +38,7 @@ class RootCauseService {
         title: 'Lùi một bước · củng cố kiến thức nền',
         description: prerequisite.prerequisite.title,
         path: prerequisite.path,
-        reason: prerequisite.reason,
+        reason: prerequisite.reason + ' ' + prerequisiteService.getRecoveryReadiness(prerequisite.prerequisite, language).reason,
         sourceQuestionId,
       };
     }
@@ -67,7 +67,7 @@ class RootCauseService {
         title: 'Lùi một bước · củng cố từ nền',
         description: prerequisite.prerequisite.word,
         path: prerequisite.path,
-        reason: prerequisite.reason,
+        reason: prerequisite.reason + ' ' + prerequisiteService.getRecoveryReadiness(prerequisite.prerequisite, language).reason,
         sourceQuestionId,
       };
     }
