@@ -4,23 +4,31 @@ import { grammarService } from './grammarService';
 import { vocabularyService } from './vocabularyService';
 import { quizService } from './quizService';
 
+export type PrerequisiteKind = 'grammar' | 'vocabulary';
+
 export interface PrerequisiteNode {
+  kind: 'grammar';
   conceptId: string;
   slug: string;
   title: string;
   level: string;
   mastery: number;
   isWeak: boolean;
+  depth: number;
 }
 
 export interface VocabularyPrerequisiteNode {
+  kind: 'vocabulary';
   wordId: string;
   slug: string;
   word: string;
   level: string;
   mastery: number;
   isWeak: boolean;
+  depth: number;
 }
+
+export type KnowledgePrerequisiteNode = PrerequisiteNode | VocabularyPrerequisiteNode;
 
 export interface PrerequisiteRecommendation {
   language: LanguageCode;
@@ -35,6 +43,16 @@ export interface VocabularyPrerequisiteRecommendation {
   sourceWordId: string;
   prerequisite: VocabularyPrerequisiteNode;
   path: string;
+  reason: string;
+}
+
+export interface DeepPrerequisiteRecommendation {
+  language: LanguageCode;
+  sourceId: string;
+  sourceKind: PrerequisiteKind;
+  prerequisite: KnowledgePrerequisiteNode;
+  path: string;
+  depth: number;
   reason: string;
 }
 
@@ -58,19 +76,18 @@ class PrerequisiteService {
       .map((prerequisite) => {
         const progress = grammarService.getProgress(prerequisite.id, language);
         return {
+          kind: 'grammar' as const,
           conceptId: prerequisite.id,
           slug: prerequisite.slug,
           title: prerequisite.title,
           level: prerequisite.level,
           mastery: progress.masteryScore,
           isWeak: progress.masteryScore < 70,
+          depth: 1,
         };
       })
       .filter((item) => item.isWeak)
-      .sort((a, b) => {
-        const levelDelta = (levelRank[a.level] || 99) - (levelRank[b.level] || 99);
-        return a.mastery - b.mastery || levelDelta;
-      })
+      .sort((a, b) => a.mastery - b.mastery || (levelRank[a.level] || 99) - (levelRank[b.level] || 99))
       .slice(0, limit);
   }
 
@@ -114,19 +131,18 @@ class PrerequisiteService {
       .map((prerequisite) => {
         const progress = vocabularyService.getProgress(prerequisite.id, language);
         return {
+          kind: 'vocabulary' as const,
           wordId: prerequisite.id,
           slug: prerequisite.slug,
           word: prerequisite.word,
           level: prerequisite.level,
           mastery: progress.masteryScore,
           isWeak: progress.masteryScore < 70,
+          depth: 1,
         };
       })
       .filter((item) => item.isWeak)
-      .sort((a, b) => {
-        const levelDelta = (levelRank[a.level] || 99) - (levelRank[b.level] || 99);
-        return a.mastery - b.mastery || levelDelta;
-      })
+      .sort((a, b) => a.mastery - b.mastery || (levelRank[a.level] || 99) - (levelRank[b.level] || 99))
       .slice(0, limit);
   }
 
@@ -143,6 +159,111 @@ class PrerequisiteService {
       prerequisite,
       path: '/quiz/' + quizService.createQuizFromVocabulary(target),
       reason: 'Bensop thấy một từ nền liên quan đang yếu hơn, nên củng cố từ đó trước khi quay lại từ hiện tại.',
+    };
+  }
+
+  getDeepGrammarPrerequisites(
+    concept: GrammarConcept,
+    language: LanguageCode,
+    maxDepth = 3,
+  ): PrerequisiteNode[] {
+    const results: PrerequisiteNode[] = [];
+    const visited = new Set<string>();
+
+    const walk = (current: GrammarConcept, depth: number) => {
+      if (depth > maxDepth || current.language !== language) return;
+
+      for (const prerequisite of this.getPrerequisites(current, language)) {
+        if (visited.has(prerequisite.id)) continue;
+        visited.add(prerequisite.id);
+
+        const progress = grammarService.getProgress(prerequisite.id, language);
+        const node: PrerequisiteNode = {
+          kind: 'grammar',
+          conceptId: prerequisite.id,
+          slug: prerequisite.slug,
+          title: prerequisite.title,
+          level: prerequisite.level,
+          mastery: progress.masteryScore,
+          isWeak: progress.masteryScore < 70,
+          depth,
+        };
+
+        results.push(node);
+        walk(prerequisite, depth + 1);
+      }
+    };
+
+    walk(concept, 1);
+    return results;
+  }
+
+  getDeepVocabularyPrerequisites(
+    word: VocabularyWord,
+    language: LanguageCode,
+    maxDepth = 3,
+  ): VocabularyPrerequisiteNode[] {
+    const results: VocabularyPrerequisiteNode[] = [];
+    const visited = new Set<string>();
+
+    const walk = (current: VocabularyWord, depth: number) => {
+      if (depth > maxDepth || current.language !== language) return;
+
+      for (const prerequisite of this.getVocabularyPrerequisites(current, language)) {
+        if (visited.has(prerequisite.id)) continue;
+        visited.add(prerequisite.id);
+
+        const progress = vocabularyService.getProgress(prerequisite.id, language);
+        const node: VocabularyPrerequisiteNode = {
+          kind: 'vocabulary',
+          wordId: prerequisite.id,
+          slug: prerequisite.slug,
+          word: prerequisite.word,
+          level: prerequisite.level,
+          mastery: progress.masteryScore,
+          isWeak: progress.masteryScore < 70,
+          depth,
+        };
+
+        results.push(node);
+        walk(prerequisite, depth + 1);
+      }
+    };
+
+    walk(word, 1);
+    return results;
+  }
+
+  getDeepRecommendation(
+    source: GrammarConcept | VocabularyWord,
+    language: LanguageCode,
+  ): DeepPrerequisiteRecommendation | undefined {
+    if (source.language !== language) return undefined;
+
+    const nodes = 'id' in source && 'slug' in source && 'title' in source
+      ? this.getDeepGrammarPrerequisites(source as GrammarConcept, language)
+      : this.getDeepVocabularyPrerequisites(source as VocabularyWord, language);
+
+    const weak = nodes
+      .filter((node) => node.isWeak)
+      .sort((a, b) => a.mastery - b.mastery || a.depth - b.depth)[0];
+
+    if (!weak) return undefined;
+
+    const path = weak.kind === 'grammar'
+      ? '/quiz/' + quizService.createQuizFromGrammar(grammarService.getConceptById(weak.conceptId)!)
+      : '/quiz/' + quizService.createQuizFromVocabulary(vocabularyService.getWordById(weak.wordId)!);
+
+    return {
+      language,
+      sourceId: 'id' in source ? source.id : source.id,
+      sourceKind: weak.kind,
+      prerequisite: weak,
+      path,
+      depth: weak.depth,
+      reason: weak.depth > 1
+        ? 'Bensop lần theo nhiều tầng kiến thức và tìm thấy một nền tảng sâu hơn đang yếu.'
+        : 'Bensop tìm thấy kiến thức nền liên quan đang yếu.',
     };
   }
 }
