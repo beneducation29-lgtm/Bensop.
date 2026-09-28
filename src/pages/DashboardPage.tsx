@@ -171,18 +171,18 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
 
             <div className="flex flex-col sm:flex-row lg:flex-col gap-3 shrink-0">
               <button
-                onClick={() => onNavigate('/tieng-anh/vocabulary/practice')}
+                onClick={() => onNavigate(learningLanguage === 'zh' ? '/tieng-trung/vocabulary/practice' : '/tieng-anh/vocabulary/practice')}
                 className="px-8 py-4 bg-[#D9FF3F] hover:bg-[#cbf532] text-black font-mono font-extrabold text-xs tracking-tight rounded-xl transition-all cursor-pointer flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(217,255,63,0.25)]"
               >
-                <span>START TODAY'S SESSION</span>
+                <span>{learningLanguage === 'zh' ? 'BẮT ĐẦU PHIÊN TIẾNG TRUNG' : "START TODAY'S SESSION"}</span>
                 <ArrowRight className="w-4 h-4 text-black" />
               </button>
               <button
-                onClick={() => onNavigate('/tieng-anh/vocabulary/review')}
+                onClick={() => onNavigate(learningLanguage === 'zh' ? '/tieng-trung/vocabulary/review' : '/tieng-anh/vocabulary/review')}
                 className="px-6 py-3 bg-[#141414] hover:bg-[#202020] text-zinc-300 font-mono text-xs rounded-xl border border-[#262626] transition-all flex items-center justify-center gap-2 cursor-pointer"
               >
                 <RotateCcw className="w-3.5 h-3.5" />
-                <span>XEM TỪ CẦN ÔN TẬP</span>
+                <span>{learningLanguage === 'zh' ? 'XEM TỪ TIẾNG TRUNG CẦN ÔN' : 'XEM TỪ CẦN ÔN TẬP'}</span>
               </button>
             </div>
           </div>
