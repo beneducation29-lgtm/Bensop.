@@ -5,6 +5,7 @@ import { QUESTIONS_BANK } from '../data/questions';
 import { QuestionRenderer } from '../components/quiz/QuestionRenderer';
 import { calculateQuizResult } from '../lib/quiz/scoring';
 import { quizSessionStorage } from '../services/quizSessionStorage';
+import { quizLearningService } from '../services/quizLearningService';
 import {
   Clock,
   Flag,
@@ -145,6 +146,7 @@ export const QuizRunnerPage: React.FC<QuizRunnerPageProps> = ({
     );
 
     quizSessionStorage.saveResult(result);
+    quizLearningService.recordResult(result);
     quizSessionStorage.clearActiveSession();
     onFinishQuiz(result);
   };
