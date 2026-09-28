@@ -1,5 +1,6 @@
 import { LanguageCode } from '../types/vocabulary';
 import { MasterySnapshot } from '../types/mastery';
+import { masteryService } from './masteryService';
 import { AdaptiveMemorySkill } from './adaptiveSessionMemoryService';
 
 export interface LearningEvidenceRecord {
@@ -10,6 +11,7 @@ export interface LearningEvidenceRecord {
   activityId: string;
   score: number;
   mastery: number;
+  overallMastery: number;
   masteryDelta: number;
   confidence: number;
   evidenceLevel?: string;
@@ -102,6 +104,7 @@ class AdaptiveLearningHistoryService {
       activityId: input.activityId,
       score: Math.max(0, Math.min(100, Math.round(input.score))),
       mastery,
+      overallMastery: Math.round(snapshot.overall),
       masteryDelta,
       confidence,
       evidenceLevel: snapshotEvidence(snapshot, input.skill),
@@ -134,9 +137,9 @@ class AdaptiveLearningHistoryService {
       : 0;
     const latest = recentWindow[0];
     const oldest = recentWindow[recentWindow.length - 1];
-    const mastery = latest?.mastery ?? masteryService.getSnapshot(language).overall;
+    const mastery = latest?.overallMastery ?? masteryService.getSnapshot(language).overall;
     const masteryDelta = latest && oldest
-      ? Math.round((latest.mastery - oldest.mastery) * 10) / 10
+      ? Math.round((latest.overallMastery - oldest.overallMastery) * 10) / 10
       : 0;
 
     return {
@@ -147,7 +150,11 @@ class AdaptiveLearningHistoryService {
       mastery: Math.round(mastery),
       masteryDelta,
       masteryChanges: recentWindow.filter((item) => item.masteryDelta !== 0).length,
-      evidenceGains: recentWindow.filter((item) => item.evidenceLevel === 'established' || item.evidenceLevel === 'mastered').length,
+      evidenceGains: recentWindow.filter((item, index) => {
+        const previous = recentWindow[index + 1];
+        return (item.evidenceLevel === 'established' || item.evidenceLevel === 'mastered') &&
+          previous?.evidenceLevel !== 'established' && previous?.evidenceLevel !== 'mastered';
+      }).length,
       recent: recentWindow.slice(0, 6),
     };
   }
@@ -164,7 +171,5 @@ class AdaptiveLearningHistoryService {
     }
   }
 }
-
-import { masteryService } from './masteryService';
 
 export const adaptiveLearningHistoryService = new AdaptiveLearningHistoryService();
