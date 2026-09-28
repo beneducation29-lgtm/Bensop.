@@ -17,7 +17,6 @@ export function SpeakingLabPage({language,onNavigate}:P){
  const list=useMemo(()=>speakingService.getActivities(language,{level,search:q}),[language,level,q]);
  const levels=Array.from(new Set(speakingService.getAllActivities(language).map(x=>x.level)));
  const track=AI_SPEAKING_TRACKS.find(x=>x.language===language)!;
- if(!track) return null;
  const[mode,setMode]=useState<AISpeakingMode>('role-play');
  const[scenarioId,setScenarioId]=useState('');
  const[session,setSession]=useState(()=>aiSpeakingService.getSession(language));
