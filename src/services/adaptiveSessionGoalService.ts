@@ -112,7 +112,12 @@ class AdaptiveSessionGoalService {
   }
 
   getProgress(language: LanguageCode): AdaptiveSessionGoalProgress {
-    const goal = this.getOrCreate(language);
+    // Preserve a completed goal long enough for the orchestrator/planner to surface
+    // the session-complete state. A new goal is created only when the next activity
+    // is actually recorded through recordStep().
+    const existing = this.read(language);
+    const goal = existing || this.create(language);
+    if (!existing) this.write(goal);
     const uniqueSkills = new Set(goal.completedSteps.map((item) => item.skill)).size;
     const averageScore = goal.completedSteps.length
       ? Math.round(goal.completedSteps.reduce((sum, item) => sum + item.score, 0) / goal.completedSteps.length)
