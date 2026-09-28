@@ -60,6 +60,7 @@ export interface SpacedReviewItem {
   path?: string;
   language?: 'en' | 'zh';
   intervalDays: 1 | 3 | 7;
+  reviewQuality?: 'again' | 'hard' | 'good' | 'easy';
   scheduledAt: string;
   dueAt: string;
   completedAt?: string;
