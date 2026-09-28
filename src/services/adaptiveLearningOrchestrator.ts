@@ -7,6 +7,7 @@ import { quizService } from './quizService';
 import { adaptiveSessionMemoryService, AdaptiveMemorySkill } from './adaptiveSessionMemoryService';
 import { crossSkillMasteryBalanceService } from './crossSkillMasteryBalanceService';
 import { adaptiveSessionGoalService } from './adaptiveSessionGoalService';
+import { dailyLearningContinuityService } from './dailyLearningContinuityService';
 
 export type AdaptivePhase =
   | 'review-due'
@@ -77,6 +78,7 @@ class AdaptiveLearningOrchestrator {
     }
 
     const goalProgress = adaptiveSessionGoalService.getProgress(language);
+    const continuity = dailyLearningContinuityService.syncProgress(goalProgress);
     if (goalProgress.status === 'completed') {
       return {
         language,
@@ -86,13 +88,17 @@ class AdaptiveLearningOrchestrator {
         description: goalProgress.label,
         reason: goalProgress.reason,
         path: language === 'zh' ? '/tieng-trung' : '/tieng-anh',
+        sourceQuestionId: continuity.recentActivities[0],
         durationMinutes: 0,
       };
     }
 
+    const continuityFocus = continuity.today.completedSteps > 0
+      ? continuity.nextFocus
+      : '';
     const balance = crossSkillMasteryBalanceService.getDecision(language);
     if ((state.recommendedAction === 'challenge' || state.recommendedAction === 'continue') && balance.shouldSwitch && balance.skill) {
-      return this.buildBalancedSkillPlan(language, state, balance.skill, balance.reason);
+      return this.buildBalancedSkillPlan(language, state, balance.skill, continuityFocus ? continuityFocus + ' ' + balance.reason : balance.reason);
     }
 
     if (state.recommendedAction === 'challenge') {
