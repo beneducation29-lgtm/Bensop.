@@ -32,7 +32,9 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
   const [activeInterest, setActiveInterest] = useState<'tieng-anh' | 'tieng-trung' | 'phat-trien-ban-than' | 'suc-khoe-doi-song'>('tieng-anh');
 
   const recommendations = getRecommendations(activeInterest);
-  const dueReviews = spacedReviewService.getDue().slice(0, 5);
+  const dueReviews = activeInterest === 'tieng-anh' || activeInterest === 'tieng-trung'
+    ? spacedReviewService.getDue(new Date(), activeInterest === 'tieng-trung' ? 'zh' : 'en').slice(0, 5)
+    : [];
   const masterySnapshot = masteryService.getSnapshot();
   const nextLearningActions = recommendationService.getNextLearningActions(3);
   const adaptiveSession = adaptiveSessionService.buildSession();
@@ -183,6 +185,38 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
             </div>
           </div>
         </div>
+
+        {/* SPACED REVIEW DUE */}
+        {dueReviews.length > 0 && (
+          <section className="mb-12 rounded-3xl border border-amber-500/20 bg-[#0D0D0D] p-6 sm:p-8">
+            <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+              <div>
+                <div className="text-[10px] font-mono font-bold tracking-[0.18em] text-amber-300">SPACED REVIEW · ĐẾN HẠN</div>
+                <h2 className="mt-2 text-2xl sm:text-3xl font-black uppercase text-white">ÔN LẠI ĐÚNG LÚC.</h2>
+                <p className="mt-2 max-w-2xl text-xs leading-relaxed text-[#777]">Những nội dung này đã đến thời điểm ôn lại theo kết quả luyện tập trước đó.</p>
+              </div>
+              <span className="rounded-xl border border-[#252525] bg-[#121212] px-4 py-2 text-[10px] font-mono text-[#888]">{dueReviews.length} NỘI DUNG ĐẾN HẠN</span>
+            </div>
+            <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
+              {dueReviews.map((item) => (
+                <button
+                  key={item.id}
+                  onClick={() => onNavigate(item.path || '/luyen-tap')}
+                  className="rounded-2xl border border-[#222] bg-[#101010] p-5 text-left transition-all hover:border-amber-400/50"
+                >
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="text-[9px] font-mono font-bold tracking-widest text-amber-300">{item.reviewType.toUpperCase()}</span>
+                    <span className="text-[9px] font-mono text-[#666]">+{item.intervalDays} NGÀY</span>
+                  </div>
+                  <h3 className="mt-3 text-sm font-black uppercase text-white">{item.title || item.quizSlug || item.lessonSlug || item.sourceId}</h3>
+                  <div className="mt-4 flex items-center justify-between border-t border-[#1E1E1E] pt-3 text-[10px] font-mono font-bold text-white">
+                    <span>ÔN NGAY</span><ArrowRight className="h-3.5 w-3.5 text-amber-300" />
+                  </div>
+                </button>
+              ))}
+            </div>
+          </section>
+        )}
 
         {/* NEXT 3 LEARNING ACTIONS */}
         <section className="mb-12 rounded-3xl border border-[#D9FF3F]/20 bg-[#0D0D0D] p-6 sm:p-8">

@@ -235,7 +235,7 @@ export const QUIZ_MODELS: QuizModel[] = [
     type: 'daily',
     skills: ['Vocabulary', 'Grammar', 'Reading'],
     topics: ['Daily', 'Reflex', 'Challenge'],
-    questionIds: ['en-mc-02', 'zh-mc-01', 'growth-mc-01', 'health-tf-01', 'en-fb-01'],
+    questionIds: ['en-mc-02', 'en-mc-03', 'en-fb-01', 'en-tf-01', 'en-lis-01'],
     questionCount: 5,
     difficulty: 'Intermediate',
     duration: 5,
