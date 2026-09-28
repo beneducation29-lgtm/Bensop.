@@ -7,6 +7,7 @@ import { quizService } from './quizService';
 import { LearnerActivitySkill } from './learnerActivityService';
 import { rootCauseService } from './rootCauseService';
 import { learningStateService, LearningStateDecision } from './learningStateService';
+import { adaptiveLearningOrchestrator } from './adaptiveLearningOrchestrator';
 
 export interface AdaptiveSessionItem {
   id: string;
@@ -78,6 +79,7 @@ class AdaptiveSessionService {
   buildSession(language: LanguageCode = 'en'): AdaptiveSession {
     const profile = learnerProfileService.getSnapshot(language);
     const learningState = learningStateService.getPriorityDecision(language);
+    const orchestration = adaptiveLearningOrchestrator.buildPlan(language);
     const due = spacedReviewService.getDue(new Date(), language);
     const candidates = recommendationService.getNextLearningActions(8, language);
     const items: AdaptiveSessionItem[] = [];
@@ -91,6 +93,19 @@ class AdaptiveSessionService {
     };
 
     const dueQuizPaths = new Set<string>();
+    const orchestrationPath = orchestration.path;
+    add({
+      type: orchestration.phase === 'review-due' ? 'review' : orchestration.phase === 'adaptive-quiz' ? 'quiz' : 'weakness',
+      skill: orchestration.state.source?.skill || 'adaptive',
+      skillKey: orchestration.state.source?.skill === 'grammar' || orchestration.state.source?.skill === 'vocabulary' ? orchestration.state.source.skill : 'quiz',
+      language,
+      title: orchestration.title,
+      description: orchestration.description,
+      path: orchestrationPath,
+      durationMinutes: orchestration.durationMinutes,
+      reason: orchestration.reason,
+    });
+
 
     due.slice(0, 2).forEach((review, index) => {
       const path = review.quizSlug
