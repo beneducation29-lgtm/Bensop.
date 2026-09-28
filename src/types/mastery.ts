@@ -22,6 +22,8 @@ export interface MasteryRecord {
   recoveryStatus?: 'none' | 'recovering' | 'recovered' | 'relearning';
   recoveryCount?: number;
   lastRecoveryAt?: string;
+  failureStreak?: number;
+  persistenceScore?: number;
 }
 
 export interface MasterySnapshot {
