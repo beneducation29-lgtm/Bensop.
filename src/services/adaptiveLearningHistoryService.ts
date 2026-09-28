@@ -151,7 +151,7 @@ class AdaptiveLearningHistoryService {
       masteryDelta,
       masteryChanges: recentWindow.filter((item) => item.masteryDelta !== 0).length,
       evidenceGains: recentWindow.filter((item, index) => {
-        const previous = recentWindow[index + 1];
+        const previous = recentWindow.slice(index + 1).find((candidate) => candidate.skill === item.skill);
         return (item.evidenceLevel === 'established' || item.evidenceLevel === 'mastered') &&
           previous?.evidenceLevel !== 'established' && previous?.evidenceLevel !== 'mastered';
       }).length,
