@@ -95,6 +95,7 @@ class AdaptiveSessionService {
     });
 
     const forgettingRisk = masteryService.getForgettingRisks(1, language)[0];
+    const persistentWeakness = masteryService.getPersistentWeaknesses(1, language)[0];
     const weakQuestion = masteryService.getWeakQuestions(1, language)[0];
     if (weakQuestion) {
       const adaptiveQuizPath = '/quiz/' + quizService.createAdaptiveQuiz(language, 10);
