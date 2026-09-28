@@ -132,7 +132,9 @@ class QuizService {
     const mastery = masteryService.getSnapshot(language);
     const targetSize = Math.max(5, Math.min(limit, 15));
     const languageQuestions = QUESTIONS_BANK.filter((q) => q.categoryId === categoryId);
+    const persistentRecords = masteryService.getPersistentWeaknesses(Math.max(targetSize, 6), language);
     const weakRecords = masteryService.getWeakQuestions(Math.max(targetSize * 2, 10), language);
+    const persistentIds = new Set(persistentRecords.map((q) => q.entityId));
     const weakIds = new Set(weakRecords.map((q) => q.entityId));
     const weakQuestions = languageQuestions
       .filter((q) => weakIds.has(q.id))
@@ -149,7 +151,7 @@ class QuizService {
       .map((topic) => topic.entityId);
     const weakTopicSet = new Set(weakTopicIds);
 
-    // First pass: weakest questions, while keeping topic diversity.
+    // First pass: persistent weaknesses get priority because they recur across sessions.
     const selectedQuestions: typeof languageQuestions = [];
     const selectedIds = new Set<string>();
     const topicCounts = new Map<string, number>();
@@ -163,9 +165,12 @@ class QuizService {
       return true;
     };
 
-    weakQuestions.forEach((question) => {
-      if (selectedQuestions.length < targetSize) addQuestion(question, 3);
-    });
+    weakQuestions
+      .slice()
+      .sort((a, b) => Number(persistentIds.has(b.id)) - Number(persistentIds.has(a.id)))
+      .forEach((question) => {
+        if (selectedQuestions.length < targetSize) addQuestion(question, persistentIds.has(question.id) ? 3 : 2);
+      });
 
     // Second pass: fill from the weakest topics before falling back to general practice.
     languageQuestions
@@ -197,8 +202,8 @@ class QuizService {
       categoryId,
       categoryName: language === 'zh' ? 'TIẾNG TRUNG' : 'TIẾNG ANH',
       description: language === 'zh'
-        ? 'Bài luyện được chọn từ những câu và chủ đề tiếng Trung bạn đang cần củng cố.'
-        : 'Bài luyện được chọn từ những câu và chủ đề tiếng Anh bạn đang cần củng cố.',
+        ? 'Bài luyện ưu tiên các câu và chủ đề tiếng Trung có dấu hiệu yếu lặp lại qua nhiều phiên.'
+        : 'Bài luyện ưu tiên các câu và chủ đề tiếng Anh có dấu hiệu yếu lặp lại qua nhiều phiên.',
       type: 'practice',
       skills: Array.from(new Set(selected.map((q) => q.skill))),
       topics: Array.from(new Set(selected.map((q) => q.topicId))),
