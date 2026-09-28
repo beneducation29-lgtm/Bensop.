@@ -291,6 +291,36 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
               </button>
             </div>
           </div>
+          {adaptiveSession.priorityFocus && (
+            <div className="mb-5 rounded-2xl border border-amber-400/25 bg-[#101010] p-5">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                <div>
+                  <div className="text-[9px] font-mono font-bold tracking-[0.18em] text-amber-300">
+                    ƯU TIÊN KIẾN THỨC NỀN
+                  </div>
+                  <h3 className="mt-2 text-sm font-black uppercase text-white">
+                    {adaptiveSession.priorityFocus.title}
+                  </h3>
+                  <p className="mt-1 text-xs text-[#888]">
+                    {adaptiveSession.priorityFocus.description}
+                  </p>
+                </div>
+                <button
+                  onClick={() => onNavigate(adaptiveSession.priorityFocus!.path)}
+                  className="shrink-0 rounded-lg border border-amber-300/30 px-3 py-2 text-[9px] font-mono font-bold text-amber-300 hover:bg-amber-300/10"
+                >
+                  SỬA NỀN →
+                </button>
+              </div>
+              <div className="mt-4 border-t border-[#1D1D1D] pt-3">
+                <div className="text-[9px] font-mono text-[#555]">VÌ SAO BƯỚC NÀY ĐƯỢC ƯU TIÊN?</div>
+                <p className="mt-1 text-[10px] leading-relaxed text-[#888]">
+                  {adaptiveSession.priorityFocus.reason}
+                </p>
+              </div>
+            </div>
+          )}
+
           <div className="grid gap-3 md:grid-cols-2">
             {adaptiveSession.items.map((item, index) => (
               <button
