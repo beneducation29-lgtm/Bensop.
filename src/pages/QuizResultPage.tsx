@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { QuizResult } from '../types/quiz';
 import { quizSessionStorage } from '../services/quizSessionStorage';
+import { adaptiveSessionExecutionService } from '../services/adaptiveSessionExecutionService';
 import { QuestionRenderer } from '../components/quiz/QuestionRenderer';
 import {
   CheckCircle2,
@@ -44,6 +45,10 @@ export const QuizResultPage: React.FC<QuizResultPageProps> = ({
 
   const [activeTab, setActiveTab] = useState<'all' | 'wrong' | 'correct'>('all');
   const [copied, setCopied] = useState(false);
+
+  const nextAdaptivePlan = result
+    ? adaptiveSessionExecutionService.getNextPlan(result.categoryId === 'tieng-trung' ? 'zh' : 'en')
+    : undefined;
 
   if (!result) {
     return (
@@ -141,6 +146,29 @@ export const QuizResultPage: React.FC<QuizResultPageProps> = ({
               </p>
 
               {/* Action Buttons */}
+              {nextAdaptivePlan && (
+                <div className="w-full p-4 rounded-2xl bg-[#11150B] border border-[#D9FF3F]/25">
+                  <div className="text-[10px] font-mono text-[#D9FF3F] tracking-widest uppercase mb-1">
+                    BƯỚC TIẾP THEO TỪ ADAPTIVE ORCHESTRATOR
+                  </div>
+                  <div className="text-base font-bold text-white">{nextAdaptivePlan.title}</div>
+                  <p className="text-xs text-[#999] mt-1">{nextAdaptivePlan.description}</p>
+                  <p className="text-[11px] text-[#777] mt-2 font-mono">{nextAdaptivePlan.reason}</p>
+                  <button
+                    onClick={() => onNavigate(nextAdaptivePlan.path)}
+                    className="mt-3 px-4 py-2 rounded-lg bg-[#D9FF3F] text-black text-xs font-extrabold font-mono cursor-pointer"
+                  >
+                    {nextAdaptivePlan.phase === 'return-to-parent'
+                      ? 'QUAY LẠI KIẾN THỨC CẤP TRÊN →'
+                      : nextAdaptivePlan.phase === 'recover-foundation'
+                        ? 'PHỤC HỒI KIẾN THỨC NỀN →'
+                        : nextAdaptivePlan.phase === 'review-due'
+                          ? 'ÔN NGAY →'
+                          : 'TIẾP TỤC PHIÊN HỌC →'}
+                  </button>
+                </div>
+              )}
+
               <div className="flex flex-wrap items-center gap-3 pt-4">
                 <button
                   onClick={() => onRetakeQuiz(result.quizSlug)}
