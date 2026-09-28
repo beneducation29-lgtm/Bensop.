@@ -147,7 +147,7 @@ export const CHINESE_LISTENING_LESSONS: ListeningLesson[] = [
     tags: ['机场', '登机', '行李', '旅行'],
     vocabularyIds: [],
     grammarIds: [],
-    questionIds: ['zh-lq-03'],
+    questionIds: ['zh-lq-03', 'zh-lq-04'],
     transcript: `地勤人员：先生您好，请出示您的护照和机票信息。
 张伟：您好，这是我的护照。我乘坐飞往上海的MU5186次航班。
 地勤人员：好的，张先生。请问您有几件托运行李？
@@ -177,7 +177,7 @@ export const CHINESE_LISTENING_LESSONS: ListeningLesson[] = [
     tags: ['工作', '职场', '项目', '同事'],
     vocabularyIds: [],
     grammarIds: [],
-    questionIds: [],
+    questionIds: ['zh-lq-05', 'zh-lq-06'],
     transcript: `王芳：陈明，你现在方便吗？我想请教你一个关于季度数据报表的问题。
 陈明：没问题，你说吧。是哪个模块的数据有疑问？
 王芳：就是用户留存率这一块。我发现采用新的统计口径后，次月留存率上升了百分之五。
@@ -203,7 +203,7 @@ export const CHINESE_LISTENING_LESSONS: ListeningLesson[] = [
     tags: ['买菜', '蔬菜', '价格', '日常'],
     vocabularyIds: [],
     grammarIds: [],
-    questionIds: [],
+    questionIds: ['zh-lq-07', 'zh-lq-08'],
     transcript: `顾客：阿姨，西红柿多少钱一斤？
 摊主：三块五一斤，非常新鲜，今天早上刚摘的！
 顾客：给我称两斤吧。还有黄瓜怎么卖？
@@ -231,7 +231,7 @@ export const CHINESE_LISTENING_LESSONS: ListeningLesson[] = [
     tags: ['出租车', '问路', '上海', '交通'],
     vocabularyIds: [],
     grammarIds: [],
-    questionIds: [],
+    questionIds: ['zh-lq-09', 'zh-lq-10'],
     transcript: `乘客：师傅，去外滩和平饭店，大概需要多长时间？
 司机：现在正是下班晚高峰，延安高架路有点堵，差不多得四十分钟。
 乘客：师傅，那走地面道路会不会快一些？
@@ -259,7 +259,7 @@ export const CHINESE_LISTENING_LESSONS: ListeningLesson[] = [
     tags: ['医院', '健康', '感冒', '看病'],
     vocabularyIds: [],
     grammarIds: [],
-    questionIds: [],
+    questionIds: ['zh-lq-11', 'zh-lq-12'],
     transcript: `医生：请坐。哪里不舒服？
 患者：医生，我这两天咳嗽得厉害，喉咙也疼，量体温有点低烧，三十七度八。
 医生：张开嘴巴，我看看咽喉。咽喉部位明显充血红肿。有痰吗？
@@ -289,7 +289,7 @@ export const CHINESE_LISTENING_LESSONS: ListeningLesson[] = [
     tags: ['租房', '合同', '房东', '生活'],
     vocabularyIds: [],
     grammarIds: [],
-    questionIds: [],
+    questionIds: ['zh-lq-13', 'zh-lq-14'],
     transcript: `房东：小李，合同我都打印好了。租期是一年，押一付三，每月租金三千八百元。
 租客：阿姨，请问宽带和物业费包含在房租里吗？
 房东：物业费是由我来交的，宽带已经装好了千兆光纤，你每个月分摊五十块钱就可以。
@@ -317,7 +317,7 @@ export const CHINESE_LISTENING_LESSONS: ListeningLesson[] = [
     tags: ['周末', '爬山', '朋友', '计划'],
     vocabularyIds: [],
     grammarIds: [],
-    questionIds: [],
+    questionIds: ['zh-lq-15', 'zh-lq-16'],
     transcript: `小明：小雨，这个周六天气预报说晴空万里，我们要不要去香山看红叶？
 小雨：好主意！不过周末去香山的人肯定特别多，我们最好早点出发。
 小明：那我们周六早上七点在地铁站集合，坐西郊线直达，怎么样？
@@ -343,7 +343,7 @@ export const CHINESE_LISTENING_LESSONS: ListeningLesson[] = [
     tags: ['大学', '选课', '学术', '教授'],
     vocabularyIds: [],
     grammarIds: [],
-    questionIds: [],
+    questionIds: ['zh-lq-17', 'zh-lq-18'],
     transcript: `学生：刘教授您好，打扰您了。我是软件工程专业大二的学生，想咨询您下学期的《人工智能前沿算法》研讨课。
 教授：请进。这门课程要求先修过离散数学与高等概率统计，并且需要具备扎实的Python编程基础。
 学生：这些先修课程我都已经修读完毕，期末成绩都在九十分以上。
@@ -369,7 +369,7 @@ export const CHINESE_LISTENING_LESSONS: ListeningLesson[] = [
     tags: ['春节', '家庭', '年夜饭', '饺子'],
     vocabularyIds: [],
     grammarIds: [],
-    questionIds: [],
+    questionIds: ['zh-lq-19', 'zh-lq-20'],
     transcript: `奶奶：明亮，快进屋暖和暖和，外面下大雪了吧？
 明亮：奶奶新年好！外面雪下得挺大，不过路上很顺畅。爸妈在厨房包饺子吗？
 奶奶：对，你妈妈正拌三鲜馅呢，你爸爸在擀饺子皮。
@@ -395,7 +395,7 @@ export const CHINESE_LISTENING_LESSONS: ListeningLesson[] = [
     tags: ['天气', '降温', '预报', '穿衣'],
     vocabularyIds: [],
     grammarIds: [],
-    questionIds: [],
+    questionIds: ['zh-lq-21', 'zh-lq-22'],
     transcript: `播音员：各位听众朋友早上好，这里是中央气象台早间天气播报。
 受强冷空气南下影响，华北地区今天傍晚将迎来大幅度降温，伴随四到五级偏北风。
 夜间最低气温将骤降至零下五度。提醒广大市民朋友添衣保暖，谨防感冒。

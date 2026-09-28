@@ -8,6 +8,11 @@ import { Flame, CheckCircle, Award, Clock, ArrowRight, Play, BookOpen, Bookmark,
 import { quizSessionStorage } from '../services/quizSessionStorage';
 import { learningProgressService } from '../services/learningProgressService';
 import { recommendationService } from '../services/recommendationService';
+import { spacedReviewService } from '../services/spacedReviewService';
+import { LESSONS } from '../data/lessons';
+import { masteryService } from '../services/masteryService';
+import { learnerProfileService } from '../services/learnerProfileService';
+import { adaptiveSessionService } from '../services/adaptiveSessionService';
 
 interface DashboardPageProps {
   user: UserProgress;
@@ -27,6 +32,12 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
   const [activeInterest, setActiveInterest] = useState<'tieng-anh' | 'tieng-trung' | 'phat-trien-ban-than' | 'suc-khoe-doi-song'>('tieng-anh');
 
   const recommendations = getRecommendations(activeInterest);
+  const dueReviews = spacedReviewService.getDue().slice(0, 5);
+  const masterySnapshot = masteryService.getSnapshot();
+  const nextLearningActions = recommendationService.getNextLearningActions(3);
+  const adaptiveSession = adaptiveSessionService.buildSession();
+  const learningSkillSnapshot = recommendationService.getLearningSkillSnapshot();
+  const learnerProfile = learnerProfileService.getSnapshot();
 
   const handleOpenRecommended = (slug: string, type: 'article' | 'course') => {
     if (type === 'article') {
@@ -172,6 +183,225 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
             </div>
           </div>
         </div>
+
+        {/* NEXT 3 LEARNING ACTIONS */}
+        <section className="mb-12 rounded-3xl border border-[#D9FF3F]/20 bg-[#0D0D0D] p-6 sm:p-8">
+          <div className="mb-6">
+            <div className="flex items-center gap-2 text-[10px] font-mono font-bold tracking-[0.18em] text-[#D9FF3F]">
+              <Zap className="w-3.5 h-3.5" />
+              PERSONALIZED LEARNING PATH
+            </div>
+            <h2 className="mt-2 text-2xl sm:text-3xl font-black uppercase text-white">3 BƯỚC TIẾP THEO.</h2>
+            <p className="mt-2 max-w-2xl text-xs sm:text-sm leading-relaxed text-[#777]">
+              Bensop xếp thứ tự dựa trên lượt ôn đến hạn, điểm yếu và mức độ luyện của từng kỹ năng.
+            </p>
+          </div>
+          <div className="grid gap-3 md:grid-cols-3">
+            {nextLearningActions.map((action, index) => (
+              <button
+                key={`${action.type}-${action.path}`}
+                onClick={() => onNavigate(action.path)}
+                className={`rounded-2xl border p-5 text-left transition-all hover:-translate-y-0.5 ${
+                  index === 0 ? 'border-[#D9FF3F]/50 bg-[#121212]' : 'border-[#222] bg-[#101010] hover:border-[#383838]'
+                }`}
+              >
+                <div className="flex items-center justify-between gap-3">
+                  <span className="text-[9px] font-mono font-bold tracking-widest text-[#D9FF3F]">BƯỚC {index + 1} · {action.priority.toUpperCase()}</span>
+                  <span className="text-[9px] font-mono text-[#666]">{action.durationMinutes} PHÚT</span>
+                </div>
+                <h3 className="mt-3 text-base font-black uppercase text-white">{action.title}</h3>
+                <p className="mt-2 min-h-[48px] text-xs leading-relaxed text-[#777]">{action.description}</p>
+                <div className="mt-4 border-t border-[#1E1E1E] pt-3">
+                  <div className="text-[9px] font-mono text-[#555]">VÌ SAO</div>
+                  <div className="mt-1 text-[10px] leading-relaxed text-[#888]">{action.reason}</div>
+                </div>
+                <div className="mt-4 flex items-center justify-between text-[10px] font-mono font-bold text-white">
+                  <span>{action.cta}</span>
+                  <ArrowRight className="w-3.5 h-3.5 text-[#D9FF3F]" />
+                </div>
+              </button>
+            ))}
+          </div>
+        </section>
+
+        {/* ADAPTIVE SESSION ENGINE */}
+        <section className="mb-12 rounded-3xl border border-[#D9FF3F]/30 bg-[#0D0D0D] p-6 sm:p-8">
+          <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-5 mb-6">
+            <div>
+              <div className="flex items-center gap-2 text-[10px] font-mono font-bold tracking-[0.18em] text-[#D9FF3F]">
+                <Zap className="w-3.5 h-3.5" />
+                ADAPTIVE SESSION ENGINE
+              </div>
+              <h2 className="mt-2 text-2xl sm:text-3xl font-black uppercase text-white">PHIÊN HỌC DÀNH RIÊNG CHO BẠN.</h2>
+              <p className="mt-2 max-w-2xl text-xs sm:text-sm leading-relaxed text-[#777]">
+                Bensop tự ghép một phiên 10–15 phút từ lượt ôn đến hạn, điểm yếu, mức độ luyện và momentum gần đây.
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="rounded-xl border border-[#252525] bg-[#121212] px-4 py-2 text-[10px] font-mono text-[#888]">
+                {adaptiveSession.items.length} BƯỚC · <b className="text-[#D9FF3F]">{adaptiveSession.totalMinutes} PHÚT</b>
+              </span>
+              <button
+                onClick={() => onNavigate('/adaptive-session')}
+                className="rounded-xl bg-[#D9FF3F] px-5 py-3 text-[10px] font-mono font-extrabold text-black hover:bg-[#cbf532] transition-colors"
+              >
+                BẮT ĐẦU PHIÊN →
+              </button>
+            </div>
+          </div>
+          <div className="grid gap-3 md:grid-cols-2">
+            {adaptiveSession.items.map((item, index) => (
+              <button
+                key={item.id}
+                onClick={() => onNavigate(item.path)}
+                className="rounded-2xl border border-[#222] bg-[#101010] p-5 text-left hover:border-[#D9FF3F]/40 transition-all"
+              >
+                <div className="flex items-center justify-between gap-3">
+                  <span className="text-[9px] font-mono font-bold tracking-widest text-[#D9FF3F]">BƯỚC {index + 1} · {item.skill.toUpperCase()}</span>
+                  <span className="text-[9px] font-mono text-[#666]">{item.durationMinutes} PHÚT</span>
+                </div>
+                <h3 className="mt-3 text-sm font-black uppercase text-white">{item.title}</h3>
+                <p className="mt-2 text-xs leading-relaxed text-[#777]">{item.description}</p>
+                <div className="mt-3 border-t border-[#1D1D1D] pt-3 text-[10px] leading-relaxed text-[#888]">
+                  <span className="text-[#555]">TÍN HIỆU: </span>{item.reason}
+                </div>
+              </button>
+            ))}
+          </div>
+        </section>
+
+        {/* CROSS-SKILL LEARNING PROFILE */}
+        <section className="mb-12 rounded-3xl border border-[#202020] bg-[#0B0B0B] p-6 sm:p-8">
+          <div className="mb-5">
+            <span className="text-[10px] font-mono font-bold tracking-[0.18em] text-[#D9FF3F]">CROSS-SKILL PROFILE</span>
+            <h3 className="mt-2 text-2xl font-black uppercase text-white">6 KỸ NĂNG · 1 LỘ TRÌNH.</h3>
+            <p className="mt-2 max-w-2xl text-xs leading-relaxed text-[#777]">
+              Bensop kết hợp dữ liệu từ Vocabulary, Grammar, Listening, Speaking, Reading và Writing để chọn bước tiếp theo thay vì chỉ dựa vào một loại bài tập.
+            </p>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+            {learningSkillSnapshot.map((skill) => (
+              <button
+                key={skill.key}
+                onClick={() => onNavigate(skill.path)}
+                className="rounded-xl border border-[#202020] bg-[#101010] p-4 text-left hover:border-[#D9FF3F]/50 transition-colors"
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-xs font-bold text-white">{skill.label}</span>
+                  <span className="font-mono text-[10px] text-[#D9FF3F]">{skill.score}%</span>
+                </div>
+                <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-[#1A1A1A]">
+                  <div className="h-full bg-[#D9FF3F]" style={{ width: `${skill.score}%` }} />
+                </div>
+                <div className="mt-2 text-[9px] font-mono text-[#666]">
+                  {skill.activityCount}/{skill.total} nội dung đã luyện
+                </div>
+              </button>
+            ))}
+          </div>
+        </section>
+
+        {/* LEARNER EVIDENCE TIMELINE */}
+        <section className="mb-12 rounded-3xl border border-[#202020] bg-[#0B0B0B] p-6 sm:p-8">
+          <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <span className="text-[10px] font-mono font-bold tracking-[0.18em] text-[#D9FF3F]">LEARNER EVIDENCE</span>
+              <h3 className="mt-2 text-2xl font-black uppercase text-white">TIẾN BỘ ĐƯỢC GHI NHẬN THEO TỪNG LẦN HỌC.</h3>
+              <p className="mt-2 max-w-2xl text-xs leading-relaxed text-[#777]">
+                Mỗi lần luyện Vocabulary, Grammar, Listening, Speaking hoặc Reading đều tạo evidence để Bensop cập nhật lộ trình cá nhân.
+              </p>
+            </div>
+            <div className="flex gap-2 text-[9px] font-mono">
+              <span className="rounded-lg border border-[#222] bg-[#121212] px-3 py-2 text-[#888]">STREAK EVIDENCE <b className="text-[#D9FF3F]">{learnerProfile.streakDays} NGÀY</b></span>
+              <span className="rounded-lg border border-[#222] bg-[#121212] px-3 py-2 text-[#888]">EVENTS <b className="text-white">{learnerProfile.recentEvidence.length}</b></span>
+            </div>
+          </div>
+          {learnerProfile.recentEvidence.length > 0 ? (
+            <div className="grid gap-2">
+              {learnerProfile.recentEvidence.slice(0, 6).map((event) => (
+                <div key={event.id} className="flex flex-col gap-2 rounded-xl border border-[#1D1D1D] bg-[#101010] p-4 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="flex items-center gap-3">
+                    <span className="min-w-24 rounded-md border border-[#2A2A2A] bg-[#151515] px-2 py-1 text-center text-[9px] font-mono font-bold uppercase text-[#D9FF3F]">{event.skill}</span>
+                    <div>
+                      <div className="text-xs font-bold text-white">{event.activityId}</div>
+                      <div className="text-[9px] font-mono text-[#666]">{new Date(event.timestamp).toLocaleString('vi-VN')}</div>
+                    </div>
+                  </div>
+                  <span className="text-xs font-mono font-bold text-white">{event.score}%</span>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="rounded-xl border border-dashed border-[#2A2A2A] p-6 text-center text-xs text-[#666]">
+              Bắt đầu một phiên luyện tập để tạo evidence đầu tiên cho hồ sơ học tập.
+            </div>
+          )}
+        </section>
+
+        {/* SPACED REVIEW QUEUE — driven by completed lesson schedules */}
+        <section className="mb-12 rounded-3xl border border-[#202020] bg-[#0B0B0B] p-6 sm:p-8">
+          <div className="mb-5 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <span className="text-[10px] font-mono font-bold tracking-[0.18em] text-[#D9FF3F]">SPACED REVIEW ENGINE</span>
+              <h3 className="mt-2 text-2xl font-black uppercase text-white">ÔN ĐÚNG LÚC, KHÔNG HỌC LẠI TỪ ĐẦU.</h3>
+              <p className="mt-2 max-w-2xl text-xs leading-relaxed text-[#777]">Mỗi bài đã hoàn thành được Bensop tự lên lịch ôn sau 1, 3 và 7 ngày để chuyển kiến thức từ “đã xem” sang “đã nhớ”.</p>
+            </div>
+            <span className="text-xs font-mono text-[#666]">{dueReviews.length} lượt đang đến hạn</span>
+          </div>
+
+          {dueReviews.length === 0 ? (
+            <div className="rounded-xl border border-[#202020] bg-[#101010] p-5 text-sm text-[#777]">
+              Chưa có lượt ôn đến hạn. Khi bạn hoàn thành bài học mới, lịch ôn sẽ tự động được tạo.
+            </div>
+          ) : (
+            <div className="grid gap-3 md:grid-cols-2">
+              {dueReviews.map((item) => {
+                const lesson = item.lessonSlug ? LESSONS.find((entry) => entry.slug === item.lessonSlug) : undefined;
+                const label = lesson?.title || item.lessonSlug || item.quizSlug || 'Nội dung cần ôn';
+                return (
+                  <div key={item.id} className="flex items-center justify-between gap-4 rounded-xl border border-[#252525] bg-[#101010] p-4">
+                    <div className="min-w-0">
+                      <div className="text-[9px] font-mono font-bold text-[#D9FF3F]">
+                        {item.reviewType === 'quiz' ? 'ÔN QUIZ' : 'ÔN BÀI'} · SAU {item.intervalDays} NGÀY · ĐẾN HẠN
+                      </div>
+                      <div className="mt-1 truncate text-sm font-bold text-white">{label}</div>
+                    </div>
+                    <button
+                      onClick={() => item.quizSlug ? onNavigate(`/quiz/${item.quizSlug}`) : item.lessonSlug ? onSelectLesson(item.lessonSlug) : onNavigate('/luyen-tap')}
+                      className="shrink-0 rounded-lg bg-[#D9FF3F] px-3 py-2 text-[10px] font-extrabold text-black"
+                    >
+                      ÔN NGAY →
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </section>
+
+        {/* LIVE MASTERY SNAPSHOT */}
+        <section className="mb-12 grid grid-cols-1 lg:grid-cols-3 gap-4">
+          <div className="lg:col-span-1 rounded-2xl border border-[#202020] bg-[#0B0B0B] p-6">
+            <span className="text-[10px] font-mono tracking-[0.18em] text-[#D9FF3F]">LIVE MASTERY</span>
+            <div className="mt-2 text-4xl font-black text-white">{masterySnapshot.overall}%</div>
+            <p className="mt-1 text-xs text-[#777]">được cập nhật từ các quiz đã hoàn thành</p>
+          </div>
+          <div className="lg:col-span-2 rounded-2xl border border-[#202020] bg-[#0B0B0B] p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-sm font-bold uppercase text-white">Kỹ năng đang được ghi nhận</h3>
+              <button onClick={() => onNavigate('/luyen-tap')} className="text-xs font-mono text-[#D9FF3F]">LUYỆN THÊM →</button>
+            </div>
+            <div className="grid sm:grid-cols-2 gap-3">
+              {masterySnapshot.skills.slice().sort((a,b) => b.mastery-a.mastery).slice(0,4).map((item) => (
+                <div key={item.id} className="rounded-xl bg-[#111] border border-[#202020] p-3">
+                  <div className="flex justify-between text-xs"><span className="text-white">{item.label}</span><span className="font-mono text-[#D9FF3F]">{item.mastery}%</span></div>
+                  <div className="mt-2 h-1.5 bg-[#1A1A1A] rounded-full overflow-hidden"><div className="h-full bg-[#D9FF3F]" style={{width:`${item.mastery}%`}} /></div>
+                </div>
+              ))}
+              {!masterySnapshot.skills.length && <p className="text-xs text-[#777]">Làm quiz đầu tiên để Bensop bắt đầu đo mastery.</p>}
+            </div>
+          </div>
+        </section>
 
         {/* LANGUAGE PROGRESS: Vocabulary + Grammar (Phase 4 Requirement 41) */}
         <div className="p-8 sm:p-10 bg-[#0C0C0C] border border-[#202020] rounded-3xl mb-12 space-y-6">

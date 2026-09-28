@@ -293,7 +293,7 @@ CUSTOMER: A refund to my debit card would be great.`,
     tags: ['friendship', 'catching up', 'weekend', 'family'],
     vocabularyIds: [],
     grammarIds: [],
-    questionIds: [],
+    questionIds: ['en-lq-07', 'en-lq-08'],
     transcript: `EMMA: Mark! I cannot believe it's you! How long has it been?
 MARK: Emma! Wow, it must be at least three years since graduation! You look fantastic.
 EMMA: Thank you! Are you still living in Chicago?
@@ -321,7 +321,7 @@ MARK: Absolutely! Saturday morning works best for me. Let's exchange numbers.`,
     tags: ['tech support', 'router', 'internet', 'troubleshooting'],
     vocabularyIds: [],
     grammarIds: [],
-    questionIds: [],
+    questionIds: ['en-lq-09', 'en-lq-10'],
     transcript: `TECH: Customer Support, my name is David. How can I help you resolve your internet issue?
 USER: Hi David. My broadband router keeps flashing an orange light on the internet indicator since this morning.
 TECH: Understood. Let's first check whether the fiber optic cable in the back is securely plugged in.
@@ -351,7 +351,7 @@ TECH: The router will take approximately ninety seconds to synchronize with our 
     tags: ['news', 'environment', 'energy', 'policy'],
     vocabularyIds: [],
     grammarIds: [],
-    questionIds: [],
+    questionIds: ['en-lq-11', 'en-lq-12'],
     transcript: `NEWSCASTER: Good morning, this is the 8 o'clock National Broadcast. Solar power generation reached an all-time record yesterday, supplying over 42% of peak midday electricity demand across the region.
 ANALYST: The accelerated adoption of high-efficiency photovoltaic panels coupled with industrial battery storage installations has significantly mitigated grid instability during summer heatwaves.
 NEWSCASTER: Government regulators are expected to unveil additional subsidies for residential rooftop retrofits later this afternoon, paving the way towards carbon neutrality goals by 2035.`,
@@ -373,7 +373,7 @@ NEWSCASTER: Government regulators are expected to unveil additional subsidies fo
     tags: ['hotel', 'booking', 'london', 'reservations'],
     vocabularyIds: [],
     grammarIds: [],
-    questionIds: [],
+    questionIds: ['en-lq-13', 'en-lq-14'],
     transcript: `RECEPTIONIST: Good morning, St. James Hotel reservations. How may I be of service?
 CALLER: Hello, I would like to reserve a double room for three nights starting on October 14th.
 RECEPTIONIST: Let me check our availability. Yes, we have a deluxe double room overlooking the garden courtyard available.

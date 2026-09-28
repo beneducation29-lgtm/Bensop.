@@ -1,10 +1,12 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Lesson, Course, SavedItem } from '../types';
 import { LESSONS } from '../data/lessons';
+import { contentService } from '../services/contentService';
+import { spacedReviewService } from '../services/spacedReviewService';
 import { COURSES } from '../data/courses';
 import { BookmarkButton } from '../components/BookmarkButton';
 import { 
-  ArrowLeft, ArrowRight, CheckCircle2, Play, Pause, Volume2, 
+  ArrowLeft, ArrowRight, CheckCircle2, Play, Pause, Volume2, Sparkles, Film, Clock3, 
   HelpCircle, ChevronDown, BookOpen, Check, Award, AlertCircle 
 } from 'lucide-react';
 
@@ -33,12 +35,39 @@ export const LessonDetailPage: React.FC<LessonDetailPageProps> = ({
   const [selectedExerciseOption, setSelectedExerciseOption] = useState<number | null>(null);
   const [exerciseSubmitted, setExerciseSubmitted] = useState(false);
   const [mobileSyllabusOpen, setMobileSyllabusOpen] = useState(false);
+  const [videoSceneIndex, setVideoSceneIndex] = useState(0);
+  const [isVideoPlaying, setIsVideoPlaying] = useState(false);
+  const [, setReviewRefresh] = useState(0);
 
   const lesson = LESSONS.find((l) => l.slug === slug) || LESSONS[0];
   const course = COURSES.find((c) => c.slug === lesson.courseSlug) || COURSES[0];
 
   const isCompleted = completedLessons.includes(lesson.slug);
   const isSaved = savedItems.some((s) => s.slug === lesson.slug);
+  const contentBlueprint = contentService.getBlueprint(lesson.slug);
+  const video = contentBlueprint?.aiVideo;
+  const activeVideoScene = video?.scenes[videoSceneIndex];
+  const ecosystemLinks = contentService.getEcosystemLinks(lesson.slug).filter((link) => link.kind !== 'course');
+  const reviewItems = spacedReviewService.getForLesson(lesson.slug);
+  const now = Date.now();
+
+  useEffect(() => {
+    if (!isVideoPlaying || !video || !activeVideoScene) return;
+    const timer = window.setTimeout(() => {
+      if (videoSceneIndex >= video.scenes.length - 1) setIsVideoPlaying(false);
+      else setVideoSceneIndex((index) => index + 1);
+    }, activeVideoScene.durationSeconds * 1000);
+    return () => window.clearTimeout(timer);
+  }, [isVideoPlaying, video, activeVideoScene, videoSceneIndex]);
+
+  const speakVideoScene = () => {
+    if (!activeVideoScene || typeof window === 'undefined' || !('speechSynthesis' in window)) return;
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(activeVideoScene.narration);
+    utterance.lang = video?.voiceLanguage === 'en' ? 'en-US' : video?.voiceLanguage === 'zh' ? 'zh-CN' : 'vi-VN';
+    utterance.rate = 0.96;
+    window.speechSynthesis.speak(utterance);
+  };
 
   // Flatten course lessons for sidebar
   const allCourseLessons = course.modules.flatMap((m) => m.lessons);
@@ -144,6 +173,156 @@ export const LessonDetailPage: React.FC<LessonDetailPageProps> = ({
               {lesson.summary}
             </p>
           </div>
+
+          {/* AI Visual Lesson — content-first video layer */}
+          {video && activeVideoScene && (
+            <section className="mb-10 overflow-hidden rounded-2xl border border-[#292929] bg-[#0A0A0A] shadow-[0_20px_70px_rgba(0,0,0,0.35)]">
+              <div className="flex items-center justify-between gap-4 border-b border-[#202020] px-5 py-4">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#D9FF3F] text-black"><Sparkles className="h-4 w-4" /></div>
+                  <div><div className="text-[10px] font-mono font-bold tracking-[0.18em] text-[#D9FF3F]">BENSOP AI VISUAL LESSON</div><h2 className="mt-1 text-sm font-bold text-white sm:text-base">{video.title}</h2></div>
+                </div>
+                <div className="hidden items-center gap-3 text-[10px] font-mono text-[#666] sm:flex"><span className="flex items-center gap-1"><Clock3 className="h-3.5 w-3.5" /> {video.targetMinutes} phút</span><span className="flex items-center gap-1"><Film className="h-3.5 w-3.5" /> SCRIPT READY</span></div>
+              </div>
+              <div className="grid lg:grid-cols-[1.15fr_0.85fr]">
+                <div className="relative min-h-[330px] overflow-hidden border-b border-[#202020] bg-[#111] p-6 lg:border-b-0 lg:border-r">
+                  <div className="absolute inset-0 opacity-30 [background-image:linear-gradient(#242424_1px,transparent_1px),linear-gradient(90deg,#242424_1px,transparent_1px)] [background-size:32px_32px]" />
+                  <div className="relative flex h-full min-h-[280px] flex-col justify-between">
+                    <div className="flex items-center justify-between text-[10px] font-mono text-[#666]"><span>SCENE {videoSceneIndex + 1} / {video.scenes.length}</span><span>{activeVideoScene.durationSeconds}s</span></div>
+                    <div className="my-8">
+                      <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-[#303030] bg-[#0B0B0B] px-3 py-1 text-[10px] font-mono text-[#D9FF3F]"><span className="h-1.5 w-1.5 animate-pulse rounded-full bg-[#D9FF3F]" /> AI STORYBOARD</div>
+                      <h3 className="max-w-xl text-2xl font-black leading-tight text-white sm:text-3xl">{activeVideoScene.visual}</h3>
+                      <p className="mt-5 max-w-xl text-sm leading-relaxed text-[#999]">{activeVideoScene.narration}</p>
+                    </div>
+                    <div className="flex flex-wrap gap-2">{activeVideoScene.onScreen.map((label) => <span key={label} className="rounded-md border border-[#2D2D2D] bg-[#0C0C0C] px-3 py-2 text-[10px] font-mono font-bold text-white">{label}</span>)}</div>
+                  </div>
+                </div>
+                <div className="p-5 sm:p-6">
+                  <div className="mb-5 flex gap-2">
+                    <button onClick={() => { setIsVideoPlaying((playing) => !playing); if (!isVideoPlaying) speakVideoScene(); }} className="flex items-center gap-2 rounded-lg bg-[#D9FF3F] px-4 py-2.5 text-xs font-extrabold text-black transition hover:bg-[#cbf532]">{isVideoPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4 fill-current" />}{isVideoPlaying ? 'TẠM DỪNG' : 'XEM BÀI GIẢNG'}</button>
+                    <button onClick={speakVideoScene} className="rounded-lg border border-[#2C2C2C] px-3 py-2.5 text-xs font-bold text-white hover:border-[#555]">🔊 Nghe lời thoại</button>
+                  </div>
+                  <div className="mb-5 h-1.5 overflow-hidden rounded-full bg-[#202020]"><div className="h-full bg-[#D9FF3F] transition-all" style={{ width: ((videoSceneIndex + 1) / video.scenes.length * 100) + '%' }} /></div>
+                  <div className="space-y-2">
+                    {video.scenes.map((scene, index) => (
+                      <button key={scene.id} onClick={() => { setVideoSceneIndex(index); setIsVideoPlaying(false); }} className={"w-full rounded-lg border p-3 text-left transition " + (index === videoSceneIndex ? 'border-[#D9FF3F] bg-[#171717]' : 'border-[#222] bg-[#0D0D0D] hover:border-[#3A3A3A]')}>
+                        <div className="flex items-center justify-between gap-3"><span className={"text-[10px] font-mono font-bold " + (index === videoSceneIndex ? 'text-[#D9FF3F]' : 'text-[#666]')}>SCENE {index + 1}</span><span className="text-[10px] font-mono text-[#555]">{scene.durationSeconds}s</span></div>
+                        <div className="mt-1 line-clamp-2 text-xs text-[#AAA]">{scene.onScreen.join(' · ')}</div>
+                      </button>
+                    ))}
+                  </div>
+                  {activeVideoScene.interaction && <div className="mt-5 border-l-2 border-[#D9FF3F] bg-[#121212] p-3 text-[11px] leading-relaxed text-[#CCC]"><span className="font-bold text-[#D9FF3F]">THỬ NGAY · </span>{activeVideoScene.interaction}</div>}
+                  <p className="mt-5 text-[10px] leading-relaxed text-[#555]">Pipeline video: script → visual scenes → AI voice → motion → subtitles → checkpoint → export. Khi có file video thật, chỉ cần gắn vào <span className="text-[#888]">videoUrl</span>.</p>
+                </div>
+              </div>
+            </section>
+          )}
+          {contentBlueprint && (
+            <section className="mb-10 space-y-5">
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="rounded-xl border border-[#252525] bg-[#0B0B0B] p-5">
+                  <div className="mb-3 text-[10px] font-mono font-bold tracking-[0.18em] text-[#D9FF3F]">SAU BÀI NÀY, BẠN LÀM ĐƯỢC</div>
+                  <ul className="space-y-2.5">
+                    {contentBlueprint.learningObjective.map((item) => (
+                      <li key={item} className="flex gap-2 text-xs leading-relaxed text-[#CCC]"><CheckCircle2 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#D9FF3F]" />{item}</li>
+                    ))}
+                  </ul>
+                </div>
+                <div className="rounded-xl border border-[#252525] bg-[#0B0B0B] p-5">
+                  <div className="mb-3 text-[10px] font-mono font-bold tracking-[0.18em] text-[#D9FF3F]">CORE IDEA</div>
+                  <p className="text-sm leading-relaxed text-[#AAA]">{contentBlueprint.coreIdea}</p>
+                  <div className="mt-4 border-l-2 border-[#333] pl-3 text-[11px] leading-relaxed text-[#777]">
+                    <span className="font-bold text-[#999]">DỄ NHẦM: </span>{contentBlueprint.misconception}
+                  </div>
+                </div>
+              </div>
+
+              <div className="rounded-xl border border-[#252525] bg-[#0B0B0B] p-5">
+                <div className="mb-3 flex items-center justify-between gap-3">
+                  <div className="text-[10px] font-mono font-bold tracking-[0.18em] text-[#D9FF3F]">THỬ THÁCH THỰC HÀNH</div>
+                  <span className="text-[9px] font-mono text-[#555]">DO → MEASURE → REVIEW</span>
+                </div>
+                <p className="text-sm leading-relaxed text-[#CCC]">{contentBlueprint.practicalChallenge}</p>
+              </div>
+
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="rounded-xl border border-[#252525] bg-[#0B0B0B] p-5">
+                  <div className="mb-3 text-[10px] font-mono font-bold tracking-[0.18em] text-[#D9FF3F]">SPACED REVIEW</div>
+                  <div className="space-y-2">
+                    {contentBlueprint.spacedReview.map((item, index) => (
+                      <div key={item} className="flex gap-3 text-xs text-[#AAA]"><span className="font-mono font-bold text-[#555]">0{index + 1}</span><span>{item}</span></div>
+                    ))}
+                  </div>
+                  {reviewItems.length > 0 && (
+                    <div className="mt-4 border-t border-[#1D1D1D] pt-4">
+                      <div className="mb-2 text-[9px] font-mono font-bold tracking-[0.16em] text-[#666]">LỊCH ÔN TẬP ĐÃ KÍCH HOẠT</div>
+                      <div className="space-y-2">
+                        {reviewItems.map((item) => {
+                          const due = new Date(item.dueAt);
+                          const isDue = !item.completedAt && due.getTime() <= now;
+                          return (
+                            <div key={item.id} className="flex items-center justify-between gap-3 rounded-lg border border-[#202020] bg-[#101010] px-3 py-2">
+                              <div>
+                                <div className="text-[10px] font-bold text-white">Sau {item.intervalDays} ngày</div>
+                                <div className="text-[9px] font-mono text-[#555]">
+                                  {item.completedAt ? 'ĐÃ ÔN' : isDue ? 'ĐẾN HẠN' : due.toLocaleDateString('vi-VN')}
+                                </div>
+                              </div>
+                              {isDue && (
+                                <button
+                                  onClick={() => { spacedReviewService.markComplete(item.id); setReviewRefresh((v) => v + 1); }}
+                                  className="rounded-md border border-[#D9FF3F] px-2.5 py-1.5 text-[9px] font-bold text-[#D9FF3F] hover:bg-[#D9FF3F] hover:text-black"
+                                >
+                                  ĐÁNH DẤU ĐÃ ÔN
+                                </button>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                </div>
+                <div className="rounded-xl border border-[#252525] bg-[#0B0B0B] p-5">
+                  <div className="mb-3 text-[10px] font-mono font-bold tracking-[0.18em] text-[#D9FF3F]">BENSOP ECOSYSTEM</div>
+                  <div className="flex flex-wrap gap-2">
+                    {contentBlueprint.crossLabLinks.map((item) => (
+                      <span key={item} className="rounded-md border border-[#292929] bg-[#111] px-2.5 py-1.5 text-[10px] text-[#AAA]">{item}</span>
+                    ))}
+                  </div>
+                  {ecosystemLinks.length > 0 && (
+                    <div className="mt-4 border-t border-[#1D1D1D] pt-4">
+                      <div className="mb-2 text-[9px] font-mono font-bold tracking-[0.16em] text-[#555]">ĐI TIẾP TỪ BÀI NÀY</div>
+                      <div className="flex flex-wrap gap-2">
+                        {ecosystemLinks.map((link) => (
+                          <button
+                            key={link.kind}
+                            onClick={() => onNavigate(link.path)}
+                            className="rounded-md border border-[#2D2D2D] bg-[#151515] px-3 py-2 text-[10px] font-bold text-[#D9FF3F] transition hover:border-[#D9FF3F]"
+                          >
+                            {link.label} →
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <details className="rounded-xl border border-[#202020] bg-[#090909] p-4">
+                <summary className="cursor-pointer list-none text-[10px] font-mono font-bold tracking-[0.18em] text-[#777]">NGUỒN & BIÊN SOẠN BENSOP</summary>
+                <div className="mt-4 space-y-3">
+                  {contentBlueprint.sources.map((source) => (
+                    <div key={source.title} className="flex flex-col gap-1 border-b border-[#181818] pb-3 last:border-0 last:pb-0">
+                      <div className="text-xs font-bold text-[#CCC]">{source.title}</div>
+                      <div className="text-[10px] font-mono text-[#555]">{source.publisher} · {source.usage}</div>
+                      <a href={source.url} target="_blank" rel="noreferrer" className="text-[10px] text-[#777] hover:text-[#D9FF3F]">{source.url}</a>
+                    </div>
+                  ))}
+                </div>
+              </details>
+            </section>
+          )}
 
           {/* Interactive Audio Simulation Player */}
           <div className="p-4 sm:p-5 bg-[#0E0E0E] border border-[#222] rounded-xl mb-10 flex items-center justify-between gap-4 shadow-lg">
@@ -286,6 +465,31 @@ export const LessonDetailPage: React.FC<LessonDetailPageProps> = ({
                   <span>Đã kiểm tra thành công! Hãy hoàn thành bài học bên dưới.</span>
                 </div>
               )}
+            </div>
+          )}
+
+          {/* Blueprint-driven ecosystem routing: the lesson now hands the learner directly into the next practice surface. */}
+          {contentBlueprint && ecosystemLinks.length > 0 && (
+            <div className="mb-10 rounded-2xl border border-[#222] bg-[#0B0B0B] p-6">
+              <div className="mb-4">
+                <span className="text-[10px] font-mono font-bold tracking-[0.18em] text-[#D9FF3F]">LEARN → PRACTICE → REVIEW</span>
+                <h4 className="mt-2 text-lg font-black text-white">Không dừng ở bài đọc — đi thẳng vào kỹ năng tiếp theo.</h4>
+                <p className="mt-2 max-w-2xl text-xs leading-relaxed text-[#777]">
+                  Bensop dùng chính blueprint của lesson để nối nội dung với lab phù hợp, giúp người học chuyển từ hiểu khái niệm sang thực hành và kiểm tra.
+                </p>
+              </div>
+              <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                {ecosystemLinks.map((link) => (
+                  <button
+                    key={link.kind}
+                    onClick={() => onNavigate(link.path)}
+                    className="group rounded-xl border border-[#242424] bg-[#111] p-4 text-left transition hover:border-[#D9FF3F]"
+                  >
+                    <div className="text-xs font-bold text-white group-hover:text-[#D9FF3F]">{link.label}</div>
+                    <div className="mt-1 text-[10px] font-mono text-[#555]">MỞ MODULE →</div>
+                  </button>
+                ))}
+              </div>
             </div>
           )}
 

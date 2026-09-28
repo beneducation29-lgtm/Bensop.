@@ -1,0 +1,6 @@
+import {WritingPrompt} from '../types/writing';
+export const WRITING_PROMPTS:WritingPrompt[]=[
+{id:'en-writing-1',language:'en',title:'Describe Your Daily Routine',slug:'describe-daily-routine',level:'A2',topic:'Daily Life',instruction:'Write a short paragraph about your typical day. Include when you start your day, what you usually do, and one habit you want to improve.',minimumWords:80,targetVocabulary:['usually','because','before','after'],targetGrammar:['present simple']},
+{id:'en-writing-2',language:'en',title:'A Lesson You Learned',slug:'a-lesson-you-learned',level:'B1',topic:'Growth',instruction:'Describe a small mistake or challenge and explain what you learned from it.',minimumWords:120,targetVocabulary:['experience','improve','however','learn'],targetGrammar:['past simple','because']},
+{id:'zh-writing-1',language:'zh',title:'介绍你的周末',slug:'jieshao-ni-de-zhou-mo',level:'HSK 2',topic:'Daily Life',instruction:'请介绍你的周末计划。请写出时间、活动和原因。',minimumWords:50,targetVocabulary:['周末','打算','因为','一起'],targetGrammar:['打算','因为...所以...']}
+];

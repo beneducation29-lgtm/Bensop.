@@ -3,6 +3,9 @@ import { QuizModel, DifficultyLevel, SkillType } from '../types/quiz';
 import { QUIZ_MODELS } from '../data/quizModels';
 import { QUESTIONS_BANK } from '../data/questions';
 import { quizSessionStorage } from '../services/quizSessionStorage';
+import { masteryService } from '../services/masteryService';
+import { quizService } from '../services/quizService';
+import { spacedReviewService } from '../services/spacedReviewService';
 import {
   Sparkles,
   Zap,
@@ -43,6 +46,24 @@ export const PracticeHubPage: React.FC<PracticeHubPageProps> = ({
   const [customDifficulty, setCustomDifficulty] = useState<string>('all');
 
   const history = quizSessionStorage.getHistory();
+  const activeLanguage: 'en' | 'zh' | undefined =
+    selectedCategory === 'tieng-anh' ? 'en' :
+    selectedCategory === 'tieng-trung' ? 'zh' : undefined;
+  const languageCategoryId = activeLanguage === 'zh' ? 'tieng-trung' : activeLanguage === 'en' ? 'tieng-anh' : undefined;
+  const languageDailyQuiz = languageCategoryId
+    ? QUIZ_MODELS.find((q) => q.type === 'daily' && q.categoryId === languageCategoryId)
+    : QUIZ_MODELS.find((q) => q.type === 'daily');
+  const mastery = masteryService.getSnapshot(activeLanguage);
+  const dueReviews = spacedReviewService.getDue(new Date(), activeLanguage);
+  const weakQuestionIds = mastery.questions
+    .filter((item) => item.mastery < 70)
+    .sort((a, b) => a.mastery - b.mastery)
+    .slice(0, 8)
+    .map((item) => item.entityId);
+  const weakTopics = mastery.topics
+    .filter((item) => item.mastery < 80)
+    .sort((a, b) => a.mastery - b.mastery)
+    .slice(0, 3);
 
   // Filter quizzes
   const filteredQuizzes = QUIZ_MODELS.filter((q) => {
@@ -64,14 +85,28 @@ export const PracticeHubPage: React.FC<PracticeHubPageProps> = ({
     const wrongSet = new Set<string>();
     history.forEach((h) => {
       const res = quizSessionStorage.getResult(h.sessionId);
-      if (res && res.wrongQuestionIds) {
-        res.wrongQuestionIds.forEach((id) => wrongSet.add(id));
-      }
+      if (!res || !res.wrongQuestionIds) return;
+      if (languageCategoryId && res.categoryId !== languageCategoryId) return;
+      res.wrongQuestionIds.forEach((id) => wrongSet.add(id));
     });
     return Array.from(wrongSet);
-  }, [history]);
+  }, [history, languageCategoryId]);
 
   // Handle launch of custom practice
+  const handleAdaptivePractice = () => {
+    if (dueReviews.length > 0 && dueReviews[0].path) {
+      onNavigate(dueReviews[0].path);
+      return;
+    }
+    if (weakQuestionIds.length) {
+      const slug = quizService.createReviewQuiz(weakQuestionIds, 'Adaptive Mastery Review');
+      onStartQuiz(slug);
+      return;
+    }
+    const fallback = QUIZ_MODELS.find((q) => q.type === 'daily' && (!activeLanguage || q.categoryId === (activeLanguage === 'zh' ? 'tieng-trung' : 'tieng-anh'))) || QUIZ_MODELS.find((q) => !activeLanguage || q.categoryId === (activeLanguage === 'zh' ? 'tieng-trung' : 'tieng-anh'));
+    if (fallback) onStartQuiz(fallback.slug);
+  };
+
   const handleLaunchCustomQuiz = () => {
     setIsCustomModalOpen(false);
     // Find a matching standard quiz or placement test
@@ -115,6 +150,57 @@ export const PracticeHubPage: React.FC<PracticeHubPageProps> = ({
           </div>
         </div>
 
+        {/* ADAPTIVE PRACTICE ENGINE */}
+        <section className="rounded-3xl border border-[#D9FF3F]/20 bg-[#0D0D0D] p-6 sm:p-8">
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+            <div className="min-w-0">
+              <div className="flex items-center gap-2 text-[10px] font-mono font-bold tracking-[0.18em] text-[#D9FF3F]">
+                <Sparkles className="w-3.5 h-3.5" />
+                ADAPTIVE PRACTICE ENGINE
+              </div>
+              <h2 className="mt-2 text-2xl sm:text-3xl font-black uppercase text-white">
+                Bài luyện tiếp theo được chọn từ dữ liệu của bạn.
+              </h2>
+              <p className="mt-2 max-w-2xl text-xs sm:text-sm leading-relaxed text-[#777]">
+                Bensop ưu tiên câu hỏi có mastery thấp, đồng thời đưa các lượt Spaced Review đã đến hạn lên trước.
+              </p>
+            </div>
+            <button
+              onClick={handleAdaptivePractice}
+              className="shrink-0 px-6 py-3.5 rounded-xl bg-[#D9FF3F] text-black font-mono text-xs font-extrabold flex items-center justify-center gap-2 hover:bg-[#cbf532] transition-all"
+            >
+              <Zap className="w-4 h-4" />
+              {dueReviews.length ? 'ÔN REVIEW ĐẾN HẠN' : weakQuestionIds.length ? 'LUYỆN ĐIỂM YẾU NGAY' : 'BẮT ĐẦU PHIÊN LUYỆN'}
+            </button>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-3 mt-6">
+            <div className="rounded-xl border border-[#202020] bg-[#111] p-4">
+              <div className="text-[9px] font-mono text-[#666]">MASTERY TỔNG</div>
+              <div className="mt-1 text-2xl font-black text-[#D9FF3F]">{mastery.overall}%</div>
+            </div>
+            <div className="rounded-xl border border-[#202020] bg-[#111] p-4">
+              <div className="text-[9px] font-mono text-[#666]">ĐIỂM YẾU ĐANG THEO DÕI</div>
+              <div className="mt-1 text-2xl font-black text-white">{weakQuestionIds.length}</div>
+            </div>
+            <div className="rounded-xl border border-[#202020] bg-[#111] p-4">
+              <div className="text-[9px] font-mono text-[#666]">REVIEW ĐẾN HẠN</div>
+              <div className="mt-1 text-2xl font-black text-white">{dueReviews.length}</div>
+            </div>
+          </div>
+
+          {weakTopics.length > 0 && (
+            <div className="mt-5 flex flex-wrap gap-2">
+              <span className="text-[10px] font-mono text-[#555] py-1">ƯU TIÊN:</span>
+              {weakTopics.map((topic) => (
+                <span key={topic.id} className="px-2.5 py-1.5 rounded-md bg-[#151515] border border-[#292929] text-[10px] text-[#CCC]">
+                  {topic.label} · {topic.mastery}%
+                </span>
+              ))}
+            </div>
+          )}
+        </section>
+
         {/* Quick Action Feature Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
           
@@ -135,7 +221,7 @@ export const PracticeHubPage: React.FC<PracticeHubPageProps> = ({
               </p>
             </div>
             <button
-              onClick={() => onStartQuiz('daily-challenge')}
+              onClick={() => onStartQuiz(languageDailyQuiz?.slug || 'daily-challenge')}
               className="mt-6 w-full py-2.5 rounded-lg bg-[#161616] group-hover:bg-[#D9FF3F] text-white group-hover:text-black font-mono text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer"
             >
               <span>BẮT ĐẦU THỬ THÁCH</span>
@@ -162,7 +248,15 @@ export const PracticeHubPage: React.FC<PracticeHubPageProps> = ({
               </p>
             </div>
             <button
-              onClick={() => onStartQuiz('quiz-en-02')}
+              onClick={() => {
+                if (weakQuestionIds.length) {
+                  const slug = quizService.createReviewQuiz(weakQuestionIds, activeLanguage === 'zh' ? 'Chinese Weak Area Review' : 'English Weak Area Review');
+                  onStartQuiz(slug);
+                  return;
+                }
+                const fallback = QUIZ_MODELS.find((q) => q.categoryId === (languageCategoryId || 'tieng-anh')) || QUIZ_MODELS[0];
+                if (fallback) onStartQuiz(fallback.slug);
+              }}
               className="mt-6 w-full py-2.5 rounded-lg bg-[#161616] group-hover:bg-amber-400 text-white group-hover:text-black font-mono text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer"
             >
               <span>LUYỆN TẬP ĐIỂM YẾU</span>
