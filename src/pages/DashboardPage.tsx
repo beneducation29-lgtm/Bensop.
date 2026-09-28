@@ -18,6 +18,7 @@ import { dailyLearningContinuityService } from '../services/dailyLearningContinu
 import { adaptiveLearningHistoryService } from '../services/adaptiveLearningHistoryService';
 import { longTermLearningInsightService } from '../services/longTermLearningInsightService';
 import { adaptiveSessionPlannerService } from '../services/adaptiveSessionPlannerService';
+import { adaptiveEvidenceGateService } from '../services/adaptiveEvidenceGateService';
 
 interface DashboardPageProps {
   user: UserProgress;
@@ -47,6 +48,8 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
   const adaptiveSession = adaptiveSessionService.buildSession(learningLanguage);
   const adaptiveSessionPlan = adaptiveSessionPlannerService.build(learningLanguage);
   const adaptiveSessionGoal = adaptiveSessionGoalService.getProgress(learningLanguage);
+  const lastSessionStep = adaptiveSessionGoalService.getGoal(learningLanguage).completedSteps.at(-1);
+  const evidenceGate = adaptiveEvidenceGateService.evaluate(learningLanguage, lastSessionStep);
   const dailyContinuity = dailyLearningContinuityService.getContinuity(learningLanguage);
   const learningHistory = adaptiveLearningHistoryService.getSummary(learningLanguage, 30);
   const longTermInsight = longTermLearningInsightService.getInsight(learningLanguage);
@@ -467,6 +470,20 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
               </div>
             )}
           </div>
+          {evidenceGate && adaptiveSessionGoal.status === 'active' && (
+            <div className="mb-5 rounded-2xl border border-[#222] bg-[#0B0B0B] p-5">
+              <div className="text-[9px] font-mono font-bold tracking-[0.18em] text-[#D9FF3F]">EVIDENCE GATE</div>
+              <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                <div>
+                  <h3 className="text-sm font-black uppercase text-white">{evidenceGate.label}</h3>
+                  <p className="mt-1 max-w-2xl text-xs leading-relaxed text-[#888]">{evidenceGate.reason}</p>
+                </div>
+                <span className="shrink-0 rounded-lg border border-[#2A2A2A] bg-[#151515] px-3 py-2 text-[9px] font-mono font-bold text-[#D9FF3F]">
+                  {evidenceGate.score}/100 · {evidenceGate.shouldAdvance ? 'CÓ THỂ CHUYỂN BƯỚC' : 'TIẾP TỤC CỦNG CỐ'}
+                </span>
+              </div>
+            </div>
+          )}
           {adaptiveSession.priorityFocus && (
             <div className="mb-5 rounded-2xl border border-amber-400/25 bg-[#101010] p-5">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
