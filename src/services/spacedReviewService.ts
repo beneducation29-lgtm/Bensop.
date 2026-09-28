@@ -120,7 +120,19 @@ export const spacedReviewService = {
 
   markComplete(id: string): void {
     const now = new Date().toISOString();
-    write(read().map((item) => item.id === id ? { ...item, completedAt: now } : item));
+    const nextInterval = (current: 1 | 3 | 7): 1 | 3 | 7 => current === 1 ? 3 : current === 3 ? 7 : 7;
+    const items = read().map((item) => {
+      if (item.id !== id) return item;
+      const intervalDays = nextInterval(item.intervalDays);
+      return {
+        ...item,
+        intervalDays,
+        scheduledAt: now,
+        dueAt: addDays(now, intervalDays),
+        completedAt: undefined,
+      };
+    });
+    write(items);
   },
 
   getDue(now = new Date(), language?: LanguageCode): SpacedReviewItem[] {

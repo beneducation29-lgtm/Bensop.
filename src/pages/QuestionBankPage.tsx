@@ -29,6 +29,7 @@ export const QuestionBankPage: React.FC<QuestionBankPageProps> = ({
   const [selectedSkill, setSelectedSkill] = useState<string>('all');
   const [selectedType, setSelectedType] = useState<string>('all');
   const [selectedDifficulty, setSelectedDifficulty] = useState<string>('all');
+  const [selectedLevel, setSelectedLevel] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
@@ -37,6 +38,7 @@ export const QuestionBankPage: React.FC<QuestionBankPageProps> = ({
     if (selectedSkill !== 'all' && q.skill !== selectedSkill) return false;
     if (selectedType !== 'all' && q.type !== selectedType) return false;
     if (selectedDifficulty !== 'all' && q.difficulty !== selectedDifficulty) return false;
+    if (selectedLevel !== 'all' && q.cefrLevel !== selectedLevel && q.hskLevel !== selectedLevel) return false;
     if (searchQuery.trim()) {
       const text = searchQuery.toLowerCase();
       const matchQ = q.question.toLowerCase().includes(text);
@@ -101,7 +103,7 @@ export const QuestionBankPage: React.FC<QuestionBankPageProps> = ({
           </div>
 
           {/* Filter Dropdowns Grid */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs font-mono">
+          <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 text-xs font-mono">
             {/* Category */}
             <div>
               <label className="text-[#777] block mb-1">Lĩnh vực:</label>
@@ -158,6 +160,25 @@ export const QuestionBankPage: React.FC<QuestionBankPageProps> = ({
               </select>
             </div>
 
+            {/* Level */}
+            <div>
+              <label className="text-[#777] block mb-1">Trình độ:</label>
+              <select
+                value={selectedLevel}
+                onChange={(e) => setSelectedLevel(e.target.value)}
+                className="w-full bg-[#141414] border border-[#262626] text-white rounded-lg p-2.5 outline-none"
+              >
+                <option value="all">Tất cả trình độ</option>
+                <option value="A2">CEFR A2</option>
+                <option value="B1">CEFR B1</option>
+                <option value="B2">CEFR B2</option>
+                <option value="C1">CEFR C1</option>
+                <option value="HSK 2">HSK 2</option>
+                <option value="HSK 3">HSK 3</option>
+                <option value="HSK 4">HSK 4</option>
+              </select>
+            </div>
+
             {/* Difficulty */}
             <div>
               <label className="text-[#777] block mb-1">Độ khó:</label>
@@ -175,6 +196,21 @@ export const QuestionBankPage: React.FC<QuestionBankPageProps> = ({
               </select>
             </div>
           </div>
+          {(selectedCategory !== 'all' || selectedSkill !== 'all' || selectedType !== 'all' || selectedDifficulty !== 'all' || selectedLevel !== 'all' || searchQuery) && (
+            <button
+              onClick={() => {
+                setSelectedCategory('all');
+                setSelectedSkill('all');
+                setSelectedType('all');
+                setSelectedDifficulty('all');
+                setSelectedLevel('all');
+                setSearchQuery('');
+              }}
+              className="text-[11px] font-mono text-[#D9FF3F] hover:underline cursor-pointer"
+            >
+              XÓA TOÀN BỘ BỘ LỌC
+            </button>
+          )}
 
         </div>
 
