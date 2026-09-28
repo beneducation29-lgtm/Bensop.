@@ -86,7 +86,7 @@ class AdaptiveSessionService {
       });
     }
 
-    const weakQuestion = mastery.questions.filter(q => q.mastery < 70).sort((a, b) => a.mastery - b.mastery)[0];
+    const weakQuestion = masteryService.getWeakQuestions(1, language)[0];
     if (weakQuestion) {
       add({
         type: 'weakness',
@@ -95,9 +95,9 @@ class AdaptiveSessionService {
         language,
         title: 'Sửa lỗi câu hỏi yếu',
         description: 'Luyện lại các dạng câu hỏi có mastery thấp trước khi chuyển sang nội dung mới.',
-        path: '/luyen-tap',
+        path: '/ngan-hang-cau-hoi?focus=weak&lang=' + language,
         durationMinutes: 8,
-        reason: 'Câu yếu nhất: ' + weakQuestion.label + ' · mastery ' + weakQuestion.mastery + '%.',
+        reason: 'Câu yếu nhất: ' + weakQuestion.label + ' · mastery ' + weakQuestion.mastery + '% · ' + (weakQuestion.skill || 'kỹ năng') + '.',
       });
     }
 
