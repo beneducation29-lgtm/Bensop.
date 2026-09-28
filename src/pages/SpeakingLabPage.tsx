@@ -17,11 +17,13 @@ export function SpeakingLabPage({language,onNavigate}:P){
  const list=useMemo(()=>speakingService.getActivities(language,{level,search:q}),[language,level,q]);
  const levels=Array.from(new Set(speakingService.getAllActivities(language).map(x=>x.level)));
  const track=AI_SPEAKING_TRACKS.find(x=>x.language===language)!;
+ if(!track) return null;
  const[mode,setMode]=useState<AISpeakingMode>('role-play');
  const[scenarioId,setScenarioId]=useState('');
  const[session,setSession]=useState(()=>aiSpeakingService.getSession(language));
- const[response,setResponse]=useState(''),[loading,setLoading]=useState(false),[listening,setListening]=useState(false),[error,setError]=useState(''),[nextPrompt,setNextPrompt]=useState('');
+ const[response,setResponse]=useState(''),[roomLevel,setRoomLevel]=useState(''),[loading,setLoading]=useState(false),[listening,setListening]=useState(false),[error,setError]=useState(''),[nextPrompt,setNextPrompt]=useState('');
  const modeInfo=track.modes.find(x=>x.id===mode)!;
+ const activeLevel=roomLevel||track.defaultLevel;
  const selectedScenario=track.scenarios.find(x=>x.id===scenarioId)||track.scenarios[0];
  const showNextPrompt=!!nextPrompt&&!!session?.turns.length&&nextPrompt.trim().toLowerCase()!==session.turns[session.turns.length-1].text.trim().toLowerCase()&&!session.turns[session.turns.length-1].text.toLowerCase().includes(nextPrompt.trim().toLowerCase());
  const modeTip=mode==='shadowing'?'Nghe → bắt chước → nhận 1 điểm sửa trọng tâm':mode==='role-play'?'AI giữ vai diễn và đẩy tình huống tiến lên':mode==='free-conversation'?'AI bám vào chi tiết bạn vừa nói để trò chuyện tiếp':mode==='interview'?'AI hỏi sâu dần như một buổi phỏng vấn thật':'Tập trung vào 1 điểm phát âm/phrasing mỗi lượt';
@@ -52,8 +54,8 @@ export function SpeakingLabPage({language,onNavigate}:P){
 
  const openRoom=()=>{
    const scenario=selectedScenario||track.scenarios[0];
-   const next=aiSpeakingService.createSession({language,level:levels[0]||'B1',mode,topic:scenario?.title||(language==='zh'?'日常生活':'Everyday Life'),scenario:scenario?.context||modeInfo.goal});
-   setScenarioId(scenario?.id||'');
+   const next=aiSpeakingService.createSession({language,level:activeLevel,mode,topic:scenario?.title||(language==='zh'?'日常生活':'Everyday Life'),scenario:scenario?.context||modeInfo.goal});
+   setScenarioId(scenario?.id||'');setRoomLevel(activeLevel);
    const starter=selectedScenario?.starter||(language==='zh'?'你好！今天过得怎么样？':'Hello! How are you doing today?');
    const starterTurn=aiSpeakingService.addTurn(next.id,{role:'ai',text:starter,display:language==='zh'?{text:starter,pinyin:'Nǐ hǎo! Jīntiān guò de zěnmeyàng?',vietnameseTranslation:'Xin chào! Hôm nay bạn thế nào?'}:{text:starter,vietnameseTranslation:'Xin chào! Hôm nay bạn thế nào?'}});
    setSession(starterTurn||next);setNextPrompt('');setError('');setRoom(true);
@@ -70,11 +72,12 @@ export function SpeakingLabPage({language,onNavigate}:P){
    if(!session||loading)return;
    const transcript=(input??response).trim();
    if(!transcript)return;
+   const previousTurns=session.turns.slice(-10);
    const withLearner=aiSpeakingService.addTurn(session.id,{role:'learner',text:transcript});
    if(!withLearner)return;
    setSession(withLearner);setResponse('');setError('');setLoading(true);
    try{
-     const reply=await aiSpeakingService.reply({language,level:session.level,mode:session.mode,topic:session.topic,scenario:session.scenario,learnerGoal:modeInfo.goal,performanceSnapshot},transcript,withLearner.turns);
+     const reply=await aiSpeakingService.reply({language,level:session.level,mode:session.mode,topic:session.topic,scenario:session.scenario,learnerGoal:modeInfo.goal,performanceSnapshot},transcript,previousTurns);
      const aiTurn=aiSpeakingService.addTurn(session.id,{role:'ai',text:reply.text,display:{text:reply.text,pinyin:reply.pinyin,vietnameseTranslation:reply.vietnameseTranslation},feedback:reply.feedback});
      setNextPrompt(reply.nextPrompt||'');
      if(reply.conversationMemory) aiSpeakingService.updateMemory(session.id,reply.conversationMemory);
@@ -116,13 +119,19 @@ export function SpeakingLabPage({language,onNavigate}:P){
   <button onClick={()=>room?setRoom(false):openRoom()} className="mb-10 w-full border border-[#D9FF3F]/40 bg-[#0d1107] p-6 text-left hover:border-[#D9FF3F]"><div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between"><div><div className="mb-2 flex items-center gap-2 text-xs font-mono text-[#D9FF3F]"><Sparkles className="h-4 w-4"/>AI SPEAKING ROOM</div><h2 className="text-2xl font-black">{track.title}</h2><p className="mt-2 max-w-2xl text-sm text-[#999]">{track.description}</p>{language==='zh'&&<p className="mt-3 text-xs text-[#D9FF3F]">中文简体 → Pinyin có dấu thanh → Tiếng Việt · không trộn English vào hội thoại.</p>}</div><div className="shrink-0 bg-[#D9FF3F] px-5 py-3 text-xs font-black text-black">{room?'ĐÓNG PHÒNG':'MỞ PHÒNG AI'}</div></div></button>
 
   {room&&<section className="mb-12 border border-[#292929] bg-[#0b0b0b] p-5 sm:p-7"><div className="mb-6 flex items-center justify-between gap-4"><div><div className="text-xs font-mono text-[#D9FF3F]">ROOM / {language==='zh'?'中文':'ENGLISH'}</div><h2 className="mt-2 text-2xl font-black">{modeInfo.title}</h2></div><button onClick={()=>setRoom(false)} className="text-xs text-[#777]"><ArrowLeft className="inline h-4 w-4"/> SPEAKING LAB</button></div>
-   <div className="mb-5 grid gap-3 md:grid-cols-[1fr_auto]">
+   <div className="mb-5 grid gap-3 md:grid-cols-[1fr_180px_220px]">
     <label className="border border-[#242424] bg-[#0d0d0d] p-3">
       <span className="mb-2 block text-[9px] font-mono text-[#666]">SCENARIO · TÌNH HUỐNG</span>
       <select value={scenarioId||track.scenarios[0]?.id||''} onChange={e=>{setScenarioId(e.target.value);const s=track.scenarios.find(x=>x.id===e.target.value);if(s&&session){setSession(aiSpeakingService.createSession({language,level:session.level,mode,topic:s.title,scenario:s.context}));setNextPrompt('');}}} className="w-full bg-transparent text-sm font-semibold text-white outline-none">
         {track.scenarios.map(s=><option key={s.id} value={s.id}>{s.title}</option>)}
       </select>
       <span className="mt-2 block text-[11px] text-[#666]">{selectedScenario?.context}</span>
+    </label>
+    <label className="border border-[#242424] bg-[#0d0d0d] p-3">
+      <span className="mb-2 block text-[9px] font-mono text-[#666]">LEVEL · TRÌNH ĐỘ</span>
+      <select value={activeLevel} onChange={e=>{setRoomLevel(e.target.value);if(session)setSession(aiSpeakingService.createSession({language,level:e.target.value,mode,topic:selectedScenario?.title||session.topic,scenario:selectedScenario?.context||session.scenario}))}} className="w-full bg-transparent text-sm font-semibold text-white outline-none">
+        {track.levelOptions.map(x=><option key={x} value={x}>{x}</option>)}
+      </select>
     </label>
     <div className="flex items-center border border-[#242424] bg-[#0d0d0d] px-4 text-[10px] font-mono text-[#777]">
       <span className="text-[#D9FF3F]">AI CONTRACT</span><span className="mx-2">·</span>{language==='zh'?'中文 → Pinyin → Việt':'English → phản hồi tự nhiên'}
