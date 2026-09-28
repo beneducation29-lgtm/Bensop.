@@ -6,6 +6,7 @@ import { QuestionRenderer } from '../components/quiz/QuestionRenderer';
 import { calculateQuizResult } from '../lib/quiz/scoring';
 import { quizSessionStorage } from '../services/quizSessionStorage';
 import { quizLearningService } from '../services/quizLearningService';
+import { adaptiveSessionExecutionService } from '../services/adaptiveSessionExecutionService';
 import {
   Clock,
   Flag,
@@ -161,8 +162,9 @@ export const QuizRunnerPage: React.FC<QuizRunnerPageProps> = ({
 
     quizSessionStorage.saveResult(finalResult);
     quizLearningService.recordResult(finalResult);
+    adaptiveSessionExecutionService.recordQuizResult(finalResult);
     quizSessionStorage.clearActiveSession();
-    onFinishQuiz(result);
+    onFinishQuiz(finalResult);
   };
 
   // Formatting Time
