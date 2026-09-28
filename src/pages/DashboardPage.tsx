@@ -32,7 +32,9 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
   const [activeInterest, setActiveInterest] = useState<'tieng-anh' | 'tieng-trung' | 'phat-trien-ban-than' | 'suc-khoe-doi-song'>('tieng-anh');
 
   const recommendations = getRecommendations(activeInterest);
-  const dueReviews = spacedReviewService.getDue().slice(0, 5);
+  const dueReviews = activeInterest === 'tieng-anh' || activeInterest === 'tieng-trung'
+    ? spacedReviewService.getDue(new Date(), activeInterest === 'tieng-trung' ? 'zh' : 'en').slice(0, 5)
+    : [];
   const masterySnapshot = masteryService.getSnapshot();
   const nextLearningActions = recommendationService.getNextLearningActions(3);
   const adaptiveSession = adaptiveSessionService.buildSession();
