@@ -100,6 +100,7 @@ class AdaptiveLearningOrchestrator {
     const balance = crossSkillMasteryBalanceService.getDecision(language);
     const longTerm = longTermLearningInsightService.getInsight(language);
     const recentActivities = continuity.recentActivities;
+    const recentSkills = adaptiveSessionMemoryService.getRecentSteps(language, 4).map((step) => step.skill);
     const trendCandidate = longTerm.skills
       .filter((item) => ['vocabulary', 'grammar', 'listening', 'speaking', 'reading', 'writing'].includes(item.skill))
       .map((item) => {
@@ -123,7 +124,7 @@ class AdaptiveLearningOrchestrator {
       trendCandidate &&
       trendCandidate.score >= 18 &&
       trendCandidate.trend === 'down' &&
-      trendCandidate.skill !== recentActivities[0]?.split(':')[1]
+      trendCandidate.skill !== recentSkills[0]
     ) {
       return this.buildTrendPlan(
         language,
