@@ -14,6 +14,34 @@ const read = (): MasterySnapshot => {
   } catch { return emptySnapshot(); }
 };
 const write = (snapshot: MasterySnapshot) => { try { localStorage.setItem(STORAGE_KEY, JSON.stringify(snapshot)); } catch {} };
+const applyForgettingSignal = (record: MasteryRecord, now = new Date()): MasteryRecord => {
+  const last = new Date(record.lastAttemptAt).getTime();
+  if (!Number.isFinite(last)) return record;
+  const daysSinceAttempt = Math.max(0, (now.getTime() - last) / 86400000);
+  if (daysSinceAttempt < 14 || record.mastery < 70) return record;
+
+  const decaySteps = Math.floor(daysSinceAttempt / 14);
+  const decay = Math.min(20, decaySteps * 4);
+  const effectiveMastery = Math.max(0, record.mastery - decay);
+  const confidenceDecay = Math.min(40, decaySteps * 8);
+  const effectiveConfidence = Math.max(0, (record.confidence ?? Math.min(100, record.attempts * 20)) - confidenceDecay);
+  const evidenceLevel: MasteryRecord['evidenceLevel'] =
+    effectiveMastery < 70 || effectiveConfidence < 40
+      ? 'developing'
+      : effectiveMastery < 85 || effectiveConfidence < 70
+        ? 'established'
+        : record.evidenceLevel === 'mastered'
+          ? 'mastered'
+          : record.evidenceLevel || 'established';
+
+  return {
+    ...record,
+    mastery: effectiveMastery,
+    confidence: effectiveConfidence,
+    evidenceLevel,
+    trend: effectiveMastery < record.mastery ? 'down' : record.trend,
+  };
+};
 const upsert = (records: MasteryRecord[], input: Omit<MasteryRecord,'mastery'|'attempts'|'correct'|'lastScore'|'lastAttemptAt'|'trend'>, score:number, correct:number, attempted:number): MasteryRecord[] => {
   const index=records.findIndex(item=>item.id===input.id);
   const previous=index>=0?records[index]:undefined;
@@ -48,14 +76,17 @@ export const masteryService = {
   getSnapshot(language?: LanguageCode): MasterySnapshot {
     const snapshot=read(); if(!language)return snapshot;
     const categoryId=categoryForLanguage(language);
-    const skills=snapshot.skills.filter(item=>item.categoryId===categoryId);
-    const topics=snapshot.topics.filter(item=>item.categoryId===categoryId);
-    const questions=snapshot.questions.filter(item=>item.categoryId===categoryId);
+    const skills=snapshot.skills.filter(item=>item.categoryId===categoryId).map(applyForgettingSignal);
+    const topics=snapshot.topics.filter(item=>item.categoryId===categoryId).map(applyForgettingSignal);
+    const questions=snapshot.questions.filter(item=>item.categoryId===categoryId).map(applyForgettingSignal);
     const overall=skills.length?Math.round(skills.reduce((sum,item)=>sum+item.mastery,0)/skills.length):0;
     return {overall,skills,topics,questions,updatedAt:snapshot.updatedAt};
   },
   recordQuizResult(result: QuizResult): MasterySnapshot {
     const snapshot=read();
+    snapshot.skills=snapshot.skills.map(applyForgettingSignal);
+    snapshot.topics=snapshot.topics.map(applyForgettingSignal);
+    snapshot.questions=snapshot.questions.map(applyForgettingSignal);
     Object.entries(result.skillBreakdown).forEach(([skill,stat])=>{snapshot.skills=upsert(snapshot.skills,{id:`skill:${result.categoryId}:${skill}`,entityType:'skill',entityId:skill,label:skill,categoryId:result.categoryId,skill:skill as MasteryRecord['skill']},stat.percentage,stat.correct,stat.total);});
     Object.entries(result.topicBreakdown).forEach(([topic,stat])=>{snapshot.topics=upsert(snapshot.topics,{id:`topic:${result.categoryId}:${topic}`,entityType:'topic',entityId:topic,label:topic,categoryId:result.categoryId},stat.percentage,stat.correct,stat.total);});
     result.questionBreakdowns.forEach(item=>{const q=item.question;const score=item.possiblePoints>0?Math.round(item.earnedPoints/item.possiblePoints*100):0;snapshot.questions=upsert(snapshot.questions,{id:`question:${q.id}`,entityType:'question',entityId:q.id,label:q.question,categoryId:q.categoryId,skill:q.skill,topicId:q.topicId},score,item.isCorrect?1:0,1);});
