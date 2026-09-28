@@ -41,7 +41,7 @@ class RecommendationService{
   });
   const mastery=masteryService.getSnapshot(language);
   const weakQuestions=mastery.questions.filter(x=>x.mastery<70).sort((a,b)=>a.mastery-b.mastery).slice(0,2);
-  if(weakQuestions.length)add({type:'weakness',title:'Củng cố câu hỏi yếu',description:`Bạn có ${weakQuestions.length} câu hỏi dưới ngưỡng mastery 70%. Phiên luyện sẽ tập trung vào các lỗi này.`,cta:'LUYỆN ĐIỂM YẾU',path:'/luyen-tap',reason:`Câu yếu nhất: “${weakQuestions[0].label}” · mastery ${weakQuestions[0].mastery}%.`,priority:'high',durationMinutes:10});
+  if(weakQuestions.length)add({type:'weakness',title:'Củng cố câu hỏi yếu',description:`Bạn có ${weakQuestions.length} câu hỏi dưới ngưỡng mastery 70%. Phiên luyện sẽ tập trung vào các lỗi này.`,cta:'LUYỆN ĐIỂM YẾU',path:`/ngan-hang-cau-hoi?focus=weak&lang=${language}`,reason:`Câu yếu nhất: “${weakQuestions[0].label}” · mastery ${weakQuestions[0].mastery}%.`,priority:'high',durationMinutes:10});
   const weakTopic=mastery.topics.filter(x=>x.mastery<80).sort((a,b)=>a.mastery-b.mastery)[0];
   if(weakTopic)add({type:'weakness',title:'Củng cố chủ đề',description:`Chủ đề “${weakTopic.label}” đang ở mức ${weakTopic.mastery}%. Một phiên luyện ngắn sẽ giúp củng cố kiến thức.`,cta:'MỞ PHÒNG LUYỆN',path:'/luyen-tap',reason:'Chủ đề có mastery dưới 80%.',priority:'medium',durationMinutes:12});
   const skills=this.getLearningSkillSnapshot(language),labels:Record<string,string>={vocabulary:'Tăng vốn từ',grammar:'Củng cố ngữ pháp',listening:'Luyện nghe',speaking:'Luyện nói',reading:'Luyện đọc',writing:'Luyện viết'};

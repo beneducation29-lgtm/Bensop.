@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { Question, QuestionType, SkillType, DifficultyLevel } from '../types/quiz';
 import { QUESTIONS_BANK } from '../data/questions';
+import { masteryService } from '../services/masteryService';
+import { LanguageCode } from '../types/vocabulary';
 import { QuestionRenderer } from '../components/quiz/QuestionRenderer';
 import {
   Database,
@@ -33,7 +35,18 @@ export const QuestionBankPage: React.FC<QuestionBankPageProps> = ({
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
+  const params = new URLSearchParams(window.location.search);
+  const focusWeak = params.get('focus') === 'weak';
+  const focusLanguage: LanguageCode = params.get('lang') === 'zh' ? 'zh' : 'en';
+  const weakQuestionIds = focusWeak
+    ? new Set(masteryService.getSnapshot(focusLanguage).questions.filter((item) => item.mastery < 70).map((item) => item.entityId))
+    : null;
+
   const filteredQuestions = QUESTIONS_BANK.filter((q) => {
+    if (focusWeak) {
+      if (q.categoryId !== (focusLanguage === 'zh' ? 'tieng-trung' : 'tieng-anh')) return false;
+      if (!weakQuestionIds?.has(q.id)) return false;
+    }
     if (selectedCategory !== 'all' && q.categoryId !== selectedCategory) return false;
     if (selectedSkill !== 'all' && q.skill !== selectedSkill) return false;
     if (selectedType !== 'all' && q.type !== selectedType) return false;
