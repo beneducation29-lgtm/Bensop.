@@ -6,6 +6,7 @@ import { recommendationService, LearningActionType } from './recommendationServi
 import { quizService } from './quizService';
 import { LearnerActivitySkill } from './learnerActivityService';
 import { rootCauseService } from './rootCauseService';
+import { learningStateService, LearningStateDecision } from './learningStateService';
 
 export interface AdaptiveSessionItem {
   id: string;
@@ -42,6 +43,7 @@ export interface AdaptiveSession {
     path: string;
     skill: 'grammar' | 'vocabulary';
   };
+  learningState: LearningStateDecision;
 }
 
 const SKILL_LABELS: Record<string, string> = {
@@ -75,6 +77,7 @@ const SKILL_PATHS: Record<LanguageCode, Record<string, string>> = {
 class AdaptiveSessionService {
   buildSession(language: LanguageCode = 'en'): AdaptiveSession {
     const profile = learnerProfileService.getSnapshot(language);
+    const learningState = learningStateService.getPriorityDecision(language);
     const due = spacedReviewService.getDue(new Date(), language);
     const candidates = recommendationService.getNextLearningActions(8, language);
     const items: AdaptiveSessionItem[] = [];
@@ -133,6 +136,40 @@ class AdaptiveSessionService {
     const forgettingRisk = masteryService.getForgettingRisks(1, language)[0];
     const persistentWeakness = masteryService.getPersistentWeaknesses(1, language)[0];
     const weakQuestion = masteryService.getWeakQuestions(1, language)[0];
+    const stateSource = learningState.source;
+    const statePath = stateSource?.entityType === 'question'
+      ? '/ngan-hang-cau-hoi?focus=weak&lang=' + language
+      : stateSource?.skill
+        ? SKILL_PATHS[language][stateSource.skill] || '/luyen-tap'
+        : '/luyen-tap';
+
+    if (learningState.recommendedAction === 'spaced-review' && stateSource && items.length < 4) {
+      add({
+        type: 'review',
+        skill: stateSource.skill || 'review',
+        skillKey: 'lesson',
+        language,
+        title: 'Spaced Review · Kiểm tra khả năng nhớ',
+        description: learningState.reason,
+        path: statePath,
+        durationMinutes: 6,
+        reason: learningState.label + ' · ưu tiên kiểm tra lại trước khi học mới.',
+      });
+    }
+
+    if ((learningState.recommendedAction === 'recovery' || learningState.recommendedAction === 'targeted-practice') && stateSource && items.length < 4) {
+      add({
+        type: 'weakness',
+        skill: stateSource.skill || 'quiz',
+        skillKey: stateSource.skill === 'grammar' || stateSource.skill === 'vocabulary' ? stateSource.skill : 'quiz',
+        language,
+        title: learningState.recommendedAction === 'recovery' ? 'Recovery · Phục hồi kiến thức' : 'Targeted Practice · Học có mục tiêu',
+        description: learningState.reason,
+        path: statePath,
+        durationMinutes: 7,
+        reason: learningState.label + ' · mastery ' + stateSource.mastery + '%.',
+      });
+    }
     if (weakQuestion) {
       const adaptiveQuizPath = '/quiz/' + quizService.createAdaptiveQuiz(language, 10);
       if (!dueQuizPaths.has(adaptiveQuizPath)) {
@@ -234,6 +271,7 @@ class AdaptiveSessionService {
       summary: total + ' phút · ' + (due.length ? 'ưu tiên lượt ôn đến hạn' : 'ưu tiên điểm cần củng cố') + '.',
       priorityFocus,
       recoveryReturn: recoveryReturn?.title.startsWith('Đã phục hồi') ? recoveryReturn : undefined,
+      learningState,
     };
   }
 }

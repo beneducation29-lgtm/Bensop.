@@ -291,6 +291,25 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
               </button>
             </div>
           </div>
+          <div className="mb-5 rounded-2xl border border-[#2A2A2A] bg-[#101010] p-5">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+              <div>
+                <div className="text-[9px] font-mono font-bold tracking-[0.18em] text-[#D9FF3F]">
+                  TRẠNG THÁI HỌC TẬP HIỆN TẠI
+                </div>
+                <h3 className="mt-2 text-sm font-black uppercase text-white">
+                  {adaptiveSession.learningState.label}
+                </h3>
+                <p className="mt-1 max-w-2xl text-xs leading-relaxed text-[#888]">
+                  {adaptiveSession.learningState.reason}
+                </p>
+              </div>
+              <span className="shrink-0 rounded-lg border border-[#2A2A2A] bg-[#151515] px-3 py-2 text-[9px] font-mono font-bold text-[#D9FF3F]">
+                {adaptiveSession.learningState.recommendedAction.replace('-', ' ').toUpperCase()}
+              </span>
+            </div>
+          </div>
+
           {adaptiveSession.priorityFocus && (
             <div className="mb-5 rounded-2xl border border-amber-400/25 bg-[#101010] p-5">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
