@@ -5,8 +5,8 @@ export function ReadingPracticePage({language,slug,onNavigate}:P){
  const p=readingService.getBySlug(slug,language);const[a,setA]=useState<Record<string,string>>({});const[score,setScore]=useState<number|null>(null);const[startedAt]=useState(()=>Date.now());
  if(!p)return <div className="p-20 text-white">Không tìm thấy bài đọc.</div>;
  const back='/'+(language==='en'?'tieng-anh':'tieng-trung')+'/reading';
- const submit=()=>{
- const nextAdaptivePlan=adaptiveMultiskillFeedbackService.recordResult({skill:'reading',language,activityId:p.id,score:s,completedAt:new Date().toISOString()});const correct=p.questions.filter(q=>a[q.id]===q.correctAnswer).length;const s=p.questions.length?Math.round(correct/p.questions.length*100):100;readingService.saveProgress({passageId:p.id,language,attempts:1,bestScore:s,lastScore:s,completed:s>=70,lastAttemptAt:new Date().toISOString()});setScore(s)};
+ const submit=()=>{const correct=p.questions.filter(q=>a[q.id]===q.correctAnswer).length;const s=p.questions.length?Math.round(correct/p.questions.length*100):100;readingService.saveProgress({passageId:p.id,language,attempts:1,bestScore:s,lastScore:s,completed:s>=70,lastAttemptAt:new Date().toISOString()});
+ const nextAdaptivePlan=adaptiveMultiskillFeedbackService.recordResult({skill:'reading',language,activityId:p.id,score:s,completedAt:new Date().toISOString()});setScore(s)};
  const reset=()=>{setA({});setScore(null)};
  return <div className="min-h-[75vh] bg-[#050505] py-10"><div className="mx-auto max-w-4xl px-5 sm:px-8">
   <button onClick={()=>onNavigate(back)} className="mb-8 flex items-center gap-2 text-xs text-[#888]"><ArrowLeft className="h-4 w-4"/>READING LAB</button>
