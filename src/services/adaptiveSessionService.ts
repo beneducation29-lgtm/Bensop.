@@ -20,12 +20,21 @@ export interface AdaptiveSessionItem {
   reason: string;
 }
 
+export interface AdaptivePriorityFocus {
+  title: string;
+  description: string;
+  reason: string;
+  path: string;
+  skill: 'grammar' | 'vocabulary';
+}
+
 export interface AdaptiveSession {
   language: LanguageCode;
   totalMinutes: number;
   generatedAt: string;
   items: AdaptiveSessionItem[];
   summary: string;
+  priorityFocus?: AdaptivePriorityFocus;
 }
 
 const SKILL_LABELS: Record<string, string> = {
@@ -96,6 +105,15 @@ class AdaptiveSessionService {
     });
 
     const rootCause = rootCauseService.getRootCauseRecommendation(language);
+    const priorityFocus: AdaptivePriorityFocus | undefined = rootCause && (rootCause.kind === 'grammar' || rootCause.kind === 'vocabulary')
+      ? {
+          title: rootCause.title,
+          description: rootCause.description,
+          reason: rootCause.reason,
+          path: rootCause.path,
+          skill: rootCause.kind,
+        }
+      : undefined;
     const forgettingRisk = masteryService.getForgettingRisks(1, language)[0];
     const persistentWeakness = masteryService.getPersistentWeaknesses(1, language)[0];
     const weakQuestion = masteryService.getWeakQuestions(1, language)[0];
@@ -198,6 +216,7 @@ class AdaptiveSessionService {
       generatedAt: new Date().toISOString(),
       items: capped,
       summary: total + ' phút · ' + (due.length ? 'ưu tiên lượt ôn đến hạn' : 'ưu tiên điểm cần củng cố') + '.',
+      priorityFocus,
     };
   }
 }
