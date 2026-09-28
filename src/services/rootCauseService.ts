@@ -30,7 +30,10 @@ class RootCauseService {
     language: LanguageCode,
     sourceQuestionId: string,
   ): RootCauseRecommendation {
-    const returnTarget = prerequisiteService.getReturnToParentRecommendation(concept, language);
+    const sourceRecord = masteryService.getSnapshot(language).questions.find((item) => item.entityId === sourceQuestionId);
+    const returnTarget = sourceRecord?.parentVerificationStatus === 'verified'
+      ? undefined
+      : prerequisiteService.getReturnToParentRecommendation(concept, language);
     const prerequisite =
       prerequisiteService.getPriorityPrerequisiteRecommendation(concept, language) ||
       prerequisiteService.getDeepRecommendation(concept, language) ||
@@ -75,7 +78,10 @@ class RootCauseService {
     language: LanguageCode,
     sourceQuestionId: string,
   ): RootCauseRecommendation {
-    const returnTarget = prerequisiteService.getReturnToParentRecommendation(word, language);
+    const sourceRecord = masteryService.getSnapshot(language).questions.find((item) => item.entityId === sourceQuestionId);
+    const returnTarget = sourceRecord?.parentVerificationStatus === 'verified'
+      ? undefined
+      : prerequisiteService.getReturnToParentRecommendation(word, language);
     const prerequisite =
       prerequisiteService.getPriorityPrerequisiteRecommendation(word, language) ||
       prerequisiteService.getDeepRecommendation(word, language) ||
