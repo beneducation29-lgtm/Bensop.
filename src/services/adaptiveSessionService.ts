@@ -3,6 +3,7 @@ import { learnerProfileService } from './learnerProfileService';
 import { spacedReviewService } from './spacedReviewService';
 import { masteryService } from './masteryService';
 import { recommendationService, LearningActionType } from './recommendationService';
+import { quizService } from './quizService';
 import { LearnerActivitySkill } from './learnerActivityService';
 
 export interface AdaptiveSessionItem {
