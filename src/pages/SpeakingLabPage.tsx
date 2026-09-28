@@ -81,7 +81,7 @@ export function SpeakingLabPage({language,onNavigate}:P){
      const reply=await aiSpeakingService.reply({language,level:session.level,mode:session.mode,topic:session.topic,scenario:session.scenario,learnerGoal:modeInfo.goal,performanceSnapshot},transcript,previousTurns);
      const aiTurn=aiSpeakingService.addTurn(session.id,{role:'ai',text:reply.text,display:{text:reply.text,pinyin:reply.pinyin,vietnameseTranslation:reply.vietnameseTranslation},feedback:reply.feedback});
      setNextPrompt(reply.nextPrompt||'');
-     if(reply.conversationMemory) aiSpeakingService.updateMemory(session.id,reply.conversationMemory);
+     const updatedMemorySession=reply.conversationMemory ? aiSpeakingService.updateMemory(session.id,reply.conversationMemory) : null;
      if(reply.feedback){
        const f=reply.feedback;
        const scores=[f.fluency,f.grammar,f.vocabulary,f.relevance].filter((v):v is number=>typeof v==='number');
@@ -90,7 +90,7 @@ export function SpeakingLabPage({language,onNavigate}:P){
        learnerActivityService.record({skill:'speaking',language,activityId:`ai-speaking:${session.id}`,score,evidenceType:'assessment',timestamp:new Date().toISOString(),metadata:{mode:session.mode}});
        spacedReviewService.scheduleSkillReview('speaking',session.id,language==='zh'?'中文 AI 口语':'English AI Speaking',language==='zh'?'/tieng-trung/speaking':'/tieng-anh/speaking',score>=80?7:score>=60?3:1,new Date().toISOString(),language);
      }
-     setSession(aiTurn||withLearner);
+     setSession(updatedMemorySession||aiTurn||withLearner);
      if(reply.text) void mediaService.speak(reply.text,language);
    }catch(e){
      setError(e instanceof Error?e.message:'Không thể kết nối AI Speaking lúc này.');

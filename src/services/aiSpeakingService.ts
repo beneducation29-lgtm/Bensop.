@@ -97,12 +97,16 @@ export const aiSpeakingService = {
   },
   completeSession(sessionId:string){const session=readSessionById(sessionId);if(!session)return null;const next={...session,status:'completed' as const};writeSession(next);return next;},
   async reply(context:AISpeakingRoomContext,transcript:string,history:AISpeakingSession['turns']):Promise<AISpeakingReply>{
+    const normalizedTranscript=transcript.trim();
+    if(!normalizedTranscript) throw new Error('Hãy nói một câu trước khi gửi cho AI.');
+    if(context.language==='zh'&&!/[\u4e00-\u9fff]/u.test(normalizedTranscript)) throw new Error('Phòng tiếng Trung cần transcript bằng tiếng Trung. Hãy nói lại rõ hơn bằng tiếng Trung phổ thông.');
+    if(context.language==='en'&&/[\u4e00-\u9fff]/u.test(normalizedTranscript)) throw new Error('English Speaking Room cần transcript bằng tiếng Anh. Hãy nói lại bằng tiếng Anh.');
     const controller=new AbortController();
     const timeout=window.setTimeout(()=>controller.abort(),18000);
     let response: Response;
     try {
       response=await fetch('/api/ai-speaking',{method:'POST',headers:{'Content-Type':'application/json'},signal:controller.signal,body:JSON.stringify({
-      language:context.language,mode:context.mode,level:context.level,topic:context.topic,scenario:context.scenario,learnerGoal:context.learnerGoal,performanceSnapshot:context.performanceSnapshot,conversationMemory:history.length?this.getSession(context.language)?.conversationMemory:undefined,transcript,history:history.slice(-10).map(t=>({role:t.role,text:t.text})),
+      language:context.language,mode:context.mode,level:context.level,topic:context.topic,scenario:context.scenario,learnerGoal:context.learnerGoal,performanceSnapshot:context.performanceSnapshot,conversationMemory:history.length?this.getSession(context.language)?.conversationMemory:undefined,transcript:normalizedTranscript,history:history.slice(-10).map(t=>({role:t.role,text:t.text})),
     })});
     } catch (error) {
       if (error instanceof DOMException && error.name === 'AbortError') throw new Error('AI Speaking phản hồi quá lâu. Hãy thử gửi lại.');
@@ -111,12 +115,17 @@ export const aiSpeakingService = {
       window.clearTimeout(timeout);
     }
     const data=await response.json().catch(()=>({}));
-    if(context.language==='zh'&&!/[\u4e00-\u9fff]/u.test(transcript)) throw new Error('Phòng tiếng Trung cần transcript bằng tiếng Trung. Hãy nói lại rõ hơn bằng tiếng Trung phổ thông.');
-    if(context.language==='en'&&/[\u4e00-\u9fff]/u.test(transcript)) throw new Error('English Speaking Room cần transcript bằng tiếng Anh. Hãy nói lại bằng tiếng Anh.');
     if(!response.ok) throw new Error(typeof data?.error==='string'?data.error:'AI speaking request failed');
     if(typeof data?.text!=='string'||!data.text.trim()) throw new Error('AI speaking returned an empty response');
-    if(context.language==='zh'&&(!data.pinyin||!data.vietnameseTranslation)) throw new Error('Chinese AI reply is missing Pinyin or Vietnamese translation');
-    if(context.language==='en'&&data.pinyin) throw new Error('English AI reply violated language isolation');
+    if(context.language==='zh'){
+      if(!/[\u4e00-\u9fff]/u.test(data.text)) throw new Error('Chinese AI reply violated language isolation');
+      if(!data.pinyin||!data.vietnameseTranslation) throw new Error('Chinese AI reply is missing Pinyin or Vietnamese translation');
+      if(data.nextPrompt && !/[\u4e00-\u9fff]/u.test(String(data.nextPrompt))) throw new Error('Chinese AI follow-up violated language isolation');
+    }else{
+      if(/[\u4e00-\u9fff]/u.test(data.text)) throw new Error('English AI reply violated language isolation');
+      if(data.pinyin) throw new Error('English AI reply violated language isolation');
+      if(data.nextPrompt && /[\u4e00-\u9fff]/u.test(String(data.nextPrompt))) throw new Error('English AI follow-up violated language isolation');
+    }
     return data as AISpeakingReply;
   },
 };
