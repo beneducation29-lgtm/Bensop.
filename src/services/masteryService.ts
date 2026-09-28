@@ -96,7 +96,14 @@ export const masteryService = {
     snapshot.updatedAt=new Date().toISOString();write(snapshot);return snapshot;
   },
   getWeakQuestions(limit=5,language?:LanguageCode):MasteryRecord[]{
-    return this.getSnapshot(language).questions.filter(item=>item.mastery<70).sort((a,b)=>a.mastery-b.mastery || b.attempts-a.attempts).slice(0,limit);
+    return this.getSnapshot(language).questions
+      .filter(item=>item.mastery<70 || item.evidenceLevel === 'new' || item.evidenceLevel === 'developing')
+      .sort((a,b)=>{
+        const aPriority=(a.mastery<70?0:1)+(a.evidenceLevel==='new'?0:a.evidenceLevel==='developing'?0.5:1);
+        const bPriority=(b.mastery<70?0:1)+(b.evidenceLevel==='new'?0:b.evidenceLevel==='developing'?0.5:1);
+        return aPriority-bPriority || a.mastery-b.mastery || (a.confidence??0)-(b.confidence??0) || b.attempts-a.attempts;
+      })
+      .slice(0,limit);
   },
   getWeakAreas(limit=5,language?:LanguageCode):MasteryRecord[]{
     return this.getSnapshot(language).topics.filter(item=>item.mastery<80).sort((a,b)=>a.mastery-b.mastery || b.attempts-a.attempts).slice(0,limit);
