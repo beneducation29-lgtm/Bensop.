@@ -13,6 +13,7 @@ import { LESSONS } from '../data/lessons';
 import { masteryService } from '../services/masteryService';
 import { learnerProfileService } from '../services/learnerProfileService';
 import { adaptiveSessionService } from '../services/adaptiveSessionService';
+import { adaptiveSessionGoalService } from '../services/adaptiveSessionGoalService';
 
 interface DashboardPageProps {
   user: UserProgress;
@@ -40,6 +41,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
   const masterySnapshot = masteryService.getSnapshot(masteryLanguage);
   const nextLearningActions = recommendationService.getNextLearningActions(3, learningLanguage);
   const adaptiveSession = adaptiveSessionService.buildSession(learningLanguage);
+  const adaptiveSessionGoal = adaptiveSessionGoalService.getProgress(learningLanguage);
   const learningSkillSnapshot = recommendationService.getLearningSkillSnapshot(learningLanguage);
   const learnerProfile = learnerProfileService.getSnapshot(learningLanguage);
   const weakQuestions = masteryService.getWeakQuestions(3, learningLanguage);
@@ -289,6 +291,21 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
               >
                 BẮT ĐẦU PHIÊN →
               </button>
+            </div>
+          </div>
+          <div className="mb-5 rounded-2xl border border-[#2A2A2A] bg-[#101010] p-5">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+              <div>
+                <div className="text-[9px] font-mono font-bold tracking-[0.18em] text-[#D9FF3F]">MỤC TIÊU PHIÊN HỌC</div>
+                <h3 className="mt-2 text-sm font-black uppercase text-white">{adaptiveSessionGoal.label}</h3>
+                <p className="mt-1 max-w-2xl text-xs leading-relaxed text-[#888]">{adaptiveSessionGoal.reason}</p>
+              </div>
+              <span className="shrink-0 rounded-lg border border-[#2A2A2A] bg-[#151515] px-3 py-2 text-[9px] font-mono font-bold text-[#D9FF3F]">
+                {adaptiveSessionGoal.completedSteps}/{adaptiveSessionGoal.targetSteps} BƯỚC
+              </span>
+            </div>
+            <div className="mt-4 h-1.5 overflow-hidden rounded-full bg-[#1A1A1A]">
+              <div className="h-full rounded-full bg-[#D9FF3F] transition-all duration-500" style={{ width: (Math.min(100, (adaptiveSessionGoal.completedSteps / adaptiveSessionGoal.targetSteps) * 100)) + '%' }} />
             </div>
           </div>
           <div className="mb-5 rounded-2xl border border-[#2A2A2A] bg-[#101010] p-5">
