@@ -94,6 +94,7 @@ export const spacedReviewService = {
     intervalDays: 1 | 3 | 7,
     completedAt = new Date().toISOString(),
     language?: LanguageCode,
+    reviewQuality: SpacedReviewItem['reviewQuality'] = 'good',
   ): SpacedReviewItem[] {
     const existing = read().filter((item) => item.quizSlug !== quizSlug || (language && item.language !== language));
     const item: SpacedReviewItem = {
@@ -102,6 +103,7 @@ export const spacedReviewService = {
       reviewType: 'quiz',
       language,
       intervalDays,
+      reviewQuality,
       scheduledAt: completedAt,
       dueAt: addDays(completedAt, intervalDays),
     };
@@ -120,10 +122,15 @@ export const spacedReviewService = {
 
   markComplete(id: string): void {
     const now = new Date().toISOString();
-    const nextInterval = (current: 1 | 3 | 7): 1 | 3 | 7 => current === 1 ? 3 : current === 3 ? 7 : 7;
+    const nextInterval = (current: 1 | 3 | 7, quality: SpacedReviewItem['reviewQuality']): 1 | 3 | 7 => {
+      if (quality === 'again') return 1;
+      if (quality === 'hard') return current === 7 ? 3 : 1;
+      if (quality === 'easy') return 7;
+      return current === 1 ? 3 : 7;
+    };
     const items = read().map((item) => {
       if (item.id !== id) return item;
-      const intervalDays = nextInterval(item.intervalDays);
+      const intervalDays = nextInterval(item.intervalDays, item.reviewQuality);
       return {
         ...item,
         intervalDays,
