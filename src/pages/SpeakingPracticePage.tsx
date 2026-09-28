@@ -1,3 +1,4 @@
+import { adaptiveMultiskillFeedbackService } from '../services/adaptiveMultiskillFeedbackService';
 
 import React, { useEffect, useMemo, useState } from 'react';
 import { ArrowLeft, Mic, Volume2, Loader2, Sparkles, MessageCircle, Languages, RotateCcw } from 'lucide-react';
@@ -140,6 +141,7 @@ export function SpeakingPracticePage({ language, slug, onNavigate }: Props) {
           new Date().toISOString(),
           language,
         );
+        adaptiveMultiskillFeedbackService.recordResult({skill:'speaking',language,activityId:activity.id,score,completedAt:new Date().toISOString()});
       }
 
       setSession(ai || learner);
