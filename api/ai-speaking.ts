@@ -71,6 +71,16 @@ export default async function handler(req:Req,res:Res){
     res.status(400).json({error:'Missing speaking context'});
     return;
   }
+  // Enforce the input language contract before the model sees the turn.
+  // This prevents a Chinese room from silently switching to English (and vice versa).
+  if(language==='zh' && !/[\u4e00-\u9fff]/u.test(transcript)){
+    res.status(422).json({error:'Chinese speaking room expects Mandarin transcript (zh-CN). Please speak Chinese and try again.'});
+    return;
+  }
+  if(language==='en' && /[\u4e00-\u9fff]/u.test(transcript)){
+    res.status(422).json({error:'English speaking room received Chinese characters. Please switch to the English room or speak English.'});
+    return;
+  }
   const apiKey=process.env.GEMINI_API_KEY||process.env.GOOGLE_API_KEY||process.env.GOOGLE_GENERATIVE_AI_API_KEY||process.env.GOOGLE_GENAI_API_KEY||process.env.API_KEY;
   if(!apiKey){res.status(503).json({error:'AI speaking service is not configured'});return;}
   const history=Array.isArray(body.history)
