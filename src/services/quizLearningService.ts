@@ -22,14 +22,26 @@ export const quizLearningService = {
       ? Math.round(attemptedMastery.reduce((sum, value) => sum + value, 0) / attemptedMastery.length)
       : result.score;
 
+    const recoveryQuestions = language
+      ? masteryService.getRecoveryRisks(result.questionBreakdowns.length, language)
+      : [];
+    const recoveredCount = recoveryQuestions.filter((item) =>
+      result.questionBreakdowns.some((breakdown) => breakdown.questionId === item.entityId && breakdown.isCorrect),
+    ).length;
+    const recoverySignal = recoveryQuestions.length
+      ? recoveredCount / recoveryQuestions.length
+      : 0;
+
     const reviewQuality: 'again' | 'hard' | 'good' | 'easy' =
       result.score < 50 || averageQuestionMastery < 50
         ? 'again'
         : result.score < 70 || averageQuestionMastery < 70
           ? 'hard'
-          : result.score >= 85 && averageQuestionMastery >= 80
+          : recoverySignal >= 0.7 && result.score >= 80
             ? 'easy'
-            : 'good';
+            : result.score >= 85 && averageQuestionMastery >= 80
+              ? 'easy'
+              : 'good';
 
     const intervalDays: 1 | 3 | 7 =
       reviewQuality === 'again'
