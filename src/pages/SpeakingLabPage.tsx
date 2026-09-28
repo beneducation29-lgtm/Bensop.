@@ -18,9 +18,11 @@ export function SpeakingLabPage({language,onNavigate}:P){
  const levels=Array.from(new Set(speakingService.getAllActivities(language).map(x=>x.level)));
  const track=AI_SPEAKING_TRACKS.find(x=>x.language===language)!;
  const[mode,setMode]=useState<AISpeakingMode>('role-play');
+ const[scenarioId,setScenarioId]=useState('');
  const[session,setSession]=useState(()=>aiSpeakingService.getSession(language));
  const[response,setResponse]=useState(''),[loading,setLoading]=useState(false),[listening,setListening]=useState(false),[error,setError]=useState(''),[nextPrompt,setNextPrompt]=useState('');
  const modeInfo=track.modes.find(x=>x.id===mode)!;
+ const selectedScenario=track.scenarios.find(x=>x.id===scenarioId)||track.scenarios[0];
  const showNextPrompt=!!nextPrompt&&!!session?.turns.length&&nextPrompt.trim().toLowerCase()!==session.turns[session.turns.length-1].text.trim().toLowerCase()&&!session.turns[session.turns.length-1].text.toLowerCase().includes(nextPrompt.trim().toLowerCase());
  const modeTip=mode==='shadowing'?'Nghe → bắt chước → nhận 1 điểm sửa trọng tâm':mode==='role-play'?'AI giữ vai diễn và đẩy tình huống tiến lên':mode==='free-conversation'?'AI bám vào chi tiết bạn vừa nói để trò chuyện tiếp':mode==='interview'?'AI hỏi sâu dần như một buổi phỏng vấn thật':'Tập trung vào 1 điểm phát âm/phrasing mỗi lượt';
  const feedbackTurns=(session?.turns||[]).filter(t=>t.role==='ai'&&t.feedback);
@@ -49,7 +51,9 @@ export function SpeakingLabPage({language,onNavigate}:P){
  const weakMetrics=['fluency','grammar','vocabulary','relevance'].map(key=>({key,label:key==='fluency'?'Fluency':key==='grammar'?'Grammar':key==='vocabulary'?'Vocabulary':'Relevance',score:feedbackTurns.length?Math.round(feedbackTurns.reduce((sum,t)=>sum+(typeof t.feedback?.[key as keyof AISpeakingTurnFeedback]==='number'?(t.feedback?.[key as keyof AISpeakingTurnFeedback] as number):0),0)/feedbackTurns.length):0})).filter(x=>x.score>0).sort((a,b)=>a.score-b.score);
 
  const openRoom=()=>{
-   const next=aiSpeakingService.createSession({language,level:levels[0]||'B1',mode,topic:language==='zh'?'日常生活':'Everyday Life',scenario:modeInfo.goal});
+   const scenario=selectedScenario||track.scenarios[0];
+   const next=aiSpeakingService.createSession({language,level:levels[0]||'B1',mode,topic:scenario?.title||(language==='zh'?'日常生活':'Everyday Life'),scenario:scenario?.context||modeInfo.goal});
+   setScenarioId(scenario?.id||'');
    setSession(next);setNextPrompt('');setError('');setRoom(true);
  };
  const speakPrompt=(text:string)=>{void mediaService.speak(text,language);};
@@ -80,6 +84,7 @@ export function SpeakingLabPage({language,onNavigate}:P){
        spacedReviewService.scheduleSkillReview('speaking',session.id,language==='zh'?'中文 AI 口语':'English AI Speaking',language==='zh'?'/tieng-trung/speaking':'/tieng-anh/speaking',score>=80?7:score>=60?3:1,new Date().toISOString(),language);
      }
      setSession(aiTurn||withLearner);
+     if(reply.text) void mediaService.speak(reply.text,language);
    }catch(e){
      setError(e instanceof Error?e.message:'Không thể kết nối AI Speaking lúc này.');
    }finally{setLoading(false);}
@@ -108,6 +113,18 @@ export function SpeakingLabPage({language,onNavigate}:P){
   <button onClick={()=>room?setRoom(false):openRoom()} className="mb-10 w-full border border-[#D9FF3F]/40 bg-[#0d1107] p-6 text-left hover:border-[#D9FF3F]"><div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between"><div><div className="mb-2 flex items-center gap-2 text-xs font-mono text-[#D9FF3F]"><Sparkles className="h-4 w-4"/>AI SPEAKING ROOM</div><h2 className="text-2xl font-black">{track.title}</h2><p className="mt-2 max-w-2xl text-sm text-[#999]">{track.description}</p>{language==='zh'&&<p className="mt-3 text-xs text-[#D9FF3F]">中文简体 → Pinyin có dấu thanh → Tiếng Việt · không trộn English vào hội thoại.</p>}</div><div className="shrink-0 bg-[#D9FF3F] px-5 py-3 text-xs font-black text-black">{room?'ĐÓNG PHÒNG':'MỞ PHÒNG AI'}</div></div></button>
 
   {room&&<section className="mb-12 border border-[#292929] bg-[#0b0b0b] p-5 sm:p-7"><div className="mb-6 flex items-center justify-between gap-4"><div><div className="text-xs font-mono text-[#D9FF3F]">ROOM / {language==='zh'?'中文':'ENGLISH'}</div><h2 className="mt-2 text-2xl font-black">{modeInfo.title}</h2></div><button onClick={()=>setRoom(false)} className="text-xs text-[#777]"><ArrowLeft className="inline h-4 w-4"/> SPEAKING LAB</button></div>
+   <div className="mb-5 grid gap-3 md:grid-cols-[1fr_auto]">
+    <label className="border border-[#242424] bg-[#0d0d0d] p-3">
+      <span className="mb-2 block text-[9px] font-mono text-[#666]">SCENARIO · TÌNH HUỐNG</span>
+      <select value={scenarioId||track.scenarios[0]?.id||''} onChange={e=>{setScenarioId(e.target.value);const s=track.scenarios.find(x=>x.id===e.target.value);if(s&&session){setSession(aiSpeakingService.createSession({language,level:session.level,mode,topic:s.title,scenario:s.context}));setNextPrompt('');}}} className="w-full bg-transparent text-sm font-semibold text-white outline-none">
+        {track.scenarios.map(s=><option key={s.id} value={s.id}>{s.title}</option>)}
+      </select>
+      <span className="mt-2 block text-[11px] text-[#666]">{selectedScenario?.context}</span>
+    </label>
+    <div className="flex items-center border border-[#242424] bg-[#0d0d0d] px-4 text-[10px] font-mono text-[#777]">
+      <span className="text-[#D9FF3F]">AI CONTRACT</span><span className="mx-2">·</span>{language==='zh'?'中文 → Pinyin → Việt':'English → phản hồi tự nhiên'}
+    </div>
+   </div>
    <div className="mb-6 flex flex-wrap gap-2">{track.modes.map(m=><button key={m.id} onClick={()=>{setMode(m.id);if(session)setSession(aiSpeakingService.createSession({language,level:session.level,mode:m.id,topic:session.topic,scenario:track.modes.find(x=>x.id===m.id)?.goal}))}} className={`border px-3 py-2 text-xs ${mode===m.id?'border-[#D9FF3F] text-[#D9FF3F]':'border-[#292929] text-[#888]'}`}>{m.title}</button>)}</div>
    {feedbackTurns.length>=2&&<div className="mb-5 border border-[#D9FF3F]/20 bg-[#0d1107] p-5"><div className="text-[10px] font-mono text-[#D9FF3F]">SESSION CHECKPOINT</div><div className="mt-3 flex flex-wrap items-end gap-6"><div><div className="text-[10px] text-[#666]">ĐIỂM PHIÊN</div><div className="text-3xl font-black">{sessionScore}/100</div></div>{weakMetrics.slice(0,3).map(m=><div key={m.key}><div className="text-[10px] text-[#666]">{m.label}</div><div className="text-xl font-bold">{m.score}%</div></div>)}</div><p className="mt-3 text-xs text-[#888]">Điểm yếu hiện tại được lấy từ các lượt AI đã đánh giá trong phiên. Hãy luyện lại kỹ năng thấp nhất thay vì chỉ lặp lại toàn bộ bài.</p><button onClick={()=>onNavigate('/adaptive-session?lang='+language)} className="mt-4 border border-[#D9FF3F] px-4 py-2 text-xs font-black text-[#D9FF3F]">LUYỆN LẠI ĐIỂM YẾU</button></div>}
    <div className="grid gap-5 lg:grid-cols-[1fr_280px]">
@@ -118,7 +135,7 @@ export function SpeakingLabPage({language,onNavigate}:P){
      <div className="flex flex-wrap gap-3"><button onClick={()=>speakPrompt(language==='zh'?'你好！今天过得怎么样？':'Hello! How are you doing today?')} className="flex items-center gap-2 border border-[#333] px-4 py-3 text-xs font-bold"><Volume2 className="h-4 w-4"/>NGHE MẪU</button><button onClick={addSample} className="flex items-center gap-2 border border-[#333] px-4 py-3 text-xs font-bold"><MessageCircle className="h-4 w-4"/>LƯU CÂU MẪU</button></div>
      <div className="mt-7"><div className="min-h-28 w-full border border-[#292929] bg-[#090909] p-4 text-sm">
        <div className="mb-2 text-[9px] font-mono text-[#555]">LIVE TRANSCRIPT · TỰ ĐỘNG GỬI AI</div>
-       <div className={response?'text-[#ddd]':'text-[#555]'}>{response||'Bấm “NÓI BẰNG MICRO”, nói tự nhiên. Bensop sẽ tự nhận diện câu nói và chuyển thẳng cho AI.'}</div>
+       <div className={response?'text-[#ddd]':'text-[#555]'}>{response||'{language==='zh'?'Nói bằng tiếng Trung. AI sẽ tự nhận diện, tự trả lời và đọc câu trả lời cho bạn.':'Speak naturally in English. AI will recognize your speech, respond, and read the reply back.'}'}</div>
      </div><div className="mt-3 flex flex-wrap items-center gap-3"><button onClick={()=>void listenForResponse()} disabled={loading} className="flex items-center gap-2 border border-[#333] px-4 py-3 text-xs font-bold disabled:opacity-30"><Mic className="h-4 w-4"/>{listening?'ĐANG NGHE…':'NÓI BẰNG MICRO'}</button>{loading&&<div className="flex items-center gap-2 text-[10px] text-[#777]"><Loader2 className="h-4 w-4 animate-spin text-[#D9FF3F]"/> AI đang hiểu và phản hồi…</div>}<span className="text-[10px] text-[#555]">Không cần bấm gửi.</span></div>{error&&<div className="mt-3 border border-red-900/60 bg-red-950/20 p-3 text-xs text-red-300">{error}</div>}</div>
     </div>
     <aside className="border border-[#242424] bg-[#0f0f0f] p-5"><div className="flex items-center gap-2 text-xs font-mono text-[#D9FF3F]"><Languages className="h-4 w-4"/>LANGUAGE CONTRACT</div>{language==='zh'?<><p className="mt-4 text-sm font-bold">Chinese AI Room</p><ul className="mt-3 space-y-3 text-xs text-[#999]"><li>✓ 中文简体</li><li>✓ Pinyin có dấu thanh</li><li>✓ Dịch tiếng Việt</li><li>✓ Không trộn English vào hội thoại</li></ul></>:<><p className="mt-4 text-sm font-bold">English AI Room</p><ul className="mt-3 space-y-3 text-xs text-[#999]"><li>✓ English conversation</li><li>✓ Vietnamese support</li><li>✓ Không sinh Pinyin/Chinese</li></ul></>}<div className="mt-6 border-t border-[#222] pt-4 text-[11px] leading-5 text-[#666]">AI thật đã nối qua server endpoint. API key chỉ ở server; AI không được phép tự chọn route ngoài contract.</div></aside>
