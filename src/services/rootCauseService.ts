@@ -54,6 +54,35 @@ class RootCauseService {
     };
   }
 
+  private getVocabularyRecommendation(
+    word: ReturnType<typeof vocabularyService.getAllWords>[number],
+    language: LanguageCode,
+    sourceQuestionId: string,
+  ): RootCauseRecommendation {
+    const prerequisite = prerequisiteService.getVocabularyRecommendation(word, language);
+    if (prerequisite) {
+      return {
+        language,
+        kind: 'vocabulary',
+        title: 'Lùi một bước · củng cố từ nền',
+        description: prerequisite.prerequisite.word,
+        path: prerequisite.path,
+        reason: prerequisite.reason,
+        sourceQuestionId,
+      };
+    }
+
+    return {
+      language,
+      kind: 'vocabulary',
+      title: 'Củng cố từ vựng nền',
+      description: word.word + ' · ' + word.meaning,
+      path: '/quiz/' + quizService.createQuizFromVocabulary(word),
+      reason: 'Lỗi lặp lại có thể bắt nguồn từ vốn từ hoặc ngữ cảnh sử dụng.',
+      sourceQuestionId,
+    };
+  }
+
   getRootCauseRecommendation(language: LanguageCode): RootCauseRecommendation | undefined {
     const question = this.findQuestion(language);
     if (!question) return undefined;
@@ -75,12 +104,7 @@ class RootCauseService {
     }
 
     if (question.skill === 'Vocabulary' && vocabulary.length) {
-      const word = vocabulary[0];
-      return {
-        language, kind: 'vocabulary', title: 'Củng cố từ vựng nền', description: word.word + ' · ' + word.meaning,
-        path: '/quiz/' + quizService.createQuizFromVocabulary(word),
-        reason: 'Lỗi lặp lại có thể bắt nguồn từ vốn từ hoặc ngữ cảnh sử dụng.', sourceQuestionId: question.id,
-      };
+      return this.getVocabularyRecommendation(vocabulary[0], language, question.id);
     }
 
     if (grammar.length) {
@@ -88,12 +112,7 @@ class RootCauseService {
     }
 
     if (vocabulary.length) {
-      const word = vocabulary[0];
-      return {
-        language, kind: 'vocabulary', title: 'Củng cố từ vựng nền', description: word.word + ' · ' + word.meaning,
-        path: '/quiz/' + quizService.createQuizFromVocabulary(word),
-        reason: 'Bensop tìm thấy từ vựng liên quan trực tiếp đến dạng lỗi.', sourceQuestionId: question.id,
-      };
+      return this.getVocabularyRecommendation(vocabulary[0], language, question.id);
     }
 
     return undefined;
