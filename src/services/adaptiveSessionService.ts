@@ -70,35 +70,46 @@ class AdaptiveSessionService {
       items.push({ ...item, id: 'adaptive-' + item.type + '-' + item.path.replace(/[^a-zA-Z0-9]+/g, '-').replace(/^-|-$/g, '') });
     };
 
-    if (due.length) {
-      const review = due[0];
-      const path = review.quizSlug ? '/quiz/' + review.quizSlug : review.lessonSlug ? '/bai-hoc/' + review.lessonSlug : '/luyen-tap';
+    const dueQuizPaths = new Set<string>();
+
+    due.slice(0, 2).forEach((review, index) => {
+      const path = review.quizSlug
+        ? '/quiz/' + review.quizSlug
+        : review.lessonSlug
+          ? '/bai-hoc/' + review.lessonSlug
+          : review.path || '/luyen-tap';
+
+      if (review.quizSlug) dueQuizPaths.add(path);
+
       add({
         type: 'review',
         skill: review.reviewType === 'quiz' ? 'quiz' : 'lesson',
         skillKey: review.reviewType === 'quiz' ? 'quiz' : 'lesson',
         language,
-        title: 'Ôn lượt đến hạn',
+        title: index === 0 ? 'Ôn lượt đến hạn' : 'Tiếp tục lượt ôn',
         description: 'Bắt đầu bằng nội dung đã đến hạn để tận dụng Spaced Review.',
         path,
         durationMinutes: review.reviewType === 'quiz' ? 8 : 10,
         reason: due.length + ' lượt ôn đang đến hạn.',
       });
-    }
+    });
 
     const weakQuestion = masteryService.getWeakQuestions(1, language)[0];
     if (weakQuestion) {
-      add({
-        type: 'weakness',
-        skill: 'quiz',
-        skillKey: 'quiz',
-        language,
-        title: 'Adaptive Quiz · Sửa điểm yếu',
-        description: 'Luyện lại các dạng câu hỏi có mastery thấp trước khi chuyển sang nội dung mới.',
-        path: '/quiz/' + quizService.createAdaptiveQuiz(language, 10),
-        durationMinutes: 8,
-        reason: 'Câu yếu nhất: ' + weakQuestion.label + ' · mastery ' + weakQuestion.mastery + '% · ' + (weakQuestion.skill || 'kỹ năng') + '.',
-      });
+      const adaptiveQuizPath = '/quiz/' + quizService.createAdaptiveQuiz(language, 10);
+      if (!dueQuizPaths.has(adaptiveQuizPath)) {
+        add({
+          type: 'weakness',
+          skill: 'quiz',
+          skillKey: 'quiz',
+          language,
+          title: 'Adaptive Quiz · Sửa điểm yếu',
+          description: 'Luyện lại các dạng câu hỏi có mastery thấp trước khi chuyển sang nội dung mới.',
+          path: adaptiveQuizPath,
+          durationMinutes: 8,
+          reason: 'Câu yếu nhất: ' + weakQuestion.label + ' · mastery ' + weakQuestion.mastery + '% · ' + (weakQuestion.skill || 'kỹ năng') + '.',
+        });
+      }
     }
 
     const ranked = [...profile.skills]
