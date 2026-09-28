@@ -19,7 +19,28 @@ const upsert = (records: MasteryRecord[], input: Omit<MasteryRecord,'mastery'|'a
   const previous=index>=0?records[index]:undefined;
   const previousMastery=previous?.mastery??0;
   const mastery=previous?Math.round(previousMastery*0.6+score*0.4):Math.round(score);
-  const next:MasteryRecord={...input,mastery:Math.max(0,Math.min(100,mastery)),attempts:(previous?.attempts??0)+attempted,correct:(previous?.correct??0)+correct,lastScore:score,lastAttemptAt:new Date().toISOString(),trend:mastery>previousMastery?'up':mastery<previousMastery?'down':'stable'};
+  const attempts=(previous?.attempts??0)+attempted;
+  const totalCorrect=(previous?.correct??0)+correct;
+  const accuracy=attempts>0?Math.round((totalCorrect/attempts)*100):0;
+  const confidence=Math.min(100,attempts*20);
+  const boundedMastery=Math.max(0,Math.min(100,mastery));
+  const evidenceLevel:MasteryRecord['evidenceLevel'] =
+    attempts < 2 ? 'new' :
+    attempts < 3 || boundedMastery < 70 ? 'developing' :
+    attempts < 5 || boundedMastery < 85 || accuracy < 80 ? 'established' :
+    'mastered';
+  const next:MasteryRecord={
+    ...input,
+    mastery:boundedMastery,
+    attempts,
+    correct:totalCorrect,
+    lastScore:score,
+    lastAttemptAt:new Date().toISOString(),
+    trend:mastery>previousMastery?'up':mastery<previousMastery?'down':'stable',
+    accuracy,
+    confidence,
+    evidenceLevel,
+  };
   if(index<0)return[...records,next];
   const clone=[...records];clone[index]=next;return clone;
 };
