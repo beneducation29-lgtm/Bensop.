@@ -5,6 +5,7 @@ import { adaptiveSessionMemoryService } from './adaptiveSessionMemoryService';
 import { adaptiveSessionGoalService } from './adaptiveSessionGoalService';
 import { dailyLearningContinuityService } from './dailyLearningContinuityService';
 import { adaptiveLearningHistoryService } from './adaptiveLearningHistoryService';
+import { adaptiveSessionPlannerService } from './adaptiveSessionPlannerService';
 
 interface AdaptiveStepRecord {
   id: string;
@@ -111,7 +112,7 @@ class AdaptiveSessionExecutionService {
 
     // Re-run the orchestrator after mastery + spaced review + session memory have been persisted.
     // This makes the next step respond to the result instead of using the pre-attempt plan.
-    const nextPlan = adaptiveLearningOrchestrator.buildPlan(language);
+    const nextPlan = adaptiveSessionPlannerService.build(language).current;
     session.nextPlan = nextPlan;
     this.write(session);
 
