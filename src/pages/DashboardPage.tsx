@@ -16,6 +16,7 @@ import { adaptiveSessionService } from '../services/adaptiveSessionService';
 import { adaptiveSessionGoalService } from '../services/adaptiveSessionGoalService';
 import { dailyLearningContinuityService } from '../services/dailyLearningContinuityService';
 import { adaptiveLearningHistoryService } from '../services/adaptiveLearningHistoryService';
+import { longTermLearningInsightService } from '../services/longTermLearningInsightService';
 
 interface DashboardPageProps {
   user: UserProgress;
@@ -46,6 +47,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
   const adaptiveSessionGoal = adaptiveSessionGoalService.getProgress(learningLanguage);
   const dailyContinuity = dailyLearningContinuityService.getContinuity(learningLanguage);
   const learningHistory = adaptiveLearningHistoryService.getSummary(learningLanguage, 30);
+  const longTermInsight = longTermLearningInsightService.getInsight(learningLanguage);
   const learningSkillSnapshot = recommendationService.getLearningSkillSnapshot(learningLanguage);
   const learnerProfile = learnerProfileService.getSnapshot(learningLanguage);
   const weakQuestions = masteryService.getWeakQuestions(3, learningLanguage);
@@ -199,6 +201,57 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
             </div>
           </div>
         </div>
+
+        {/* LONG-TERM LEARNING INSIGHTS */}
+        <section className="mb-12 rounded-3xl border border-[#2A2A2A] bg-[#0D0D0D] p-6 sm:p-8">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between mb-6">
+            <div>
+              <div className="text-[10px] font-mono font-bold tracking-[0.18em] text-[#D9FF3F]">LONG-TERM LEARNING INSIGHTS</div>
+              <h2 className="mt-2 text-2xl sm:text-3xl font-black uppercase text-white">{longTermInsight.headline}</h2>
+              <p className="mt-2 max-w-2xl text-xs leading-relaxed text-[#777]">{longTermInsight.explanation}</p>
+            </div>
+            <span className="shrink-0 rounded-xl border border-[#252525] bg-[#121212] px-4 py-2 text-[10px] font-mono font-bold text-[#D9FF3F]">{longTermInsight.trendLabel}</span>
+          </div>
+
+          <div className="grid gap-4 lg:grid-cols-4 mb-6">
+            {longTermInsight.periods.map((period) => (
+              <div key={period.label} className="rounded-2xl border border-[#222] bg-[#101010] p-4">
+                <div className="text-[9px] font-mono font-bold tracking-wider text-[#666]">{period.label}</div>
+                <div className="mt-3 flex items-end justify-between gap-3">
+                  <span className="text-xl font-black text-white">{period.mastery}%</span>
+                  <span className={`text-[10px] font-mono ${period.masteryDelta > 0 ? 'text-emerald-400' : period.masteryDelta < 0 ? 'text-amber-400' : 'text-[#777]'}`}>
+                    {period.masteryDelta > 0 ? '+' : ''}{period.masteryDelta} Δ
+                  </span>
+                </div>
+                <div className="mt-2 text-[9px] font-mono text-[#666]">{period.activities} hoạt động · {period.activeDays} ngày</div>
+              </div>
+            ))}
+          </div>
+
+          <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
+            {longTermInsight.skills.slice().sort((a, b) => b.mastery - a.mastery).map((skill) => (
+              <div key={skill.skill} className="rounded-2xl border border-[#222] bg-[#101010] p-4">
+                <div className="flex items-center justify-between gap-3">
+                  <span className="text-xs font-black uppercase text-white">{skill.skill}</span>
+                  <span className={`text-[9px] font-mono font-bold ${skill.trend === 'up' ? 'text-emerald-400' : skill.trend === 'down' ? 'text-amber-400' : 'text-[#777]'}`}>
+                    {skill.trend === 'up' ? '↑ TĂNG' : skill.trend === 'down' ? '↓ GIẢM' : skill.trend === 'stable' ? '→ ỔN ĐỊNH' : '· ĐỦ EVIDENCE'}
+                  </span>
+                </div>
+                <div className="mt-3 flex items-center justify-between text-[10px] font-mono">
+                  <span className="text-[#777]">MASTERY</span>
+                  <strong className="text-white">{skill.mastery}%</strong>
+                </div>
+                <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-[#1A1A1A]">
+                  <div className="h-full bg-[#D9FF3F] rounded-full" style={{ width: `${Math.min(100, skill.mastery)}%` }} />
+                </div>
+                <div className="mt-3 text-[9px] font-mono text-[#666]">{skill.activities} hoạt động · TB {skill.averageScore}% · consistency {skill.consistency}%</div>
+              </div>
+            ))}
+            {!longTermInsight.skills.length && (
+              <p className="text-xs text-[#777]">Chưa đủ dữ liệu để phân tích xu hướng kỹ năng.</p>
+            )}
+          </div>
+        </section>
 
         {/* SPACED REVIEW DUE */}
         {dueReviews.length > 0 && (
