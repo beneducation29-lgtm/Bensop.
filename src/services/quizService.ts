@@ -130,12 +130,62 @@ class QuizService {
   createAdaptiveQuiz(language: LanguageCode, limit = 10): string {
     const categoryId = language === 'en' ? 'tieng-anh' : 'tieng-trung';
     const mastery = masteryService.getSnapshot(language);
-    const weakIds = new Set(mastery.questions.filter((q) => q.mastery < 70).sort((a, b) => a.mastery - b.mastery || b.attempts - a.attempts).map((q) => q.entityId));
+    const targetSize = Math.max(5, Math.min(limit, 15));
     const languageQuestions = QUESTIONS_BANK.filter((q) => q.categoryId === categoryId);
-    const weakQuestions = languageQuestions.filter((q) => weakIds.has(q.id));
-    const topicIds = mastery.topics.filter((topic) => topic.mastery < 80).sort((a, b) => a.mastery - b.mastery).map((topic) => topic.entityId);
-    const topicQuestions = topicIds.flatMap((topicId) => languageQuestions.filter((q) => q.topicId === topicId));
-    const selected = Array.from(new Map([...weakQuestions, ...topicQuestions, ...languageQuestions].map((q) => [q.id, q])).values()).slice(0, Math.max(5, Math.min(limit, 15)));
+    const weakRecords = mastery.questions
+      .filter((q) => q.mastery < 70)
+      .sort((a, b) => a.mastery - b.mastery || b.attempts - a.attempts);
+    const weakIds = new Set(weakRecords.map((q) => q.entityId));
+    const weakQuestions = languageQuestions
+      .filter((q) => weakIds.has(q.id))
+      .sort((a, b) => {
+        const am = mastery.questions.find((item) => item.entityId === a.id)?.mastery ?? 0;
+        const bm = mastery.questions.find((item) => item.entityId === b.id)?.mastery ?? 0;
+        return am - bm;
+      });
+    const weakTopicIds = mastery.topics
+      .filter((topic) => topic.mastery < 80)
+      .sort((a, b) => a.mastery - b.mastery || b.attempts - a.attempts)
+      .map((topic) => topic.entityId);
+    const weakTopicSet = new Set(weakTopicIds);
+
+    // First pass: weakest questions, while keeping topic diversity.
+    const selectedQuestions: typeof languageQuestions = [];
+    const selectedIds = new Set<string>();
+    const topicCounts = new Map<string, number>();
+    const addQuestion = (question: typeof languageQuestions[number], maxPerTopic = 2) => {
+      if (selectedIds.has(question.id)) return false;
+      const count = topicCounts.get(question.topicId) ?? 0;
+      if (count >= maxPerTopic) return false;
+      selectedQuestions.push(question);
+      selectedIds.add(question.id);
+      topicCounts.set(question.topicId, count + 1);
+      return true;
+    };
+
+    weakQuestions.forEach((question) => {
+      if (selectedQuestions.length < targetSize) addQuestion(question, 3);
+    });
+
+    // Second pass: fill from the weakest topics before falling back to general practice.
+    languageQuestions
+      .filter((question) => weakTopicSet.has(question.topicId))
+      .sort((a, b) => {
+        const ai = weakTopicIds.indexOf(a.topicId);
+        const bi = weakTopicIds.indexOf(b.topicId);
+        return ai - bi;
+      })
+      .forEach((question) => {
+        if (selectedQuestions.length < targetSize) addQuestion(question, 2);
+      });
+
+    // Final pass: use unseen language-scoped questions so the session remains useful
+    // even when the learner has little or no mastery history.
+    languageQuestions.forEach((question) => {
+      if (selectedQuestions.length < targetSize) addQuestion(question, 1);
+    });
+
+    const selected = selectedQuestions.slice(0, targetSize);
     if (!selected.length) return 'daily-challenge';
     const slug = `quiz-adaptive-${language}-${selected.map((q) => q.id).sort().join('-')}`;
     const existing = this.getQuizBySlug(slug);
