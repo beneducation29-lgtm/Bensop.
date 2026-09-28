@@ -42,6 +42,12 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
   const adaptiveSession = adaptiveSessionService.buildSession(learningLanguage);
   const learningSkillSnapshot = recommendationService.getLearningSkillSnapshot(learningLanguage);
   const learnerProfile = learnerProfileService.getSnapshot(learningLanguage);
+  const weakQuestions = masteryService.getWeakQuestions(3, learningLanguage);
+  const weakAreas = masteryService.getWeakAreas(3, learningLanguage);
+  const strongestSkills = masterySnapshot.skills
+    .filter((item) => item.mastery >= 70)
+    .sort((a, b) => b.mastery - a.mastery)
+    .slice(0, 3);
 
   const handleOpenRecommended = (slug: string, type: 'article' | 'course') => {
     if (type === 'article') {
@@ -304,6 +310,52 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
               </button>
             ))}
           </div>
+        </section>
+
+        {/* ADAPTIVE LEARNING CENTER */}
+        <section className="mb-12 rounded-3xl border border-amber-500/20 bg-[#0D0D0D] p-6 sm:p-8">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between mb-6">
+            <div>
+              <div className="flex items-center gap-2 text-[10px] font-mono font-bold tracking-[0.18em] text-amber-300">
+                <Target className="w-3.5 h-3.5" />
+                ADAPTIVE LEARNING CENTER · {learningLanguage === 'zh' ? 'TIẾNG TRUNG' : 'TIẾNG ANH'}
+              </div>
+              <h2 className="mt-2 text-2xl sm:text-3xl font-black uppercase text-white">VÌ SAO BENSOP CHỌN BÀI NÀY?</h2>
+              <p className="mt-2 max-w-2xl text-xs sm:text-sm leading-relaxed text-[#777]">
+                Bensop đọc mastery theo đúng ngôn ngữ đang học, tìm câu hỏi và topic yếu, rồi ưu tiên Adaptive Quiz thay vì đưa bạn vào một bài luyện ngẫu nhiên.
+              </p>
+            </div>
+            <div className="rounded-xl border border-[#252525] bg-[#121212] px-4 py-2 text-[10px] font-mono text-[#888]">
+              {weakQuestions.length} CÂU YẾU · {weakAreas.length} TOPIC CẦN CỦNG CỐ
+            </div>
+          </div>
+          <div className="grid gap-3 md:grid-cols-3">
+            {weakQuestions.map((question) => (
+              <button
+                key={question.id}
+                onClick={() => onNavigate(adaptiveSession.items.find((item) => item.type === 'weakness')?.path || `/ngan-hang-cau-hoi?focus=weak&lang=${learningLanguage}`)}
+                className="rounded-2xl border border-[#222] bg-[#101010] p-5 text-left hover:border-amber-400/50 transition-all"
+              >
+                <div className="flex items-center justify-between gap-3">
+                  <span className="text-[9px] font-mono font-bold tracking-widest text-amber-300">QUESTION MASTERY</span>
+                  <span className="text-[10px] font-mono font-bold text-amber-300">{question.mastery}%</span>
+                </div>
+                <h3 className="mt-3 line-clamp-2 text-sm font-black text-white">{question.label}</h3>
+                <p className="mt-2 text-[10px] leading-relaxed text-[#777]">
+                  {question.skill ? `Kỹ năng: ${question.skill}. ` : ''}Ưu tiên vì mastery thấp và đã có evidence.
+                </p>
+                <div className="mt-4 border-t border-[#1E1E1E] pt-3 text-[10px] font-mono font-bold text-white">
+                  XEM ADAPTIVE QUIZ →
+                </div>
+              </button>
+            ))}
+          </div>
+          {!weakQuestions.length && !weakAreas.length && (
+            <div className="rounded-2xl border border-dashed border-[#2A2A2A] bg-[#101010] p-6 text-center">
+              <div className="text-sm font-bold text-white">Chưa có điểm yếu đủ evidence.</div>
+              <p className="mt-2 text-xs text-[#777]">Hãy hoàn thành thêm một vài quiz để Bensop có dữ liệu cá nhân hóa chính xác hơn.</p>
+            </div>
+          )}
         </section>
 
         {/* CROSS-SKILL LEARNING PROFILE */}
@@ -709,25 +761,24 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
               </div>
 
               <div className="space-y-3 font-mono text-xs">
-                {[
-                  { skill: 'Từ vựng (Vocabulary)', pct: 88 },
-                  { skill: 'Ngữ pháp (Grammar)', pct: 82 },
-                  { skill: 'Nghe hiểu (Listening)', pct: 75 },
-                  { skill: 'Đọc hiểu & Tư duy', pct: 90 },
-                ].map((s) => (
-                  <div key={s.skill} className="space-y-1">
-                    <div className="flex justify-between text-[#888]">
-                      <span>{s.skill}</span>
-                      <span className="text-white font-bold">{s.pct}%</span>
+                {masterySnapshot.skills
+                  .slice()
+                  .sort((a, b) => b.mastery - a.mastery)
+                  .slice(0, 5)
+                  .map((skill) => (
+                    <div key={skill.id} className="space-y-1">
+                      <div className="flex justify-between text-[#888]">
+                        <span>{skill.label}</span>
+                        <span className="text-white font-bold">{skill.mastery}%</span>
+                      </div>
+                      <div className="w-full h-1.5 bg-[#1A1A1A] rounded-full overflow-hidden">
+                        <div className="h-full bg-[#D9FF3F] rounded-full" style={{ width: `${skill.mastery}%` }} />
+                      </div>
                     </div>
-                    <div className="w-full h-1.5 bg-[#1A1A1A] rounded-full overflow-hidden">
-                      <div
-                        className="h-full bg-[#D9FF3F] rounded-full"
-                        style={{ width: `${s.pct}%` }}
-                      />
-                    </div>
-                  </div>
-                ))}
+                  ))}
+                {!masterySnapshot.skills.length && (
+                  <p className="text-xs text-[#777]">Hoàn thành một bài luyện để Bensop bắt đầu ghi nhận mastery.</p>
+                )}
               </div>
             </div>
 
@@ -744,19 +795,20 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
               </div>
 
               <div className="space-y-3 font-mono text-xs">
-                {[
-                  { name: 'Phrasal Verbs Công Sở', acc: '94% chính xác', desc: 'Phản xạ chọn đúng cụm động từ trong email' },
-                  { name: 'Thanh điệu & Pinyin HSK', acc: '88% chính xác', desc: 'Phân biệt thanh 1 và thanh 4 dứt khoát' },
-                  { name: 'Tư duy Thói quen Atomic', acc: '92% chính xác', desc: 'Làm chủ 4 bước trong Habit Loop' },
-                ].map((item, idx) => (
-                  <div key={idx} className="p-3 rounded-lg bg-[#141414] border border-[#1E1E1E]">
+                {strongestSkills.map((item) => (
+                  <div key={item.id} className="p-3 rounded-lg bg-[#141414] border border-[#1E1E1E]">
                     <div className="flex justify-between text-white font-bold mb-1">
-                      <span>{item.name}</span>
-                      <span className="text-[#D9FF3F]">{item.acc}</span>
+                      <span>{item.label}</span>
+                      <span className="text-[#D9FF3F]">{item.mastery}%</span>
                     </div>
-                    <p className="text-[11px] text-[#777] font-sans">{item.desc}</p>
+                    <p className="text-[11px] text-[#777] font-sans">
+                      {item.attempts > 1 ? `Được ghi nhận qua ${item.attempts} lượt luyện.` : 'Đang hình thành evidence đầu tiên.'}
+                    </p>
                   </div>
                 ))}
+                {!strongestSkills.length && (
+                  <p className="text-xs text-[#777]">Chưa có kỹ năng đạt ngưỡng mastery 70%. Hãy luyện thêm để tạo evidence.</p>
+                )}
               </div>
             </div>
 
@@ -773,25 +825,27 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
               </div>
 
               <div className="space-y-3 font-mono text-xs">
-                {[
-                  { name: 'Cấu trúc Đảo ngữ & Thì HTHT', acc: '64% chính xác', action: 'Luyện lại 8 câu đảo ngữ trong quiz' },
-                  { name: 'Câu chữ 把 / 被 tiếng Trung', acc: '60% chính xác', action: 'Ôn lại vị trí tân ngữ và phó từ' },
-                ].map((item, idx) => (
-                  <div key={idx} className="p-3 rounded-lg bg-amber-950/20 border border-amber-500/30">
-                    <div className="flex justify-between text-amber-200 font-bold mb-1">
-                      <span>{item.name}</span>
-                      <span className="text-amber-400">{item.acc}</span>
+                {weakAreas.map((area) => (
+                  <div key={area.id} className="p-3 rounded-lg bg-amber-950/20 border border-amber-500/30">
+                    <div className="flex justify-between gap-3 text-amber-200 font-bold mb-1">
+                      <span>{area.label}</span>
+                      <span className="text-amber-400">{area.mastery}%</span>
                     </div>
-                    <p className="text-[11px] text-[#AAA] font-sans mb-2">💡 Gợi ý: {item.action}</p>
+                    <p className="text-[11px] text-[#AAA] font-sans mb-2">
+                      💡 Ưu tiên vì mastery dưới 80% và cần thêm evidence.
+                    </p>
                     <button
-                      onClick={() => onNavigate('/luyen-tap')}
+                      onClick={() => onNavigate(`/ngan-hang-cau-hoi?focus=weak&lang=${learningLanguage}`)}
                       className="text-[10px] font-bold text-[#D9FF3F] hover:underline flex items-center gap-1 cursor-pointer"
                     >
-                      <span>Luyện tập ngay</span>
+                      <span>Luyện đúng điểm yếu</span>
                       <ArrowRight className="w-3 h-3" />
                     </button>
                   </div>
                 ))}
+                {!weakAreas.length && (
+                  <p className="text-xs text-[#777]">Chưa phát hiện topic yếu trong ngôn ngữ này.</p>
+                )}
               </div>
             </div>
 
