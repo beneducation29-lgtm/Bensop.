@@ -201,7 +201,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
               {dueReviews.map((item) => (
                 <button
                   key={item.id}
-                  onClick={() => onNavigate(item.path || '/luyen-tap')}
+                  onClick={() => onNavigate(item.path || (item.quizSlug ? `/quiz/${item.quizSlug}` : '/luyen-tap'))}
                   className="rounded-2xl border border-[#222] bg-[#101010] p-5 text-left transition-all hover:border-amber-400/50"
                 >
                   <div className="flex items-center justify-between gap-3">
