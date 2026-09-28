@@ -19,6 +19,9 @@ export interface MasteryRecord {
   accuracy?: number;
   confidence?: number;
   evidenceLevel?: 'new' | 'developing' | 'established' | 'mastered';
+  recoveryStatus?: 'none' | 'recovering' | 'recovered' | 'relearning';
+  recoveryCount?: number;
+  lastRecoveryAt?: string;
 }
 
 export interface MasterySnapshot {
