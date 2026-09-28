@@ -132,16 +132,16 @@ class QuizService {
     const mastery = masteryService.getSnapshot(language);
     const targetSize = Math.max(5, Math.min(limit, 15));
     const languageQuestions = QUESTIONS_BANK.filter((q) => q.categoryId === categoryId);
-    const weakRecords = mastery.questions
-      .filter((q) => q.mastery < 70)
-      .sort((a, b) => a.mastery - b.mastery || b.attempts - a.attempts);
+    const weakRecords = masteryService.getWeakQuestions(Math.max(targetSize * 2, 10), language);
     const weakIds = new Set(weakRecords.map((q) => q.entityId));
     const weakQuestions = languageQuestions
       .filter((q) => weakIds.has(q.id))
       .sort((a, b) => {
-        const am = mastery.questions.find((item) => item.entityId === a.id)?.mastery ?? 0;
-        const bm = mastery.questions.find((item) => item.entityId === b.id)?.mastery ?? 0;
-        return am - bm;
+        const am = mastery.questions.find((item) => item.entityId === a.id);
+        const bm = mastery.questions.find((item) => item.entityId === b.id);
+        const aEvidence = am?.evidenceLevel === 'new' ? 0 : am?.evidenceLevel === 'developing' ? 1 : 2;
+        const bEvidence = bm?.evidenceLevel === 'new' ? 0 : bm?.evidenceLevel === 'developing' ? 1 : 2;
+        return aEvidence - bEvidence || (am?.mastery ?? 0) - (bm?.mastery ?? 0);
       });
     const weakTopicIds = mastery.topics
       .filter((topic) => topic.mastery < 80)
