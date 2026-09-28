@@ -432,7 +432,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
             <div>
               <span className="text-[10px] font-mono font-bold tracking-[0.18em] text-[#D9FF3F]">SPACED REVIEW ENGINE</span>
               <h3 className="mt-2 text-2xl font-black uppercase text-white">ÔN ĐÚNG LÚC, KHÔNG HỌC LẠI TỪ ĐẦU.</h3>
-              <p className="mt-2 max-w-2xl text-xs leading-relaxed text-[#777]">Mỗi bài đã hoàn thành được Bensop tự lên lịch ôn sau 1, 3 và 7 ngày để chuyển kiến thức từ “đã xem” sang “đã nhớ”.</p>
+              <p className="mt-2 max-w-2xl text-xs leading-relaxed text-[#777]">Mỗi kết quả học tập được Bensop đánh giá theo chất lượng ghi nhớ để chọn nhịp ôn 1, 3 hoặc 7 ngày, thay vì áp một lịch giống nhau cho mọi người.</p>
             </div>
             <span className="text-xs font-mono text-[#666]">{dueReviews.length} lượt đang đến hạn</span>
           </div>
@@ -450,7 +450,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                   <div key={item.id} className="flex items-center justify-between gap-4 rounded-xl border border-[#252525] bg-[#101010] p-4">
                     <div className="min-w-0">
                       <div className="text-[9px] font-mono font-bold text-[#D9FF3F]">
-                        {item.reviewType === 'quiz' ? 'ÔN QUIZ' : 'ÔN BÀI'} · SAU {item.intervalDays} NGÀY · ĐẾN HẠN
+                        {item.reviewType === 'quiz' ? 'ÔN QUIZ' : 'ÔN BÀI'} · {item.reviewQuality === 'again' ? 'CẦN ÔN LẠI' : item.reviewQuality === 'hard' ? 'CẦN CỦNG CỐ' : item.reviewQuality === 'easy' ? 'NHỚ TỐT' : 'ỔN ĐỊNH'} · {item.intervalDays} NGÀY · ĐẾN HẠN
                       </div>
                       <div className="mt-1 truncate text-sm font-bold text-white">{label}</div>
                     </div>
