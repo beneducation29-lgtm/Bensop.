@@ -100,7 +100,7 @@ export default function App(){
   if(route==='/saved')return <SavedPage savedItems={user.savedItems} onToggleBookmark={handleToggleBookmark} onNavigate={navigateTo} onSelectArticle={a=>navigateTo(`/bai-viet/${a.slug}`)} onSelectCourse={c=>navigateTo(`/khoa-hoc/${c.slug}`)} onSelectLesson={s=>navigateTo(`/bai-hoc/${s}`)}/>;
   if(route==='/dashboard')return <DashboardPage user={user} onNavigate={navigateTo} onSelectArticle={a=>navigateTo(`/bai-viet/${a.slug}`)} onSelectCourse={c=>navigateTo(`/khoa-hoc/${c.slug}`)} onSelectLesson={s=>navigateTo(`/bai-hoc/${s}`)}/>;
   if(route==='/luyen-tap')return <PracticeHubPage onNavigate={navigateTo} onStartQuiz={s=>navigateTo(`/quiz/${s}`)}/>;
-  if(route.startsWith('/quiz/'))return <QuizRunnerPage quizSlug={route.replace('/quiz/','')} onNavigate={navigateTo} onFinishQuiz={res=>{quizLearningService.recordResult(res);navigateTo(`/quiz-result/${res.sessionId}`)}}/>;
+  if(route.startsWith('/quiz/'))return <QuizRunnerPage quizSlug={route.replace('/quiz/','')} onNavigate={navigateTo} onFinishQuiz={res=>{navigateTo(`/quiz-result/${res.sessionId}`)}}/>;
   if(route.startsWith('/quiz-result/')){const id=route.replace('/quiz-result/','');return <QuizResultPage sessionId={id} onNavigate={navigateTo} onRetakeQuiz={s=>navigateTo(`/quiz/${s}`)} onPracticeWrongQuestions={ids=>{const s=quizService.createReviewQuiz(ids,'Quiz gần nhất');navigateTo(`/quiz/${s}`)}}/>;}
   if(route.startsWith('/quiz-mastery/'))return <QuizMasteryPage sessionId={route.replace('/quiz-mastery/','')} onNavigate={navigateTo}/>;
   if(route==='/ngan-hang-cau-hoi')return <QuestionBankPage onNavigate={navigateTo} onPracticeQuiz={s=>navigateTo(`/quiz/${s}`)}/>;
