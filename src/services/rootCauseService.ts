@@ -45,7 +45,7 @@ class RootCauseService {
         kind: 'grammar',
         title: 'Đã phục hồi nền · quay lại kiến thức cấp trên',
         description: returnTarget.parentLabel,
-        path: returnTarget.path,
+        path: `${returnTarget.path}?recovery=1&sourceQuestionId=${encodeURIComponent(sourceQuestionId)}&parentKind=${returnTarget.sourceKind}&parentId=${encodeURIComponent(returnTarget.parentId)}`,
         reason: returnTarget.reason,
         sourceQuestionId,
       };
