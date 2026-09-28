@@ -40,6 +40,9 @@ const applyForgettingSignal = (record: MasteryRecord, now = new Date()): Mastery
     confidence: effectiveConfidence,
     evidenceLevel,
     trend: effectiveMastery < record.mastery ? 'down' : record.trend,
+    recoveryStatus,
+    recoveryCount: record.recoveryCount ?? 0,
+    lastRecoveryAt: record.lastRecoveryAt,
   };
 };
 const upsert = (records: MasteryRecord[], input: Omit<MasteryRecord,'mastery'|'attempts'|'correct'|'lastScore'|'lastAttemptAt'|'trend'>, score:number, correct:number, attempted:number): MasteryRecord[] => {
