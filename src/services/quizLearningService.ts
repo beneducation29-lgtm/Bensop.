@@ -4,14 +4,15 @@ import { spacedReviewService } from './spacedReviewService';
 
 export const quizLearningService = {
   recordResult(result: QuizResult): void {
-    masteryService.recordQuizResult(result);
-
     const language = result.categoryId === 'tieng-trung'
       ? 'zh'
       : result.categoryId === 'tieng-anh'
         ? 'en'
         : undefined;
 
+    const recoveryQuestionsBefore = language
+      ? masteryService.getRecoveryRisks(result.questionBreakdowns.length, language)
+      : [];
     const questionMastery = language
       ? masteryService.getSnapshot(language).questions
       : [];
@@ -22,14 +23,11 @@ export const quizLearningService = {
       ? Math.round(attemptedMastery.reduce((sum, value) => sum + value, 0) / attemptedMastery.length)
       : result.score;
 
-    const recoveryQuestions = language
-      ? masteryService.getRecoveryRisks(result.questionBreakdowns.length, language)
-      : [];
-    const recoveredCount = recoveryQuestions.filter((item) =>
+    const recoveredCount = recoveryQuestionsBefore.filter((item) =>
       result.questionBreakdowns.some((breakdown) => breakdown.questionId === item.entityId && breakdown.isCorrect),
     ).length;
-    const recoverySignal = recoveryQuestions.length
-      ? recoveredCount / recoveryQuestions.length
+    const recoverySignal = recoveryQuestionsBefore.length
+      ? recoveredCount / recoveryQuestionsBefore.length
       : 0;
 
     const reviewQuality: 'again' | 'hard' | 'good' | 'easy' =
@@ -42,6 +40,8 @@ export const quizLearningService = {
             : result.score >= 85 && averageQuestionMastery >= 80
               ? 'easy'
               : 'good';
+
+    masteryService.recordQuizResult(result);
 
     const intervalDays: 1 | 3 | 7 =
       reviewQuality === 'again'
