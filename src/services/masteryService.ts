@@ -141,5 +141,12 @@ export const masteryService = {
   },
   getWeakAreas(limit=5,language?:LanguageCode):MasteryRecord[]{
     return this.getSnapshot(language).topics.filter(item=>item.mastery<80).sort((a,b)=>a.mastery-b.mastery || b.attempts-a.attempts).slice(0,limit);
+  },
+  getForgettingRisks(limit=5,language?:LanguageCode):MasteryRecord[]{
+    const now=Date.now();
+    return this.getSnapshot(language).questions
+      .filter(item=>item.mastery>=70 && (now-new Date(item.lastAttemptAt).getTime())/86400000>=14)
+      .sort((a,b)=>new Date(a.lastAttemptAt).getTime()-new Date(b.lastAttemptAt).getTime())
+      .slice(0,limit);
   }
 };
