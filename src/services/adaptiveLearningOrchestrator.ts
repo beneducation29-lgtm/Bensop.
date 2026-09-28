@@ -6,6 +6,7 @@ import { learningStateService, LearningStateDecision } from './learningStateServ
 import { quizService } from './quizService';
 import { adaptiveSessionMemoryService, AdaptiveMemorySkill } from './adaptiveSessionMemoryService';
 import { crossSkillMasteryBalanceService } from './crossSkillMasteryBalanceService';
+import { adaptiveSessionGoalService } from './adaptiveSessionGoalService';
 
 export type AdaptivePhase =
   | 'review-due'
@@ -17,7 +18,8 @@ export type AdaptivePhase =
   | 'cross-skill'
   | 'continue'
   | 'challenge'
-  | 'start';
+  | 'start'
+  | 'session-complete';
 
 export interface AdaptiveLearningPlan {
   language: LanguageCode;
@@ -72,6 +74,20 @@ class AdaptiveLearningOrchestrator {
     if (state.recommendedAction === 'targeted-practice') {
       const weak = masteryService.getWeakQuestions(1, language)[0];
       return { language, phase: 'targeted-practice', state, title: 'Luyện đúng điểm yếu', description: weak?.label || state.reason, reason: state.reason, path: '/ngan-hang-cau-hoi?focus=weak&lang=' + language, durationMinutes: 8, sourceQuestionId: weak?.entityId };
+    }
+
+    const goalProgress = adaptiveSessionGoalService.getProgress(language);
+    if (goalProgress.status === 'completed') {
+      return {
+        language,
+        phase: 'session-complete',
+        state,
+        title: 'Hoàn thành phiên học',
+        description: goalProgress.label,
+        reason: goalProgress.reason,
+        path: language === 'zh' ? '/tieng-trung' : '/tieng-anh',
+        durationMinutes: 0,
+      };
     }
 
     const balance = crossSkillMasteryBalanceService.getDecision(language);

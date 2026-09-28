@@ -1,6 +1,7 @@
 import { LanguageCode } from '../types/vocabulary';
 import { adaptiveLearningOrchestrator, AdaptiveLearningPlan } from './adaptiveLearningOrchestrator';
 import { adaptiveSessionMemoryService } from './adaptiveSessionMemoryService';
+import { adaptiveSessionGoalService } from './adaptiveSessionGoalService';
 
 export type AdaptiveSkill = 'listening' | 'reading' | 'writing' | 'speaking';
 
@@ -16,6 +17,14 @@ class AdaptiveMultiskillFeedbackService {
   recordResult(result: AdaptiveSkillResult): AdaptiveLearningPlan {
     // The skill service is responsible for persisting its own evidence/mastery/review.
     // We only record session memory here, then re-run orchestration.
+    adaptiveSessionGoalService.recordStep({
+      skill: result.skill,
+      language: result.language,
+      activityId: result.activityId,
+      score: result.score,
+      completedAt: result.completedAt || new Date().toISOString(),
+    });
+
     adaptiveSessionMemoryService.recordStep({
       skill: result.skill,
       language: result.language,

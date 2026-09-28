@@ -2,6 +2,7 @@ import { LanguageCode } from '../types/vocabulary';
 import { QuizResult } from '../types/quiz';
 import { AdaptiveLearningPlan, adaptiveLearningOrchestrator } from './adaptiveLearningOrchestrator';
 import { adaptiveSessionMemoryService } from './adaptiveSessionMemoryService';
+import { adaptiveSessionGoalService } from './adaptiveSessionGoalService';
 
 interface AdaptiveStepRecord {
   id: string;
@@ -73,6 +74,14 @@ class AdaptiveSessionExecutionService {
         passed: result.passed,
       });
     }
+
+    adaptiveSessionGoalService.recordStep({
+      skill: 'quiz',
+      language,
+      activityId: result.quizSlug || result.sessionId,
+      score: result.score,
+      completedAt: result.completedAt,
+    });
 
     adaptiveSessionMemoryService.recordStep({
       skill: 'quiz',

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { QuizResult } from '../types/quiz';
 import { quizSessionStorage } from '../services/quizSessionStorage';
 import { adaptiveSessionExecutionService } from '../services/adaptiveSessionExecutionService';
+import { adaptiveSessionGoalService } from '../services/adaptiveSessionGoalService';
 import { QuestionRenderer } from '../components/quiz/QuestionRenderer';
 import {
   CheckCircle2,
@@ -46,8 +47,12 @@ export const QuizResultPage: React.FC<QuizResultPageProps> = ({
   const [activeTab, setActiveTab] = useState<'all' | 'wrong' | 'correct'>('all');
   const [copied, setCopied] = useState(false);
 
+  const learningLanguage = result?.categoryId === 'tieng-trung' ? 'zh' : 'en';
   const nextAdaptivePlan = result
-    ? adaptiveSessionExecutionService.getNextPlan(result.categoryId === 'tieng-trung' ? 'zh' : 'en')
+    ? adaptiveSessionExecutionService.getNextPlan(learningLanguage)
+    : undefined;
+  const adaptiveSessionGoal = result
+    ? adaptiveSessionGoalService.getProgress(learningLanguage)
     : undefined;
 
   if (!result) {
@@ -145,6 +150,22 @@ export const QuizResultPage: React.FC<QuizResultPageProps> = ({
                 Hoàn thành lúc: {new Date(result.completedAt).toLocaleTimeString('vi-VN')} · Ngày {new Date(result.completedAt).toLocaleDateString('vi-VN')}
               </p>
 
+              {/* Adaptive Session Goal */}
+              {adaptiveSessionGoal && (
+                <div className="w-full p-4 rounded-2xl bg-[#101010] border border-[#2A2A2A]">
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="text-[10px] font-mono text-[#D9FF3F] tracking-widest uppercase">
+                      MỤC TIÊU PHIÊN HỌC
+                    </div>
+                    <span className="text-[10px] font-mono font-bold text-white">
+                      {adaptiveSessionGoal.completedSteps}/{adaptiveSessionGoal.targetSteps} BƯỚC
+                    </span>
+                  </div>
+                  <div className="mt-2 text-sm font-bold text-white">{adaptiveSessionGoal.label}</div>
+                  <p className="text-xs text-[#777] mt-1">{adaptiveSessionGoal.reason}</p>
+                </div>
+              )}
+
               {/* Action Buttons */}
               {nextAdaptivePlan && (
                 <div className="w-full p-4 rounded-2xl bg-[#11150B] border border-[#D9FF3F]/25">
@@ -158,7 +179,9 @@ export const QuizResultPage: React.FC<QuizResultPageProps> = ({
                     onClick={() => onNavigate(nextAdaptivePlan.path)}
                     className="mt-3 px-4 py-2 rounded-lg bg-[#D9FF3F] text-black text-xs font-extrabold font-mono cursor-pointer"
                   >
-                    {nextAdaptivePlan.phase === 'return-to-parent'
+                    {nextAdaptivePlan.phase === 'session-complete'
+                      ? 'TIẾP TỤC HỌC NỘI DUNG KHÁC →'
+                      : nextAdaptivePlan.phase === 'return-to-parent'
                       ? 'QUAY LẠI KIẾN THỨC CẤP TRÊN →'
                       : nextAdaptivePlan.phase === 'recover-foundation'
                         ? 'PHỤC HỒI KIẾN THỨC NỀN →'
