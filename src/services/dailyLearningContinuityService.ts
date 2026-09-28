@@ -25,7 +25,12 @@ export interface DailyLearningContinuity {
 
 const STORAGE_KEY = 'bensop_daily_learning_continuity_v1';
 
-const dateKey = (date = new Date()) => date.toISOString().slice(0, 10);
+const dateKey = (date = new Date()) => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
 
 class DailyLearningContinuityService {
   private read(): DailyLearningRecord[] {
@@ -116,10 +121,10 @@ class DailyLearningContinuityService {
 
     const previous = records.find((item) => item.date < today.date);
     let streakDays = today.completed ? 1 : 0;
-    let cursor = new Date(today.date + 'T00:00:00Z');
+    let cursor = new Date(today.date + 'T00:00:00');
 
     for (let i = 0; i < 29; i += 1) {
-      cursor.setUTCDate(cursor.getUTCDate() - 1);
+      cursor.setDate(cursor.getDate() - 1);
       const key = dateKey(cursor);
       const record = records.find((item) => item.date === key);
       if (!record?.completed) break;
