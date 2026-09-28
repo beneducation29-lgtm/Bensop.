@@ -4,6 +4,7 @@ import { masteryService } from './masteryService';
 import { rootCauseService } from './rootCauseService';
 import { learningStateService, LearningStateDecision } from './learningStateService';
 import { quizService } from './quizService';
+import { adaptiveSessionMemoryService, AdaptiveMemorySkill } from './adaptiveSessionMemoryService';
 
 export type AdaptivePhase =
   | 'review-due'
@@ -12,6 +13,7 @@ export type AdaptivePhase =
   | 'verify-parent'
   | 'targeted-practice'
   | 'adaptive-quiz'
+  | 'cross-skill'
   | 'continue'
   | 'challenge'
   | 'start';
@@ -27,6 +29,37 @@ export interface AdaptiveLearningPlan {
   durationMinutes: number;
   sourceQuestionId?: string;
 }
+
+const SKILL_PATHS: Record<LanguageCode, Record<AdaptiveMemorySkill, string>> = {
+  en: {
+    vocabulary: '/tieng-anh/vocabulary/practice',
+    grammar: '/tieng-anh/grammar',
+    listening: '/tieng-anh/listening',
+    speaking: '/tieng-anh/speaking',
+    reading: '/tieng-anh/reading',
+    writing: '/tieng-anh/writing',
+    quiz: '/luyen-tap',
+  },
+  zh: {
+    vocabulary: '/tieng-trung/vocabulary/practice',
+    grammar: '/tieng-trung/grammar',
+    listening: '/tieng-trung/listening',
+    speaking: '/tieng-trung/speaking',
+    reading: '/tieng-trung/reading',
+    writing: '/tieng-trung/writing',
+    quiz: '/luyen-tap',
+  },
+};
+
+const SKILL_LABELS: Record<AdaptiveMemorySkill, string> = {
+  vocabulary: 'Từ vựng',
+  grammar: 'Ngữ pháp',
+  listening: 'Listening',
+  speaking: 'Speaking',
+  reading: 'Reading',
+  writing: 'Writing',
+  quiz: 'Quiz',
+};
 
 class AdaptiveLearningOrchestrator {
   buildPlan(language: LanguageCode = 'en'): AdaptiveLearningPlan {
@@ -113,6 +146,11 @@ class AdaptiveLearningOrchestrator {
     }
 
     if (state.recommendedAction === 'challenge') {
+      const rotation = adaptiveSessionMemoryService.getCrossSkillDecision(language);
+      if (rotation.shouldSwitch && rotation.suggestedSkill) {
+        return this.buildCrossSkillPlan(language, state, rotation.suggestedSkill, rotation.reason);
+      }
+
       return {
         language,
         phase: 'challenge',
@@ -126,6 +164,11 @@ class AdaptiveLearningOrchestrator {
     }
 
     if (state.recommendedAction === 'continue') {
+      const rotation = adaptiveSessionMemoryService.getCrossSkillDecision(language);
+      if (rotation.shouldSwitch && rotation.suggestedSkill) {
+        return this.buildCrossSkillPlan(language, state, rotation.suggestedSkill, rotation.reason);
+      }
+
       const weak = masteryService.getWeakQuestions(1, language)[0];
       if (weak) {
         const slug = quizService.createAdaptiveQuiz(language, 10);
@@ -152,6 +195,24 @@ class AdaptiveLearningOrchestrator {
       reason: 'Chưa có tín hiệu đủ mạnh để cá nhân hóa sâu hơn.',
       path: '/luyen-tap',
       durationMinutes: 10,
+    };
+  }
+
+  private buildCrossSkillPlan(
+    language: LanguageCode,
+    state: LearningStateDecision,
+    skill: AdaptiveMemorySkill,
+    reason: string
+  ): AdaptiveLearningPlan {
+    return {
+      language,
+      phase: 'cross-skill',
+      state,
+      title: 'Đổi kỹ năng · ' + SKILL_LABELS[skill],
+      description: 'Chuyển sang một kỹ năng khác để tạo thêm evidence mà không lặp lại cùng một dạng hoạt động.',
+      reason,
+      path: SKILL_PATHS[language][skill],
+      durationMinutes: skill === 'vocabulary' || skill === 'grammar' ? 6 : 8,
     };
   }
 }

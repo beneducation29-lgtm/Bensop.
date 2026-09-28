@@ -1,6 +1,7 @@
 import { LanguageCode } from '../types/vocabulary';
 import { QuizResult } from '../types/quiz';
 import { AdaptiveLearningPlan, adaptiveLearningOrchestrator } from './adaptiveLearningOrchestrator';
+import { adaptiveSessionMemoryService } from './adaptiveSessionMemoryService';
 
 interface AdaptiveStepRecord {
   id: string;
@@ -73,9 +74,17 @@ class AdaptiveSessionExecutionService {
       });
     }
 
+    adaptiveSessionMemoryService.recordStep({
+      skill: 'quiz',
+      language,
+      activityId: result.quizSlug || result.sessionId,
+      score: result.score,
+      completedAt: result.completedAt,
+    });
+
     session.updatedAt = now;
 
-    // Re-run the same orchestrator after mastery + spaced review have been persisted.
+    // Re-run the orchestrator after mastery + spaced review + session memory have been persisted.
     // This makes the next step respond to the result instead of using the pre-attempt plan.
     const nextPlan = adaptiveLearningOrchestrator.buildPlan(language);
     session.nextPlan = nextPlan;
