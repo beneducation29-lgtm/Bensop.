@@ -158,6 +158,12 @@ export const masteryService = {
       .sort((a,b)=>new Date(a.lastAttemptAt).getTime()-new Date(b.lastAttemptAt).getTime())
       .slice(0,limit);
   },
+  getPersistentWeaknesses(limit=5,language?:LanguageCode):MasteryRecord[]{
+    return this.getSnapshot(language).questions
+      .filter(item => (item.persistenceScore ?? 0) >= 55 || (item.failureStreak ?? 0) >= 2)
+      .sort((a,b) => (b.persistenceScore ?? 0) - (a.persistenceScore ?? 0) || (a.mastery - b.mastery))
+      .slice(0, limit);
+  },
   getRecoveryRisks(limit=5,language?:LanguageCode):MasteryRecord[]{
     return this.getSnapshot(language).questions
       .filter(item=>item.recoveryStatus === 'relearning' || item.recoveryStatus === 'recovering')
