@@ -70,6 +70,15 @@ export interface DeepPrerequisiteRecommendation {
   reason: string;
 }
 
+
+export interface DependencyImpact {
+  directDependents: number;
+  higherLevelDependents: number;
+  weightedImpact: number;
+  levelGap: number;
+  priorityScore: number;
+}
+
 const levelRank: Record<string, number> = {
   'A1': 1, 'A2': 2, 'B1': 3, 'B2': 4, 'C1': 5, 'C2': 6,
   'HSK 1': 1, 'HSK 2': 2, 'HSK 3': 3, 'HSK 4': 4, 'HSK 5': 5, 'HSK 6': 6,
@@ -275,15 +284,138 @@ class PrerequisiteService {
     };
   }
 
+
+  private isGrammarConcept(source: GrammarConcept | VocabularyWord): source is GrammarConcept {
+    return 'title' in source && 'rules' in source && Array.isArray(source.rules);
+  }
+
+  getDependencyImpact(node: KnowledgePrerequisiteNode, language: LanguageCode): DependencyImpact {
+    if (node.kind === 'grammar') {
+      const dependents = grammarService.getAllConcepts(language)
+        .filter((concept) => concept.id !== node.conceptId)
+        .filter((concept) => concept.relatedConcepts?.some((related) => {
+          const target = grammarService.getConceptBySlug(related.slug, language);
+          return target?.id === node.conceptId;
+        }));
+
+      const nodeLevel = levelRank[node.level] || 1;
+      const gaps = dependents.map((concept) => Math.max(0, (levelRank[concept.level] || nodeLevel) - nodeLevel));
+      const higherLevelDependents = gaps.filter((gap) => gap > 0).length;
+      const levelGap = gaps.length ? Math.max(...gaps) : 0;
+      const weightedImpact = dependents.reduce((sum, concept) => {
+        const gap = Math.max(0, (levelRank[concept.level] || nodeLevel) - nodeLevel);
+        return sum + 1 + gap * 0.75;
+      }, 0);
+
+      return {
+        directDependents: dependents.length,
+        higherLevelDependents,
+        weightedImpact: Math.round(weightedImpact * 10) / 10,
+        levelGap,
+        priorityScore: Math.round(
+          (100 - node.mastery) * 0.55 +
+          weightedImpact * 12 +
+          higherLevelDependents * 8 +
+          levelGap * 5 +
+          (node.depth > 1 ? 6 : 0)
+        ),
+      };
+    }
+
+    const dependents = vocabularyService.getAllWords(language)
+      .filter((word) => word.id !== node.wordId)
+      .filter((word) =>
+        word.relatedWords?.some((related) => {
+          const target = vocabularyService.getWordBySlug(related.slug, language);
+          return target?.id === node.wordId;
+        }) ||
+        Boolean(
+          word.relatedGrammarSlug &&
+          grammarService.getConceptBySlug(word.relatedGrammarSlug, language)?.relatedVocabSlugs?.includes(node.slug)
+        )
+      );
+
+    const nodeLevel = levelRank[node.level] || 1;
+    const gaps = dependents.map((word) => Math.max(0, (levelRank[word.level] || nodeLevel) - nodeLevel));
+    const higherLevelDependents = gaps.filter((gap) => gap > 0).length;
+    const levelGap = gaps.length ? Math.max(...gaps) : 0;
+    const weightedImpact = dependents.reduce((sum, word) => {
+      const gap = Math.max(0, (levelRank[word.level] || nodeLevel) - nodeLevel);
+      return sum + 1 + gap * 0.75;
+    }, 0);
+
+    return {
+      directDependents: dependents.length,
+      higherLevelDependents,
+      weightedImpact: Math.round(weightedImpact * 10) / 10,
+      levelGap,
+      priorityScore: Math.round(
+        (100 - node.mastery) * 0.55 +
+        weightedImpact * 12 +
+        higherLevelDependents * 8 +
+        levelGap * 5 +
+        (node.depth > 1 ? 6 : 0)
+      ),
+    };
+  }
+
+  getPriorityPrerequisiteRecommendation(
+    source: GrammarConcept | VocabularyWord,
+    language: LanguageCode,
+  ): DeepPrerequisiteRecommendation | undefined {
+    if (source.language !== language) return undefined;
+
+    const nodes = this.isGrammarConcept(source)
+      ? this.getDeepGrammarPrerequisites(source, language)
+      : this.getDeepVocabularyPrerequisites(source, language);
+
+    const candidates = nodes
+      .filter((node) => node.isWeak)
+      .map((node) => ({ node, impact: this.getDependencyImpact(node, language) }))
+      .sort((a, b) =>
+        b.impact.priorityScore - a.impact.priorityScore ||
+        a.node.mastery - b.node.mastery ||
+        a.node.depth - b.node.depth
+      );
+
+    const selected = candidates[0];
+    if (!selected) return undefined;
+
+    const { node, impact } = selected;
+    const target = node.kind === 'grammar'
+      ? grammarService.getConceptById(node.conceptId)
+      : vocabularyService.getWordById(node.wordId);
+    if (!target || target.language !== language) return undefined;
+
+    const path = node.kind === 'grammar'
+      ? '/quiz/' + quizService.createQuizFromGrammar(target as GrammarConcept)
+      : '/quiz/' + quizService.createQuizFromVocabulary(target as VocabularyWord);
+
+    const impactReason = impact.directDependents > 0
+      ? 'Nền tảng này đang hỗ trợ ' + impact.directDependents + ' nội dung liên quan' +
+        (impact.higherLevelDependents ? ' và ' + impact.higherLevelDependents + ' nội dung ở cấp cao hơn' : '') + '.'
+      : 'Nền tảng này chưa có nhiều liên kết trực tiếp, nhưng mức độ yếu hiện tại cần được củng cố.';
+
+    return {
+      language,
+      sourceId: source.id,
+      sourceKind: node.kind,
+      prerequisite: node,
+      path,
+      depth: node.depth,
+      reason: 'Bensop ưu tiên nền tảng có tác động lớn hơn thay vì chỉ chọn kiến thức có mastery thấp nhất. ' + impactReason,
+    };
+  }
+
   getDeepRecommendation(
     source: GrammarConcept | VocabularyWord,
     language: LanguageCode,
   ): DeepPrerequisiteRecommendation | undefined {
     if (source.language !== language) return undefined;
 
-    const nodes = 'id' in source && 'slug' in source && 'title' in source
-      ? this.getDeepGrammarPrerequisites(source as GrammarConcept, language)
-      : this.getDeepVocabularyPrerequisites(source as VocabularyWord, language);
+    const nodes = this.isGrammarConcept(source)
+      ? this.getDeepGrammarPrerequisites(source, language)
+      : this.getDeepVocabularyPrerequisites(source, language);
 
     const weak = nodes
       .filter((node) => node.isWeak)
@@ -291,9 +423,14 @@ class PrerequisiteService {
 
     if (!weak) return undefined;
 
+    const target = weak.kind === 'grammar'
+      ? grammarService.getConceptById(weak.conceptId)
+      : vocabularyService.getWordById(weak.wordId);
+    if (!target || target.language !== language) return undefined;
+
     const path = weak.kind === 'grammar'
-      ? '/quiz/' + quizService.createQuizFromGrammar(grammarService.getConceptById(weak.conceptId)!)
-      : '/quiz/' + quizService.createQuizFromVocabulary(vocabularyService.getWordById(weak.wordId)!);
+      ? '/quiz/' + quizService.createQuizFromGrammar(target as GrammarConcept)
+      : '/quiz/' + quizService.createQuizFromVocabulary(target as VocabularyWord);
 
     return {
       language,
