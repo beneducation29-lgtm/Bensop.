@@ -306,12 +306,16 @@ class PrerequisiteService {
       ? this.getDeepGrammarPrerequisites(source, language, 1)
       : this.getDeepVocabularyPrerequisites(source, language, 1);
 
-    const recovered = direct
-      .map((node) => ({ node, gate: this.getRecoveryReadiness(node, language) }))
-      .filter(({ gate }) => gate.readiness === 'ready-to-return')
-      .sort((a, b) => b.node.mastery - a.node.mastery)[0];
+    const evaluated = direct.map((node) => ({
+      node,
+      gate: this.getRecoveryReadiness(node, language),
+    }));
 
-    if (!recovered) return undefined;
+    if (!evaluated.length || evaluated.some(({ gate }) => gate.readiness !== 'ready-to-return')) {
+      return undefined;
+    }
+
+    const recovered = evaluated.sort((a, b) => b.node.mastery - a.node.mastery)[0];
 
     const path = this.isGrammarConcept(source)
       ? '/quiz/' + quizService.createQuizFromGrammar(source)
