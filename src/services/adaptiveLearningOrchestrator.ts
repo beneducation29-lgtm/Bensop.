@@ -8,6 +8,7 @@ import { adaptiveSessionMemoryService, AdaptiveMemorySkill } from './adaptiveSes
 import { crossSkillMasteryBalanceService } from './crossSkillMasteryBalanceService';
 import { adaptiveSessionGoalService } from './adaptiveSessionGoalService';
 import { dailyLearningContinuityService } from './dailyLearningContinuityService';
+import { longTermLearningInsightService } from './longTermLearningInsightService';
 
 export type AdaptivePhase =
   | 'review-due'
@@ -97,6 +98,42 @@ class AdaptiveLearningOrchestrator {
       ? continuity.nextFocus
       : '';
     const balance = crossSkillMasteryBalanceService.getDecision(language);
+    const longTerm = longTermLearningInsightService.getInsight(language);
+    const recentActivities = continuity.recentActivities;
+    const trendCandidate = longTerm.skills
+      .filter((item) => ['vocabulary', 'grammar', 'listening', 'speaking', 'reading', 'writing'].includes(item.skill))
+      .map((item) => {
+        const recentCount = recentActivities.filter((activityId) => activityId.toLowerCase().includes(item.skill)).length;
+        const trendBoost = item.trend === 'down' ? 36 : item.trend === 'insufficient' ? 22 : item.trend === 'up' ? 4 : 0;
+        const masteryGap = Math.max(0, 70 - item.mastery) * 0.8;
+        const evidenceBoost = item.activities < 2 ? 16 : item.activities < 4 ? 7 : 0;
+        const repetitionPenalty = recentCount * 12;
+        const stablePenalty = item.trend === 'stable' && item.mastery >= 85 ? 16 : 0;
+        return {
+          skill: item.skill as AdaptiveMemorySkill,
+          score: trendBoost + masteryGap + evidenceBoost - repetitionPenalty - stablePenalty,
+          trend: item.trend,
+          mastery: item.mastery,
+        };
+      })
+      .sort((a, b) => b.score - a.score || a.mastery - b.mastery)[0];
+
+    if (
+      (state.recommendedAction === 'challenge' || state.recommendedAction === 'continue') &&
+      trendCandidate &&
+      trendCandidate.score >= 18 &&
+      trendCandidate.trend === 'down' &&
+      trendCandidate.skill !== recentActivities[0]?.split(':')[1]
+    ) {
+      return this.buildTrendPlan(
+        language,
+        state,
+        trendCandidate.skill,
+        'Xu hướng 30 ngày của ' + SKILL_LABELS[trendCandidate.skill] + ' đang giảm; Bensop đưa kỹ năng này trở lại trước khi mở rộng sang nội dung khó hơn.'
+      );
+    }
+
+    const balance = crossSkillMasteryBalanceService.getDecision(language);
     if ((state.recommendedAction === 'challenge' || state.recommendedAction === 'continue') && balance.shouldSwitch && balance.skill) {
       return this.buildBalancedSkillPlan(language, state, balance.skill, continuityFocus ? continuityFocus + ' ' + balance.reason : balance.reason);
     }
@@ -118,6 +155,19 @@ class AdaptiveLearningOrchestrator {
     }
 
     return { language, phase: 'start', state, title: 'Khởi động phiên học', description: 'Một lượt luyện ngắn để tạo evidence cho hồ sơ học tập.', reason: 'Chưa có tín hiệu đủ mạnh để cá nhân hóa sâu hơn.', path: '/luyen-tap', durationMinutes: 10 };
+  }
+
+  private buildTrendPlan(language: LanguageCode, state: LearningStateDecision, skill: AdaptiveMemorySkill, reason: string): AdaptiveLearningPlan {
+    return {
+      language,
+      phase: 'cross-skill',
+      state,
+      title: 'Điều chỉnh dài hạn · ' + SKILL_LABELS[skill],
+      description: 'Bensop kết hợp xu hướng 30 ngày, mastery hiện tại và lịch sử gần đây để đưa kỹ năng đang giảm trở lại phiên học.',
+      reason,
+      path: SKILL_PATHS[language][skill],
+      durationMinutes: skill === 'vocabulary' || skill === 'grammar' ? 6 : 8,
+    };
   }
 
   private buildBalancedSkillPlan(language: LanguageCode, state: LearningStateDecision, skill: AdaptiveMemorySkill, reason: string): AdaptiveLearningPlan {
