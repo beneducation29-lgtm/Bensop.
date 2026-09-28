@@ -24,6 +24,10 @@ export interface MasteryRecord {
   lastRecoveryAt?: string;
   failureStreak?: number;
   persistenceScore?: number;
+  parentVerificationStatus?: 'pending' | 'verified' | 'needs-review';
+  parentVerificationCount?: number;
+  lastParentVerificationScore?: number;
+  lastParentVerificationAt?: string;
 }
 
 export interface MasterySnapshot {
