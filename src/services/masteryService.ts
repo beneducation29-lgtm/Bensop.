@@ -119,6 +119,28 @@ export const masteryService = {
     result.questionBreakdowns.forEach(item=>{const q=item.question;const score=item.possiblePoints>0?Math.round(item.earnedPoints/item.possiblePoints*100):0;snapshot.questions=upsert(snapshot.questions,{id:`question:${q.id}`,entityType:'question',entityId:q.id,label:q.question,categoryId:q.categoryId,skill:q.skill,topicId:q.topicId},score,item.isCorrect?1:0,1);});
     snapshot.overall=snapshot.skills.length?Math.round(snapshot.skills.reduce((sum,item)=>sum+item.mastery,0)/snapshot.skills.length):result.accuracy;snapshot.updatedAt=new Date().toISOString();write(snapshot);return snapshot;
   },
+  recordParentVerification(input:{language:LanguageCode;sourceQuestionId:string;score:number}): MasterySnapshot {
+    const snapshot=refreshForLearning(read());
+    const categoryId=categoryForLanguage(input.language);
+    const index=snapshot.questions.findIndex(item =>
+      item.entityId===input.sourceQuestionId && item.categoryId===categoryId
+    );
+    if(index<0)return snapshot;
+    const previous=snapshot.questions[index];
+    const verified=input.score>=70;
+    const next={
+      ...previous,
+      parentVerificationStatus: verified ? 'verified' as const : 'needs-review' as const,
+      parentVerificationCount:(previous.parentVerificationCount??0)+1,
+      lastParentVerificationScore:input.score,
+      lastParentVerificationAt:new Date().toISOString(),
+    };
+    snapshot.questions=[...snapshot.questions];
+    snapshot.questions[index]=next;
+    snapshot.updatedAt=new Date().toISOString();
+    write(snapshot);
+    return snapshot;
+  },
   recordSpeakingEvaluation(input:{language:LanguageCode;sessionId:string;score:number;fluency?:number;grammar?:number;vocabulary?:number;relevance?:number;pronunciation?:number}): MasterySnapshot {
     const snapshot=refreshForLearning(read());const categoryId=categoryForLanguage(input.language);
     const metrics:[string,number|undefined][]=[['speaking',input.score],['fluency',input.fluency],['grammar',input.grammar],['vocabulary',input.vocabulary],['pronunciation',input.pronunciation],['relevance',input.relevance]];

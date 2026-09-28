@@ -145,8 +145,22 @@ export const QuizRunnerPage: React.FC<QuizRunnerPageProps> = ({
       sessionIdRef.current
     );
 
-    quizSessionStorage.saveResult(result);
-    quizLearningService.recordResult(result);
+    const recovery = new URLSearchParams(window.location.search);
+    const learningContext = recovery.get('recovery') === '1' &&
+      recovery.get('sourceQuestionId') &&
+      (recovery.get('parentKind') === 'grammar' || recovery.get('parentKind') === 'vocabulary') &&
+      recovery.get('parentId')
+      ? {
+          type: 'recovery-return' as const,
+          sourceQuestionId: recovery.get('sourceQuestionId')!,
+          parentKind: recovery.get('parentKind') as 'grammar' | 'vocabulary',
+          parentId: recovery.get('parentId')!,
+        }
+      : undefined;
+    const finalResult: QuizResult = learningContext ? { ...result, learningContext } : result;
+
+    quizSessionStorage.saveResult(finalResult);
+    quizLearningService.recordResult(finalResult);
     quizSessionStorage.clearActiveSession();
     onFinishQuiz(result);
   };

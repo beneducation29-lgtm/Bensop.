@@ -43,6 +43,14 @@ export const quizLearningService = {
 
     masteryService.recordQuizResult(result);
 
+    if (result.learningContext?.type === 'recovery-return') {
+      masteryService.recordParentVerification({
+        language: language || 'en',
+        sourceQuestionId: result.learningContext.sourceQuestionId,
+        score: result.score,
+      });
+    }
+
     const intervalDays: 1 | 3 | 7 =
       reviewQuality === 'again'
         ? 1
