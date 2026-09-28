@@ -303,9 +303,12 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                 <p className="mt-1 max-w-2xl text-xs leading-relaxed text-[#888]">
                   {adaptiveSession.learningState.reason}
                 </p>
+                <div className="mt-2 text-[9px] font-mono text-[#555]">
+                  ORCHESTRATOR · {adaptiveSession.items[0]?.title || 'PHIÊN HỌC'}
+                </div>
               </div>
               <span className="shrink-0 rounded-lg border border-[#2A2A2A] bg-[#151515] px-3 py-2 text-[9px] font-mono font-bold text-[#D9FF3F]">
-                {adaptiveSession.learningState.recommendedAction.replace('-', ' ').toUpperCase()}
+                {adaptiveSession.learningState.recommendedAction.replace('-', ' ').toUpperCase()} · {adaptiveSession.learningState.state.toUpperCase()}
               </span>
             </div>
           </div>
