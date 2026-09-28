@@ -30,10 +30,23 @@ class RootCauseService {
     language: LanguageCode,
     sourceQuestionId: string,
   ): RootCauseRecommendation {
+    const returnTarget = prerequisiteService.getReturnToParentRecommendation(concept, language);
     const prerequisite =
       prerequisiteService.getPriorityPrerequisiteRecommendation(concept, language) ||
       prerequisiteService.getDeepRecommendation(concept, language) ||
       prerequisiteService.getRecommendation(concept, language);
+
+    if (returnTarget) {
+      return {
+        language,
+        kind: 'grammar',
+        title: 'Đã phục hồi nền · quay lại kiến thức cấp trên',
+        description: returnTarget.parentLabel,
+        path: returnTarget.path,
+        reason: returnTarget.reason,
+        sourceQuestionId,
+      };
+    }
     if (prerequisite) {
       return {
         language,
@@ -62,10 +75,23 @@ class RootCauseService {
     language: LanguageCode,
     sourceQuestionId: string,
   ): RootCauseRecommendation {
+    const returnTarget = prerequisiteService.getReturnToParentRecommendation(word, language);
     const prerequisite =
       prerequisiteService.getPriorityPrerequisiteRecommendation(word, language) ||
       prerequisiteService.getDeepRecommendation(word, language) ||
       prerequisiteService.getVocabularyRecommendation(word, language);
+
+    if (returnTarget) {
+      return {
+        language,
+        kind: 'vocabulary',
+        title: 'Đã phục hồi từ nền · quay lại từ cấp trên',
+        description: returnTarget.parentLabel,
+        path: returnTarget.path,
+        reason: returnTarget.reason,
+        sourceQuestionId,
+      };
+    }
     if (prerequisite) {
       return {
         language,
