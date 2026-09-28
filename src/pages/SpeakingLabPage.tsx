@@ -54,7 +54,10 @@ export function SpeakingLabPage({language,onNavigate}:P){
    const scenario=selectedScenario||track.scenarios[0];
    const next=aiSpeakingService.createSession({language,level:levels[0]||'B1',mode,topic:scenario?.title||(language==='zh'?'日常生活':'Everyday Life'),scenario:scenario?.context||modeInfo.goal});
    setScenarioId(scenario?.id||'');
-   setSession(next);setNextPrompt('');setError('');setRoom(true);
+   const starter=selectedScenario?.starter||(language==='zh'?'你好！今天过得怎么样？':'Hello! How are you doing today?');
+   const starterTurn=aiSpeakingService.addTurn(next.id,{role:'ai',text:starter,display:language==='zh'?{text:starter,pinyin:'Nǐ hǎo! Jīntiān guò de zěnmeyàng?',vietnameseTranslation:'Xin chào! Hôm nay bạn thế nào?'}:{text:starter,vietnameseTranslation:'Xin chào! Hôm nay bạn thế nào?'}});
+   setSession(starterTurn||next);setNextPrompt('');setError('');setRoom(true);
+   if(starter) void mediaService.speak(starter,language);
  };
  const speakPrompt=(text:string)=>{void mediaService.speak(text,language);};
  const addSample=()=>{
@@ -125,7 +128,7 @@ export function SpeakingLabPage({language,onNavigate}:P){
       <span className="text-[#D9FF3F]">AI CONTRACT</span><span className="mx-2">·</span>{language==='zh'?'中文 → Pinyin → Việt':'English → phản hồi tự nhiên'}
     </div>
    </div>
-   <div className="mb-6 flex flex-wrap gap-2">{track.modes.map(m=><button key={m.id} onClick={()=>{setMode(m.id);if(session)setSession(aiSpeakingService.createSession({language,level:session.level,mode:m.id,topic:session.topic,scenario:track.modes.find(x=>x.id===m.id)?.goal}))}} className={`border px-3 py-2 text-xs ${mode===m.id?'border-[#D9FF3F] text-[#D9FF3F]':'border-[#292929] text-[#888]'}`}>{m.title}</button>)}</div>
+   <div className="mb-6 flex flex-wrap gap-2">{track.modes.map(m=><button key={m.id} onClick={()=>{setMode(m.id);if(session)setSession(aiSpeakingService.createSession({language,level:session.level,mode:m.id,topic:selectedScenario?.title||session.topic,scenario:selectedScenario?.context||session.scenario}))}} className={`border px-3 py-2 text-xs ${mode===m.id?'border-[#D9FF3F] text-[#D9FF3F]':'border-[#292929] text-[#888]'}`}>{m.title}</button>)}</div>
    {feedbackTurns.length>=2&&<div className="mb-5 border border-[#D9FF3F]/20 bg-[#0d1107] p-5"><div className="text-[10px] font-mono text-[#D9FF3F]">SESSION CHECKPOINT</div><div className="mt-3 flex flex-wrap items-end gap-6"><div><div className="text-[10px] text-[#666]">ĐIỂM PHIÊN</div><div className="text-3xl font-black">{sessionScore}/100</div></div>{weakMetrics.slice(0,3).map(m=><div key={m.key}><div className="text-[10px] text-[#666]">{m.label}</div><div className="text-xl font-bold">{m.score}%</div></div>)}</div><p className="mt-3 text-xs text-[#888]">Điểm yếu hiện tại được lấy từ các lượt AI đã đánh giá trong phiên. Hãy luyện lại kỹ năng thấp nhất thay vì chỉ lặp lại toàn bộ bài.</p><button onClick={()=>onNavigate('/adaptive-session?lang='+language)} className="mt-4 border border-[#D9FF3F] px-4 py-2 text-xs font-black text-[#D9FF3F]">LUYỆN LẠI ĐIỂM YẾU</button></div>}
    <div className="grid gap-5 lg:grid-cols-[1fr_280px]">
     <div className="border border-[#242424] bg-[#111] p-6">
