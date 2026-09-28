@@ -32,15 +32,16 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
   const [activeInterest, setActiveInterest] = useState<'tieng-anh' | 'tieng-trung' | 'phat-trien-ban-than' | 'suc-khoe-doi-song'>('tieng-anh');
 
   const recommendations = getRecommendations(activeInterest);
+  const learningLanguage = activeInterest === 'tieng-trung' ? 'zh' : 'en';
   const dueReviews = activeInterest === 'tieng-anh' || activeInterest === 'tieng-trung'
-    ? spacedReviewService.getDue(new Date(), activeInterest === 'tieng-trung' ? 'zh' : 'en').slice(0, 5)
+    ? spacedReviewService.getDue(new Date(), learningLanguage).slice(0, 5)
     : [];
   const masteryLanguage = activeInterest === 'tieng-trung' ? 'zh' : activeInterest === 'tieng-anh' ? 'en' : undefined;
   const masterySnapshot = masteryService.getSnapshot(masteryLanguage);
-  const nextLearningActions = recommendationService.getNextLearningActions(3);
-  const adaptiveSession = adaptiveSessionService.buildSession();
-  const learningSkillSnapshot = recommendationService.getLearningSkillSnapshot();
-  const learnerProfile = learnerProfileService.getSnapshot();
+  const nextLearningActions = recommendationService.getNextLearningActions(3, learningLanguage);
+  const adaptiveSession = adaptiveSessionService.buildSession(learningLanguage);
+  const learningSkillSnapshot = recommendationService.getLearningSkillSnapshot(learningLanguage);
+  const learnerProfile = learnerProfileService.getSnapshot(learningLanguage);
 
   const handleOpenRecommended = (slug: string, type: 'article' | 'course') => {
     if (type === 'article') {
