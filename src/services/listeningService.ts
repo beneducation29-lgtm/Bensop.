@@ -3,6 +3,7 @@ import { ALL_LISTENING_LESSONS } from '../data/listening';
 import { learnerActivityService } from './learnerActivityService';
 import { masteryService } from './masteryService';
 import { spacedReviewService } from './spacedReviewService';
+import { adaptiveMultiskillFeedbackService } from './adaptiveMultiskillFeedbackService';
 
 const LISTENING_PROGRESS_KEY = 'bensop_listening_progress';
 
@@ -153,6 +154,7 @@ class ListeningService {
       learnerActivityService.record({skill:'listening',language:progress.language,activityId:progress.listeningLessonId,score:progress.accuracy,evidenceType:'assessment',timestamp:progress.lastAttemptAt,metadata:{completed:progress.completed}});
       masteryService.recordListeningEvaluation({language:progress.language,lessonId:progress.listeningLessonId,score:progress.accuracy});
       spacedReviewService.scheduleSkillReview('listening',progress.listeningLessonId,`Listening · ${progress.listeningLessonId}`,progress.language==='zh'?`/tieng-trung/listening/${this.getLessonById(progress.listeningLessonId)?.slug || progress.listeningLessonId}`:`/tieng-anh/listening/${this.getLessonById(progress.listeningLessonId)?.slug || progress.listeningLessonId}`,progress.accuracy>=80?7:progress.accuracy>=60?3:1,progress.lastAttemptAt,progress.language);
+      adaptiveMultiskillFeedbackService.recordResult({skill:'listening',language:progress.language,activityId:progress.listeningLessonId,score:progress.accuracy,completedAt:progress.lastAttemptAt});
     } catch (e) {
       console.warn('Failed to save listening progress:', e);
     }
