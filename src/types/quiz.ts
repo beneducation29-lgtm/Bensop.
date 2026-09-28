@@ -190,6 +190,12 @@ export interface QuizResult {
   difficultyBreakdown: Record<string, { total: number; correct: number; percentage: number }>;
   questionBreakdowns: QuestionBreakdown[];
   wrongQuestionIds: string[];
+  learningContext?: {
+    type: 'recovery-return';
+    sourceQuestionId: string;
+    parentKind: 'grammar' | 'vocabulary';
+    parentId: string;
+  };
 }
 
 export interface QuizAttemptSummary {
