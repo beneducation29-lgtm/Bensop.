@@ -97,7 +97,6 @@ class AdaptiveLearningOrchestrator {
     const continuityFocus = continuity.today.completedSteps > 0
       ? continuity.nextFocus
       : '';
-    const balance = crossSkillMasteryBalanceService.getDecision(language);
     const longTerm = longTermLearningInsightService.getInsight(language);
     const recentActivities = continuity.recentActivities;
     const recentSkills = adaptiveSessionMemoryService.getRecentSteps(language, 4).map((step) => step.skill);
