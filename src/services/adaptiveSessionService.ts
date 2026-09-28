@@ -5,6 +5,7 @@ import { masteryService } from './masteryService';
 import { recommendationService, LearningActionType } from './recommendationService';
 import { quizService } from './quizService';
 import { LearnerActivitySkill } from './learnerActivityService';
+import { rootCauseService } from './rootCauseService';
 
 export interface AdaptiveSessionItem {
   id: string;
@@ -94,6 +95,7 @@ class AdaptiveSessionService {
       });
     });
 
+    const rootCause = rootCauseService.getRootCauseRecommendation(language);
     const forgettingRisk = masteryService.getForgettingRisks(1, language)[0];
     const persistentWeakness = masteryService.getPersistentWeaknesses(1, language)[0];
     const weakQuestion = masteryService.getWeakQuestions(1, language)[0];
@@ -114,6 +116,20 @@ class AdaptiveSessionService {
             : 'Câu yếu nhất: ' + weakQuestion.label + ' · mastery ' + weakQuestion.mastery + '% · ' + (weakQuestion.skill || 'kỹ năng') + '.',
         });
       }
+    }
+
+    if (rootCause && items.length < 4) {
+      add({
+        type: rootCause.kind,
+        skill: rootCause.kind === 'grammar' ? 'Ngữ pháp' : 'Từ vựng',
+        skillKey: rootCause.kind as LearnerActivitySkill,
+        language,
+        title: rootCause.title,
+        description: rootCause.description,
+        path: rootCause.path,
+        durationMinutes: 7,
+        reason: rootCause.reason,
+      });
     }
 
     const ranked = [...profile.skills]
