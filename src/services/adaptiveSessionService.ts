@@ -35,6 +35,13 @@ export interface AdaptiveSession {
   items: AdaptiveSessionItem[];
   summary: string;
   priorityFocus?: AdaptivePriorityFocus;
+  recoveryReturn?: {
+    title: string;
+    description: string;
+    reason: string;
+    path: string;
+    skill: 'grammar' | 'vocabulary';
+  };
 }
 
 const SKILL_LABELS: Record<string, string> = {
@@ -105,6 +112,15 @@ class AdaptiveSessionService {
     });
 
     const rootCause = rootCauseService.getRootCauseRecommendation(language);
+    const recoveryReturn = rootCause && (rootCause.kind === 'grammar' || rootCause.kind === 'vocabulary')
+      ? {
+          title: rootCause.title,
+          description: rootCause.description,
+          reason: rootCause.reason,
+          path: rootCause.path,
+          skill: rootCause.kind,
+        }
+      : undefined;
     const priorityFocus: AdaptivePriorityFocus | undefined = rootCause && (rootCause.kind === 'grammar' || rootCause.kind === 'vocabulary')
       ? {
           title: rootCause.title,
@@ -217,6 +233,7 @@ class AdaptiveSessionService {
       items: capped,
       summary: total + ' phút · ' + (due.length ? 'ưu tiên lượt ôn đến hạn' : 'ưu tiên điểm cần củng cố') + '.',
       priorityFocus,
+      recoveryReturn: recoveryReturn?.title.startsWith('Đã phục hồi') ? recoveryReturn : undefined,
     };
   }
 }
