@@ -5,7 +5,9 @@ export interface AISpeakingTrack {
   language: LanguageCode;
   title: string;
   description: string;
-  displayPolicy: {
+  defaultLevel: 'B1',
+    levelOptions: ['A2','B1','B2','C1'],
+    displayPolicy: {
     showPinyin: boolean;
     showVietnameseTranslation: boolean;
     translationLanguage: 'vi';
