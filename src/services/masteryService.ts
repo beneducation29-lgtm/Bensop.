@@ -40,7 +40,7 @@ const applyForgettingSignal = (record: MasteryRecord, now = new Date()): Mastery
     confidence: effectiveConfidence,
     evidenceLevel,
     trend: effectiveMastery < record.mastery ? 'down' : record.trend,
-    recoveryStatus,
+    recoveryStatus: record.recoveryStatus === 'relearning' ? 'relearning' : record.recoveryStatus === 'recovered' ? 'recovered' : 'none',
     recoveryCount: record.recoveryCount ?? 0,
     lastRecoveryAt: record.lastRecoveryAt,
   };
