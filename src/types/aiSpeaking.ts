@@ -7,17 +7,16 @@ export type AISpeakingMode =
   | 'interview'
   | 'pronunciation-coach';
 
-/**
- * Display layer for speaking turns.
- * Chinese turns intentionally carry Pinyin + Vietnamese translation so learners
- * can understand the line before/after speaking without switching tracks.
- */
+export interface AISpeakingScenario {
+  id: string;
+  title: string;
+  context: string;
+  starter: string;
+}
+
 export interface AISpeakingTurnDisplay {
-  /** Original utterance in the active learning language. */
   text: string;
-  /** Required for Chinese AI turns; omitted for English. */
   pinyin?: string;
-  /** Vietnamese support translation; required for Chinese AI turns. */
   vietnameseTranslation?: string;
 }
 
@@ -93,9 +92,7 @@ export interface AISpeakingRoomContext {
 
 export interface AISpeakingReply {
   text: string;
-  /** Pinyin is populated for Chinese AI replies. */
   pinyin?: string;
-  /** Vietnamese translation is populated for Chinese AI replies. */
   vietnameseTranslation?: string;
   nextPrompt?: string;
   feedback?: AISpeakingTurnFeedback;
