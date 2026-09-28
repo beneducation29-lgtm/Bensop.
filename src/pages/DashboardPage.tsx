@@ -17,6 +17,7 @@ import { adaptiveSessionGoalService } from '../services/adaptiveSessionGoalServi
 import { dailyLearningContinuityService } from '../services/dailyLearningContinuityService';
 import { adaptiveLearningHistoryService } from '../services/adaptiveLearningHistoryService';
 import { longTermLearningInsightService } from '../services/longTermLearningInsightService';
+import { adaptiveSessionPlannerService } from '../services/adaptiveSessionPlannerService';
 
 interface DashboardPageProps {
   user: UserProgress;
@@ -44,6 +45,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
   const masterySnapshot = masteryService.getSnapshot(masteryLanguage);
   const nextLearningActions = recommendationService.getNextLearningActions(3, learningLanguage);
   const adaptiveSession = adaptiveSessionService.buildSession(learningLanguage);
+  const adaptiveSessionPlan = adaptiveSessionPlannerService.build(learningLanguage);
   const adaptiveSessionGoal = adaptiveSessionGoalService.getProgress(learningLanguage);
   const dailyContinuity = dailyLearningContinuityService.getContinuity(learningLanguage);
   const learningHistory = adaptiveLearningHistoryService.getSummary(learningLanguage, 30);
@@ -440,6 +442,31 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
             </div>
           </div>
 
+          <div className="mb-5 rounded-2xl border border-[#222] bg-[#0B0B0B] p-5">
+            <div className="text-[9px] font-mono font-bold tracking-[0.18em] text-[#D9FF3F]">
+              SESSION PLANNER · {adaptiveSessionPlan.completedSteps}/{adaptiveSessionPlan.targetSteps} BƯỚC
+            </div>
+            <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+              <div>
+                <h3 className="text-sm font-black uppercase text-white">{adaptiveSessionPlan.current.title}</h3>
+                <p className="mt-1 max-w-2xl text-xs leading-relaxed text-[#888]">{adaptiveSessionPlan.reason}</p>
+              </div>
+              <button type="button" onClick={() => onNavigate(adaptiveSessionPlan.current.path)} className="shrink-0 rounded-lg border border-[#333] px-3 py-2 text-[9px] font-mono font-bold text-white hover:border-[#D9FF3F] hover:text-[#D9FF3F]">
+                BẮT ĐẦU BƯỚC HIỆN TẠI →
+              </button>
+            </div>
+            {adaptiveSessionPlan.upcoming.length > 0 && (
+              <div className="mt-4 grid gap-2 sm:grid-cols-2">
+                {adaptiveSessionPlan.upcoming.map((step) => (
+                  <div key={step.title} className="rounded-xl border border-[#1D1D1D] bg-[#101010] p-3">
+                    <div className="text-[9px] font-mono text-[#666]">DỰ KIẾN TIẾP THEO</div>
+                    <div className="mt-1 text-xs font-bold text-white">{step.title}</div>
+                    <div className="mt-1 text-[10px] text-[#666]">{step.durationMinutes} phút · sẽ tính lại sau kết quả</div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
           {adaptiveSession.priorityFocus && (
             <div className="mb-5 rounded-2xl border border-amber-400/25 bg-[#101010] p-5">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
