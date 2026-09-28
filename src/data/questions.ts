@@ -918,7 +918,7 @@ export const QUESTIONS_BANK: Question[] = [
       hskLevel: level,
       question: q,
       instructions: 'Chọn đáp án chính xác nhất để hoàn thành câu.',
-      options: [ans, wrong1, wrong2, wrong3, wrong4],
+      options,
       correctAnswer: ans,
       explanation: {
         general: `${full} — Câu này luyện ${topic.toLowerCase()} ở mức ${level}.`,
