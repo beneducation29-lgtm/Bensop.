@@ -45,7 +45,8 @@ const periodFor = (record: LearningEvidenceRecord, now: number) => {
   if (age < 7) return 0;
   if (age < 14) return 1;
   if (age < 21) return 2;
-  return 3;
+  if (age < 30) return 3;
+  return -1;
 };
 
 const buildPeriod = (records: LearningEvidenceRecord[], label: string, days: number): LearningPeriodInsight => {
@@ -70,7 +71,7 @@ class LongTermLearningInsightService {
     const buckets = [[], [], [], []] as LearningEvidenceRecord[][];
     history.forEach((record) => {
       const index = periodFor(record, now);
-      if (index < buckets.length) buckets[index].push(record);
+      if (index >= 0 && index < buckets.length) buckets[index].push(record);
     });
 
     const periods = [
@@ -80,7 +81,7 @@ class LongTermLearningInsightService {
       buildPeriod(buckets[3], '22–30 NGÀY', 9),
     ];
 
-    const recent = history.filter((item) => (now - new Date(item.completedAt).getTime()) <= 30 * 86400000);
+    const recent = history.filter((item) => (now - new Date(item.completedAt).getTime()) < 30 * 86400000);
     const skills = SKILLS.map((skill): SkillInsight => {
       const items = recent.filter((item) => item.skill === skill);
       const latest = items[0];
