@@ -34,6 +34,7 @@ interface AdaptiveMemoryState {
 }
 
 const STORAGE_KEY = 'bensop_adaptive_session_memory_v1';
+const storageKey = (language: LanguageCode) => `${STORAGE_KEY}_${language}`;
 const MAX_STEPS = 12;
 const SKILL_ROTATION: AdaptiveMemorySkill[] = [
   'vocabulary',
@@ -48,7 +49,7 @@ const SKILL_ROTATION: AdaptiveMemorySkill[] = [
 class AdaptiveSessionMemoryService {
   private read(language: LanguageCode): AdaptiveMemoryState {
     try {
-      const raw = window.localStorage.getItem(STORAGE_KEY);
+      const raw = window.localStorage.getItem(storageKey(language));
       if (!raw) return { language, updatedAt: new Date().toISOString(), steps: [] };
       const parsed = JSON.parse(raw) as AdaptiveMemoryState;
       return parsed.language === language
@@ -61,7 +62,7 @@ class AdaptiveSessionMemoryService {
 
   private write(state: AdaptiveMemoryState): void {
     try {
-      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      window.localStorage.setItem(storageKey(state.language), JSON.stringify(state));
     } catch {
       // Memory is an adaptive enhancement; core learning persistence remains independent.
     }
@@ -139,6 +140,8 @@ class AdaptiveSessionMemoryService {
     try {
       if (!language) {
         window.localStorage.removeItem(STORAGE_KEY);
+        window.localStorage.removeItem(storageKey('en'));
+        window.localStorage.removeItem(storageKey('zh'));
         return;
       }
       const state = this.read(language);
