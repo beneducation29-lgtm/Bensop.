@@ -1,6 +1,7 @@
 import { LanguageCode } from '../types/vocabulary';
 import { AdaptiveMemorySkill } from './adaptiveSessionMemoryService';
 import { SessionOutcome } from './adaptiveSessionOutcomeService';
+import { masteryService } from './masteryService';
 
 export interface LearningMemoryEntry {
   id: string;
@@ -17,6 +18,7 @@ export interface LearningMemoryEntry {
 }
 
 export type LearningProgressPattern = 'improving' | 'stable' | 'recurring-weakness' | 'declining' | 'insufficient';
+export type LearningRecoveryPattern = 'relearning' | 'recovering' | 'improving' | 'recovered' | 'stable' | 'insufficient';
 
 export interface LearningMemorySummary {
   language: LanguageCode;
@@ -29,6 +31,8 @@ export interface LearningMemorySummary {
   consistency: number;
   trend: 'up' | 'down' | 'stable' | 'insufficient';
   progressPattern: LearningProgressPattern;
+  recoveryPattern: LearningRecoveryPattern;
+  recoverySkill?: AdaptiveMemorySkill;
   attentionFrequency: number;
   strongestSkill?: AdaptiveMemorySkill;
   recurringAttentionSkill?: AdaptiveMemorySkill;
@@ -122,6 +126,39 @@ class LongTermLearningMemoryService {
             ? 'improving'
             : 'stable';
 
+    const recoverySkill = recurringAttentionSkill;
+    const recoveryEntryCount = recoverySkill
+      ? completed.filter(item => item.needsAttentionSkill === recoverySkill).length
+      : 0;
+    const recentRecoveryEntries = recoverySkill
+      ? completed.slice(0, 3).filter(item => item.needsAttentionSkill === recoverySkill).length
+      : 0;
+    const recentRecoveryClear = recoverySkill
+      ? completed.slice(0, 2).every(item => item.needsAttentionSkill !== recoverySkill)
+      : false;
+    const recoverySignal = scoreDelta > 0 || masteryDelta > 0 || trend === 'up';
+    const currentSkill = recoverySkill
+      ? masteryService.getSnapshot(language).skills.find(item => item.entityId === recoverySkill)
+      : undefined;
+    const currentMastery = currentSkill?.mastery ?? 0;
+    const currentEvidence = currentSkill?.evidenceLevel;
+    const recoveryPattern: LearningRecoveryPattern = completed.length < 3 || !recoverySkill
+      ? 'insufficient'
+      : currentSkill && (currentSkill.recoveryStatus === 'relearning' || currentMastery < 50)
+        ? 'relearning'
+        : recentRecoveryEntries > 0 && recoverySignal
+          ? 'recovering'
+          : recoveryEntryCount >= 2 && recentRecoveryClear && currentMastery >= 70 &&
+            (currentEvidence === 'established' || currentEvidence === 'mastered')
+            ? 'recovered'
+            : currentMastery >= 85 &&
+              (currentEvidence === 'established' || currentEvidence === 'mastered') &&
+              recentRecoveryClear
+              ? 'stable'
+              : recoveryEntryCount >= 2 && recoverySignal && currentMastery >= 60
+                ? 'improving'
+                : 'stable';
+
     const headline = trend === 'up'
       ? 'Chuỗi phiên gần đây đang cho thấy tiến bộ.'
       : trend === 'down'
@@ -145,6 +182,8 @@ class LongTermLearningMemoryService {
       consistency,
       trend,
       progressPattern,
+      recoveryPattern,
+      recoverySkill,
       attentionFrequency,
       strongestSkill,
       recurringAttentionSkill,
