@@ -121,7 +121,7 @@ class AdaptiveLearningOrchestrator {
       (state.recommendedAction === 'challenge' || state.recommendedAction === 'continue') &&
       longTermMemory.completedSessions >= 3 &&
       longTermMemory.recurringAttentionSkill &&
-      (longTermMemory.trend === 'down' || longTermMemory.scoreDelta <= 0) &&
+      longTermMemory.progressPattern === 'recurring-weakness' &&
       longTermMemory.recurringAttentionSkill !== recentSkills[0]
     ) {
       return this.buildMemoryPlan(
@@ -130,8 +130,9 @@ class AdaptiveLearningOrchestrator {
         longTermMemory.recurringAttentionSkill,
         'Long-Term Learning Memory ghi nhận ' + longTermMemory.completedSessions + ' phiên và cho thấy ' +
           SKILL_LABELS[longTermMemory.recurringAttentionSkill] + ' lặp lại trong nhóm cần chú ý. ' +
-          'Xu hướng gần đây ' + longTermMemory.trend + ', score delta ' + longTermMemory.scoreDelta +
-          '; Bensop ưu tiên kỹ năng này trước khi mở rộng tiếp.'
+          'Pattern dài hạn: recurring-weakness, xuất hiện ở ' + longTermMemory.attentionFrequency +
+          '% phiên; score delta ' + longTermMemory.scoreDelta + ', mastery delta ' + longTermMemory.masteryDelta +
+          '. Bensop ưu tiên kỹ năng này trước khi mở rộng tiếp.'
       );
     }
     const longTerm = longTermLearningInsightService.getInsight(language);
