@@ -6,6 +6,7 @@ import { adaptiveSessionGoalService } from './adaptiveSessionGoalService';
 import { dailyLearningContinuityService } from './dailyLearningContinuityService';
 import { adaptiveLearningHistoryService } from './adaptiveLearningHistoryService';
 import { adaptiveSessionPlannerService } from './adaptiveSessionPlannerService';
+import { adaptiveSessionOutcomeService } from './adaptiveSessionOutcomeService';
 
 interface AdaptiveStepRecord {
   id: string;
@@ -96,6 +97,8 @@ class AdaptiveSessionExecutionService {
       score: result.score,
       completedAt: result.completedAt,
     });
+
+    adaptiveSessionOutcomeService.sync(language);
 
     adaptiveSessionMemoryService.recordStep({
       skill: 'quiz',
