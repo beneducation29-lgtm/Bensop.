@@ -10,6 +10,7 @@ import { adaptiveSessionGoalService } from './adaptiveSessionGoalService';
 import { dailyLearningContinuityService } from './dailyLearningContinuityService';
 import { longTermLearningInsightService } from './longTermLearningInsightService';
 import { learningIntelligenceProfileService } from './learningIntelligenceProfileService';
+import { longTermLearningMemoryService } from './longTermLearningMemoryService';
 
 export type AdaptivePhase =
   | 'review-due'
@@ -112,9 +113,29 @@ class AdaptiveLearningOrchestrator {
     const continuityFocus = continuity.today.completedSteps > 0
       ? continuity.nextFocus
       : '';
+
+    const longTermMemory = longTermLearningMemoryService.getSummary(language);
+    const recentSkills = adaptiveSessionMemoryService.getRecentSteps(language, 4).map((step) => step.skill);
+
+    if (
+      (state.recommendedAction === 'challenge' || state.recommendedAction === 'continue') &&
+      longTermMemory.completedSessions >= 3 &&
+      longTermMemory.recurringAttentionSkill &&
+      (longTermMemory.trend === 'down' || longTermMemory.scoreDelta <= 0) &&
+      longTermMemory.recurringAttentionSkill !== recentSkills[0]
+    ) {
+      return this.buildMemoryPlan(
+        language,
+        state,
+        longTermMemory.recurringAttentionSkill,
+        'Long-Term Learning Memory ghi nhận ' + longTermMemory.completedSessions + ' phiên và cho thấy ' +
+          SKILL_LABELS[longTermMemory.recurringAttentionSkill] + ' lặp lại trong nhóm cần chú ý. ' +
+          'Xu hướng gần đây ' + longTermMemory.trend + ', score delta ' + longTermMemory.scoreDelta +
+          '; Bensop ưu tiên kỹ năng này trước khi mở rộng tiếp.'
+      );
+    }
     const longTerm = longTermLearningInsightService.getInsight(language);
     const recentActivities = continuity.recentActivities;
-    const recentSkills = adaptiveSessionMemoryService.getRecentSteps(language, 4).map((step) => step.skill);
     const trendCandidate = longTerm.skills
       .filter((item) => ['vocabulary', 'grammar', 'listening', 'speaking', 'reading', 'writing'].includes(item.skill))
       .map((item) => {
@@ -170,6 +191,19 @@ class AdaptiveLearningOrchestrator {
     }
 
     return { language, phase: 'start', state, title: 'Khởi động phiên học', description: 'Một lượt luyện ngắn để tạo evidence cho hồ sơ học tập.', reason: 'Chưa có tín hiệu đủ mạnh để cá nhân hóa sâu hơn.', path: '/luyen-tap', durationMinutes: 10 };
+  }
+
+  private buildMemoryPlan(language: LanguageCode, state: LearningStateDecision, skill: AdaptiveMemorySkill, reason: string): AdaptiveLearningPlan {
+    return {
+      language,
+      phase: 'cross-skill',
+      state,
+      title: 'Learning Memory · ' + SKILL_LABELS[skill],
+      description: 'Bensop dùng lịch sử nhiều phiên để đưa kỹ năng lặp lại trong nhóm cần chú ý trở lại kế hoạch học.',
+      reason,
+      path: SKILL_PATHS[language][skill],
+      durationMinutes: skill === 'vocabulary' || skill === 'grammar' ? 6 : 8,
+    };
   }
 
   private buildTrendPlan(language: LanguageCode, state: LearningStateDecision, skill: AdaptiveMemorySkill, reason: string): AdaptiveLearningPlan {
