@@ -19,6 +19,7 @@ import { adaptiveLearningHistoryService } from '../services/adaptiveLearningHist
 import { longTermLearningInsightService } from '../services/longTermLearningInsightService';
 import { adaptiveSessionPlannerService } from '../services/adaptiveSessionPlannerService';
 import { adaptiveEvidenceGateService } from '../services/adaptiveEvidenceGateService';
+import { learningIntelligenceProfileService } from '../services/learningIntelligenceProfileService';
 
 interface DashboardPageProps {
   user: UserProgress;
@@ -54,6 +55,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
   const learningHistory = adaptiveLearningHistoryService.getSummary(learningLanguage, 30);
   const longTermInsight = longTermLearningInsightService.getInsight(learningLanguage);
   const learningSkillSnapshot = recommendationService.getLearningSkillSnapshot(learningLanguage);
+  const learningIntelligence = learningIntelligenceProfileService.getProfile(learningLanguage);
   const learnerProfile = learnerProfileService.getSnapshot(learningLanguage);
   const weakQuestions = masteryService.getWeakQuestions(3, learningLanguage);
   const weakAreas = masteryService.getWeakAreas(3, learningLanguage);
@@ -258,6 +260,32 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
           </div>
         </section>
 
+        {/* LEARNING INTELLIGENCE */}
+        <section className="mb-12 rounded-3xl border border-[#2A2A2A] bg-[#0D0D0D] p-6 sm:p-8">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between mb-6">
+            <div><div className="text-[10px] font-mono font-bold tracking-[0.18em] text-[#D9FF3F]">LEARNING INTELLIGENCE · {learningLanguage === 'zh' ? 'TIẾNG TRUNG' : 'TIẾNG ANH'}</div>
+              <h2 className="mt-2 text-2xl sm:text-3xl font-black uppercase text-white">{learningIntelligence.headline}</h2>
+              <p className="mt-2 max-w-2xl text-xs leading-relaxed text-[#777]">{learningIntelligence.reason}</p></div>
+            <button onClick={() => onNavigate(adaptiveSessionPlan.current.path)} className="shrink-0 rounded-xl bg-[#D9FF3F] px-5 py-3 text-[10px] font-mono font-extrabold text-black hover:bg-[#cbf532] transition-all flex items-center justify-center gap-2">
+              {adaptiveSessionPlan.current.title.toUpperCase()} <ArrowRight className="w-3.5 h-3.5" /></button>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-5">
+            <div className="rounded-2xl border border-[#222] bg-[#101010] p-4"><span className="text-[9px] font-mono text-[#666]">MASTERY TỔNG</span><strong className="mt-2 block text-2xl text-white">{learningIntelligence.overallMastery}%</strong></div>
+            <div className="rounded-2xl border border-[#222] bg-[#101010] p-4"><span className="text-[9px] font-mono text-[#666]">EVIDENCE COVERAGE</span><strong className="mt-2 block text-2xl text-white">{learningIntelligence.evidenceCoverage}%</strong></div>
+            <div className="rounded-2xl border border-[#222] bg-[#101010] p-4"><span className="text-[9px] font-mono text-[#666]">ĐỦ EVIDENCE</span><strong className="mt-2 block text-2xl text-emerald-400">{learningIntelligence.readyCount}/6</strong></div>
+            <div className="rounded-2xl border border-[#222] bg-[#101010] p-4"><span className="text-[9px] font-mono text-[#666]">CẦN ƯU TIÊN</span><strong className="mt-2 block text-lg text-[#D9FF3F]">{learningIntelligence.prioritySkill || '—'}</strong></div>
+          </div>
+          <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
+            {learningIntelligence.skills.map((skill) => (
+              <div key={skill.skill} className="rounded-2xl border border-[#222] bg-[#101010] p-4">
+                <div className="flex items-center justify-between gap-3"><span className="text-xs font-black uppercase text-white">{skill.skill}</span><span className="text-[9px] font-mono text-[#666]">{skill.evidenceLevel}</span></div>
+                <div className="mt-3 flex items-center justify-between text-[10px] font-mono"><span className="text-[#777]">MASTERY</span><strong>{skill.mastery}%</strong></div>
+                <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-[#1A1A1A]"><div className="h-full bg-[#D9FF3F] rounded-full" style={{ width: Math.min(100, skill.mastery) + '%' }} /></div>
+                <div className="mt-3 flex justify-between text-[9px] font-mono text-[#666]"><span>{skill.attempts} attempts · confidence {skill.confidence}%</span><span>{skill.trend}</span></div>
+              </div>
+            ))}
+          </div>
+        </section>
         {/* SPACED REVIEW DUE */}
         {dueReviews.length > 0 && (
           <section className="mb-12 rounded-3xl border border-amber-500/20 bg-[#0D0D0D] p-6 sm:p-8">
