@@ -16,6 +16,8 @@ export interface LearningMemoryEntry {
   nextFocus?: AdaptiveMemorySkill;
 }
 
+export type LearningProgressPattern = 'improving' | 'stable' | 'recurring-weakness' | 'declining' | 'insufficient';
+
 export interface LearningMemorySummary {
   language: LanguageCode;
   sessions: number;
@@ -26,6 +28,8 @@ export interface LearningMemorySummary {
   activeSkills: number;
   consistency: number;
   trend: 'up' | 'down' | 'stable' | 'insufficient';
+  progressPattern: LearningProgressPattern;
+  attentionFrequency: number;
   strongestSkill?: AdaptiveMemorySkill;
   recurringAttentionSkill?: AdaptiveMemorySkill;
   headline: string;
@@ -98,12 +102,25 @@ class LongTermLearningMemoryService {
     completed.forEach(item => {
       if (item.needsAttentionSkill) attentionCounts.set(item.needsAttentionSkill, (attentionCounts.get(item.needsAttentionSkill) || 0) + 1);
     });
-    const recurringAttentionSkill = [...attentionCounts.entries()].sort((a,b) => b[1] - a[1])[0]?.[0];
+    const recurringAttentionEntry = [...attentionCounts.entries()].sort((a,b) => b[1] - a[1])[0];
+    const recurringAttentionSkill = recurringAttentionEntry?.[0];
+    const attentionFrequency = recurringAttentionEntry && completed.length
+      ? Math.round((recurringAttentionEntry[1] / completed.length) * 100)
+      : 0;
 
     const activeSkills = new Set(completed.flatMap(item => [item.strongestSkill, item.needsAttentionSkill, item.nextFocus].filter(Boolean) as AdaptiveMemorySkill[])).size;
     const activeDays = new Set(completed.map(item => item.completedAt.slice(0, 10))).size;
     const consistency = Math.min(100, Math.round((activeDays / 14) * 100));
     const trend: LearningMemorySummary['trend'] = completed.length < 3 ? 'insufficient' : scoreDelta >= 5 || masteryDelta >= 2 ? 'up' : scoreDelta <= -5 || masteryDelta <= -2 ? 'down' : 'stable';
+    const progressPattern: LearningProgressPattern = completed.length < 3
+      ? 'insufficient'
+      : recurringAttentionSkill && attentionFrequency >= 40 && (trend === 'down' || scoreDelta <= 0)
+        ? 'recurring-weakness'
+        : trend === 'down'
+          ? 'declining'
+          : trend === 'up'
+            ? 'improving'
+            : 'stable';
 
     const headline = trend === 'up'
       ? 'Chuỗi phiên gần đây đang cho thấy tiến bộ.'
@@ -127,6 +144,8 @@ class LongTermLearningMemoryService {
       activeSkills,
       consistency,
       trend,
+      progressPattern,
+      attentionFrequency,
       strongestSkill,
       recurringAttentionSkill,
       headline,
