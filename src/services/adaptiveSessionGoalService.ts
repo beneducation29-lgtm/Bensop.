@@ -84,9 +84,11 @@ class AdaptiveSessionGoalService {
   }
 
   recordStep(step: Omit<AdaptiveSessionGoalStep, 'id'>): AdaptiveSessionGoal {
-    const goal = this.getOrCreate(step.language);
     const id = [step.skill, step.activityId, step.completedAt].join(':');
-    if (goal.completedSteps.some((item) => item.id === id)) return goal;
+    const existing = this.read(step.language);
+    if (existing?.completedSteps.some((item) => item.id === id)) return existing;
+
+    const goal = this.getOrCreate(step.language);
 
     goal.completedSteps = [...goal.completedSteps, { ...step, id }].slice(-goal.maxSteps);
     goal.updatedAt = new Date().toISOString();
