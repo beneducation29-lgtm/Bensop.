@@ -37,13 +37,14 @@ export interface AdaptiveSessionGoalProgress {
 }
 
 const STORAGE_KEY = 'bensop_adaptive_session_goal_v1';
+const storageKey = (language: LanguageCode) => `${STORAGE_KEY}_${language}`;
 const TARGET_STEPS = 3;
 const MAX_STEPS = 5;
 
 class AdaptiveSessionGoalService {
   private read(language: LanguageCode): AdaptiveSessionGoal | null {
     try {
-      const raw = window.localStorage.getItem(STORAGE_KEY);
+      const raw = window.localStorage.getItem(storageKey(language));
       if (!raw) return null;
       const goal = JSON.parse(raw) as AdaptiveSessionGoal;
       return goal.language === language ? goal : null;
@@ -54,7 +55,7 @@ class AdaptiveSessionGoalService {
 
   private write(goal: AdaptiveSessionGoal): void {
     try {
-      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(goal));
+      window.localStorage.setItem(storageKey(goal.language), JSON.stringify(goal));
     } catch {
       // Session goal is an adaptive UI enhancement; core learning persistence is independent.
     }
@@ -156,6 +157,8 @@ class AdaptiveSessionGoalService {
     try {
       if (!language) {
         window.localStorage.removeItem(STORAGE_KEY);
+        window.localStorage.removeItem(storageKey('en'));
+        window.localStorage.removeItem(storageKey('zh'));
         return;
       }
       const existing = this.read(language);
