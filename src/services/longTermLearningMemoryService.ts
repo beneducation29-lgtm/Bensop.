@@ -1,7 +1,6 @@
 import { LanguageCode } from '../types/vocabulary';
 import { AdaptiveMemorySkill } from './adaptiveSessionMemoryService';
 import type { SessionOutcome } from './adaptiveSessionOutcomeService';
-import { masteryService } from './masteryService';
 
 export interface LearningMemoryEntry {
   id: string;
@@ -137,23 +136,16 @@ class LongTermLearningMemoryService {
       ? completed.slice(0, 2).every(item => item.needsAttentionSkill !== recoverySkill)
       : false;
     const recoverySignal = scoreDelta > 0 || masteryDelta > 0 || trend === 'up';
-    const currentSkill = recoverySkill
-      ? masteryService.getSnapshot(language).skills.find(item => item.entityId === recoverySkill)
-      : undefined;
-    const currentMastery = currentSkill?.mastery ?? 0;
-    const currentEvidence = currentSkill?.evidenceLevel;
+    const currentMastery = completed[0]?.mastery ?? 0;
     const recoveryPattern: LearningRecoveryPattern = completed.length < 3 || !recoverySkill
       ? 'insufficient'
-      : currentSkill && (currentSkill.recoveryStatus === 'relearning' || currentMastery < 50)
+      : currentMastery < 50 && recentRecoveryEntries >= 2
         ? 'relearning'
         : recentRecoveryEntries > 0 && recoverySignal
           ? 'recovering'
-          : recoveryEntryCount >= 2 && recentRecoveryClear && currentMastery >= 70 &&
-            (currentEvidence === 'established' || currentEvidence === 'mastered')
+          : recoveryEntryCount >= 2 && recentRecoveryClear && currentMastery >= 70
             ? 'recovered'
-            : currentMastery >= 85 &&
-              (currentEvidence === 'established' || currentEvidence === 'mastered') &&
-              recentRecoveryClear
+            : currentMastery >= 85 && recentRecoveryClear
               ? 'stable'
               : recoveryEntryCount >= 2 && recoverySignal && currentMastery >= 60
                 ? 'improving'
