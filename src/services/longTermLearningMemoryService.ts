@@ -1,6 +1,6 @@
 import { LanguageCode } from '../types/vocabulary';
 import { AdaptiveMemorySkill } from './adaptiveSessionMemoryService';
-import { SessionOutcome } from './adaptiveSessionOutcomeService';
+import type { SessionOutcome } from './adaptiveSessionOutcomeService';
 import { masteryService } from './masteryService';
 
 export interface LearningMemoryEntry {
