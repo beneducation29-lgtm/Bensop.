@@ -69,6 +69,10 @@ class AdaptiveSessionExecutionService {
         };
 
     const alreadyRecorded = session.completedSteps.some((step) => step.id === result.sessionId);
+    if (alreadyRecorded) {
+      return session.nextPlan;
+    }
+
     if (!alreadyRecorded) {
       session.completedSteps.push({
         id: result.sessionId,
