@@ -21,6 +21,7 @@ import { adaptiveSessionPlannerService } from '../services/adaptiveSessionPlanne
 import { adaptiveEvidenceGateService } from '../services/adaptiveEvidenceGateService';
 import { learningIntelligenceProfileService } from '../services/learningIntelligenceProfileService';
 import { adaptiveSessionOutcomeService } from '../services/adaptiveSessionOutcomeService';
+import { longTermLearningMemoryService } from '../services/longTermLearningMemoryService';
 
 interface DashboardPageProps {
   user: UserProgress;
@@ -58,6 +59,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
   const learningSkillSnapshot = recommendationService.getLearningSkillSnapshot(learningLanguage);
   const learningIntelligence = learningIntelligenceProfileService.getProfile(learningLanguage);
   const sessionOutcome = adaptiveSessionOutcomeService.get(learningLanguage);
+  const learningMemory = longTermLearningMemoryService.getSummary(learningLanguage);
   const learnerProfile = learnerProfileService.getSnapshot(learningLanguage);
   const weakQuestions = masteryService.getWeakQuestions(3, learningLanguage);
   const weakAreas = masteryService.getWeakAreas(3, learningLanguage);
@@ -284,6 +286,28 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
             <div className="rounded-2xl border border-[#222] bg-[#101010] p-4">
               <div className="text-[9px] font-mono font-bold tracking-wider text-[#666]">NEXT SESSION INTENT</div>
               <p className="mt-2 text-xs text-[#B5B5B5]">{sessionOutcome.nextAction}</p>
+            </div>
+          </section>
+        )}
+
+        {/* LONG-TERM LEARNING MEMORY */}
+        {learningMemory.sessions > 0 && (
+          <section className="mb-12 rounded-3xl border border-[#2A2A2A] bg-[#0D0D0D] p-6 sm:p-8">
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between mb-6">
+              <div>
+                <div className="text-[10px] font-mono font-bold tracking-[0.18em] text-[#D9FF3F]">LONG-TERM LEARNING MEMORY</div>
+                <h2 className="mt-2 text-2xl sm:text-3xl font-black uppercase text-white">{learningMemory.headline}</h2>
+                <p className="mt-2 max-w-2xl text-xs leading-relaxed text-[#777]">{learningMemory.reason}</p>
+              </div>
+              <span className="rounded-xl border border-[#252525] bg-[#121212] px-4 py-2 text-[10px] font-mono font-bold text-[#D9FF3F]">
+                {learningMemory.completedSessions} PHIÊN · {learningMemory.consistency}% NHỊP HỌC
+              </span>
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              <div className="rounded-2xl border border-[#222] bg-[#101010] p-4"><span className="text-[9px] font-mono text-[#666]">ĐIỂM GẦN ĐÂY</span><strong className="mt-2 block text-2xl text-white">{learningMemory.averageScore}%</strong></div>
+              <div className="rounded-2xl border border-[#222] bg-[#101010] p-4"><span className="text-[9px] font-mono text-[#666]">DELTA ĐIỂM</span><strong className="mt-2 block text-2xl text-white">{learningMemory.scoreDelta > 0 ? '+' : ''}{learningMemory.scoreDelta}</strong></div>
+              <div className="rounded-2xl border border-[#222] bg-[#101010] p-4"><span className="text-[9px] font-mono text-[#666]">MASTERY DELTA</span><strong className="mt-2 block text-2xl text-white">{learningMemory.masteryDelta > 0 ? '+' : ''}{learningMemory.masteryDelta}</strong></div>
+              <div className="rounded-2xl border border-[#222] bg-[#101010] p-4"><span className="text-[9px] font-mono text-[#666]">CẦN THEO DÕI</span><strong className="mt-2 block text-lg text-[#D9FF3F]">{learningMemory.recurringAttentionSkill || '—'}</strong></div>
             </div>
           </section>
         )}

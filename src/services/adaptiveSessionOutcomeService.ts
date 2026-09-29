@@ -2,6 +2,7 @@ import { LanguageCode } from '../types/vocabulary';
 import { AdaptiveMemorySkill } from './adaptiveSessionMemoryService';
 import { adaptiveSessionGoalService, AdaptiveSessionGoal } from './adaptiveSessionGoalService';
 import { learningIntelligenceProfileService } from './learningIntelligenceProfileService';
+import { longTermLearningMemoryService } from './longTermLearningMemoryService';
 
 export type SessionOutcomeStatus = 'completed' | 'in-progress';
 
@@ -84,6 +85,7 @@ class AdaptiveSessionOutcomeService {
     const goal = adaptiveSessionGoalService.getGoal(language);
     const outcome = this.build(language, goal);
     this.write(outcome);
+    longTermLearningMemoryService.record(outcome);
     return outcome;
   }
 
