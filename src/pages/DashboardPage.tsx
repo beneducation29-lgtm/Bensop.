@@ -20,6 +20,7 @@ import { longTermLearningInsightService } from '../services/longTermLearningInsi
 import { adaptiveSessionPlannerService } from '../services/adaptiveSessionPlannerService';
 import { adaptiveEvidenceGateService } from '../services/adaptiveEvidenceGateService';
 import { learningIntelligenceProfileService } from '../services/learningIntelligenceProfileService';
+import { adaptiveSessionOutcomeService } from '../services/adaptiveSessionOutcomeService';
 
 interface DashboardPageProps {
   user: UserProgress;
@@ -56,6 +57,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
   const longTermInsight = longTermLearningInsightService.getInsight(learningLanguage);
   const learningSkillSnapshot = recommendationService.getLearningSkillSnapshot(learningLanguage);
   const learningIntelligence = learningIntelligenceProfileService.getProfile(learningLanguage);
+  const sessionOutcome = adaptiveSessionOutcomeService.get(learningLanguage);
   const learnerProfile = learnerProfileService.getSnapshot(learningLanguage);
   const weakQuestions = masteryService.getWeakQuestions(3, learningLanguage);
   const weakAreas = masteryService.getWeakAreas(3, learningLanguage);
@@ -259,6 +261,32 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
             )}
           </div>
         </section>
+
+        {/* SESSION OUTCOME & LEARNING MEMORY */}
+        {sessionOutcome && (
+          <section className="mb-12 rounded-3xl border border-[#2A2A2A] bg-[#0D0D0D] p-6 sm:p-8">
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between mb-6">
+              <div>
+                <div className="text-[10px] font-mono font-bold tracking-[0.18em] text-[#D9FF3F]">SESSION OUTCOME · LEARNING MEMORY</div>
+                <h2 className="mt-2 text-2xl sm:text-3xl font-black uppercase text-white">{sessionOutcome.headline}</h2>
+                <p className="mt-2 max-w-2xl text-xs leading-relaxed text-[#777]">{sessionOutcome.summary}</p>
+              </div>
+              <span className="shrink-0 rounded-xl border border-[#252525] bg-[#121212] px-4 py-2 text-[10px] font-mono font-bold text-[#D9FF3F]">
+                {sessionOutcome.completedSteps} BƯỚC · {sessionOutcome.averageScore}% TB
+              </span>
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-5">
+              <div className="rounded-2xl border border-[#222] bg-[#101010] p-4"><span className="text-[9px] font-mono text-[#666]">MASTERY</span><strong className="mt-2 block text-2xl text-white">{sessionOutcome.mastery}%</strong></div>
+              <div className="rounded-2xl border border-[#222] bg-[#101010] p-4"><span className="text-[9px] font-mono text-[#666]">EVIDENCE</span><strong className="mt-2 block text-2xl text-white">{sessionOutcome.evidenceCoverage}%</strong></div>
+              <div className="rounded-2xl border border-[#222] bg-[#101010] p-4"><span className="text-[9px] font-mono text-[#666]">ĐIỂM MẠNH</span><strong className="mt-2 block text-lg text-emerald-400">{sessionOutcome.strongestSkill || '—'}</strong></div>
+              <div className="rounded-2xl border border-[#222] bg-[#101010] p-4"><span className="text-[9px] font-mono text-[#666]">ƯU TIÊN TIẾP</span><strong className="mt-2 block text-lg text-[#D9FF3F]">{sessionOutcome.nextFocus || '—'}</strong></div>
+            </div>
+            <div className="rounded-2xl border border-[#222] bg-[#101010] p-4">
+              <div className="text-[9px] font-mono font-bold tracking-wider text-[#666]">NEXT SESSION INTENT</div>
+              <p className="mt-2 text-xs text-[#B5B5B5]">{sessionOutcome.nextAction}</p>
+            </div>
+          </section>
+        )}
 
         {/* LEARNING INTELLIGENCE */}
         <section className="mb-12 rounded-3xl border border-[#2A2A2A] bg-[#0D0D0D] p-6 sm:p-8">
