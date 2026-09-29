@@ -25,6 +25,7 @@ interface AdaptiveSessionExecution {
 }
 
 const STORAGE_KEY = 'bensop_adaptive_session_execution_v1';
+const storageKey = (language: LanguageCode) => `${STORAGE_KEY}_${language}`;
 
 const getLanguage = (result: QuizResult): LanguageCode | undefined =>
   result.categoryId === 'tieng-trung'
@@ -34,9 +35,9 @@ const getLanguage = (result: QuizResult): LanguageCode | undefined =>
       : undefined;
 
 class AdaptiveSessionExecutionService {
-  private read(): AdaptiveSessionExecution | null {
+  private read(language: LanguageCode): AdaptiveSessionExecution | null {
     try {
-      const raw = window.localStorage.getItem(STORAGE_KEY);
+      const raw = window.localStorage.getItem(storageKey(language)) || window.localStorage.getItem(STORAGE_KEY);
       return raw ? JSON.parse(raw) as AdaptiveSessionExecution : null;
     } catch {
       return null;
@@ -45,7 +46,7 @@ class AdaptiveSessionExecutionService {
 
   private write(session: AdaptiveSessionExecution): void {
     try {
-      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(session));
+      window.localStorage.setItem(storageKey(session.language), JSON.stringify(session));
     } catch {
       // Adaptive execution is an enhancement; learning persistence remains handled by existing services.
     }
@@ -56,7 +57,7 @@ class AdaptiveSessionExecutionService {
     if (!language) return undefined;
 
     const now = new Date().toISOString();
-    const existing = this.read();
+    const existing = this.read(language);
     const session: AdaptiveSessionExecution = existing?.language === language
       ? existing
       : {
@@ -120,13 +121,15 @@ class AdaptiveSessionExecutionService {
   }
 
   getNextPlan(language: LanguageCode): AdaptiveLearningPlan | undefined {
-    const session = this.read();
+    const session = this.read(language);
     return session?.language === language ? session.nextPlan : undefined;
   }
 
   clear(): void {
     try {
       window.localStorage.removeItem(STORAGE_KEY);
+      window.localStorage.removeItem(storageKey('en'));
+      window.localStorage.removeItem(storageKey('zh'));
     } catch {
       // Ignore storage failures.
     }
