@@ -49,7 +49,7 @@ const SKILL_ROTATION: AdaptiveMemorySkill[] = [
 class AdaptiveSessionMemoryService {
   private read(language: LanguageCode): AdaptiveMemoryState {
     try {
-      const raw = window.localStorage.getItem(storageKey(language));
+      const raw = window.localStorage.getItem(storageKey(language)) || window.localStorage.getItem(STORAGE_KEY);
       if (!raw) return { language, updatedAt: new Date().toISOString(), steps: [] };
       const parsed = JSON.parse(raw) as AdaptiveMemoryState;
       return parsed.language === language
