@@ -51,7 +51,17 @@ class CrossSkillMasteryBalanceService {
       const confidenceGap = Math.max(0, 60 - confidence);
       const coverageGap = attempts === 0 ? 18 : attempts < 2 ? 10 : 0;
       const repetitionPenalty = recentCount >= 2 && mastery >= 70 ? 12 : recentCount * 2;
-      const needScore = evidenceGap * 1.1 + confidenceGap * 0.35 + coverageGap + repetitionPenalty;
+      const evidenceLevel = record?.evidenceLevel;
+      const evidenceGapBoost =
+        evidenceLevel === 'new' ? 12 :
+        evidenceLevel === 'developing' ? 7 :
+        evidenceLevel === 'established' ? 2 : 0;
+      const needScore =
+        evidenceGap * 1.1 +
+        confidenceGap * 0.35 +
+        coverageGap +
+        evidenceGapBoost +
+        repetitionPenalty;
       return { skill, mastery, confidence, attempts, recentCount, needScore };
     }).sort((a, b) => b.needScore - a.needScore);
 
