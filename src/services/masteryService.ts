@@ -190,8 +190,14 @@ export const masteryService = {
   },
   getForgettingRisks(limit=5,language?:LanguageCode):MasteryRecord[]{
     const now=Date.now();
-    return this.getSnapshot(language).questions
-      .filter(item=>item.mastery>=70 && (now-new Date(item.lastAttemptAt).getTime())/86400000>=14)
+    const categoryId=language ? categoryForLanguage(language) : undefined;
+    return read().questions
+      .filter(item =>
+        (!categoryId || item.categoryId===categoryId) &&
+        item.mastery>=70 &&
+        (now-new Date(item.lastAttemptAt).getTime())/86400000>=14
+      )
+      .map(applyForgettingSignal)
       .sort((a,b)=>new Date(a.lastAttemptAt).getTime()-new Date(b.lastAttemptAt).getTime())
       .slice(0,limit);
   },
