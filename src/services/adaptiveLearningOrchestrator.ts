@@ -9,6 +9,7 @@ import { crossSkillMasteryBalanceService } from './crossSkillMasteryBalanceServi
 import { adaptiveSessionGoalService } from './adaptiveSessionGoalService';
 import { dailyLearningContinuityService } from './dailyLearningContinuityService';
 import { longTermLearningInsightService } from './longTermLearningInsightService';
+import { learningIntelligenceProfileService } from './learningIntelligenceProfileService';
 
 export type AdaptivePhase =
   | 'review-due'
@@ -76,6 +77,20 @@ class AdaptiveLearningOrchestrator {
     if (state.recommendedAction === 'targeted-practice') {
       const weak = masteryService.getWeakQuestions(1, language)[0];
       return { language, phase: 'targeted-practice', state, title: 'Luyện đúng điểm yếu', description: weak?.label || state.reason, reason: state.reason, path: '/ngan-hang-cau-hoi?focus=weak&lang=' + language, durationMinutes: 8, sourceQuestionId: weak?.entityId };
+    }
+
+    const intelligence = learningIntelligenceProfileService.getProfile(language);
+    if (
+      (state.recommendedAction === 'challenge' || state.recommendedAction === 'continue') &&
+      intelligence.prioritySkill &&
+      intelligence.priorityScore >= 20
+    ) {
+      return this.buildBalancedSkillPlan(
+        language,
+        state,
+        intelligence.prioritySkill,
+        intelligence.reason + ' Hồ sơ hiện tại: ' + intelligence.evidenceCoverage + '% coverage, mastery trung bình ' + intelligence.overallMastery + '%.'
+      );
     }
 
     const goalProgress = adaptiveSessionGoalService.getProgress(language);
