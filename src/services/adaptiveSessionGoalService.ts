@@ -44,7 +44,7 @@ const MAX_STEPS = 5;
 class AdaptiveSessionGoalService {
   private read(language: LanguageCode): AdaptiveSessionGoal | null {
     try {
-      const raw = window.localStorage.getItem(storageKey(language));
+      const raw = window.localStorage.getItem(storageKey(language)) || window.localStorage.getItem(STORAGE_KEY);
       if (!raw) return null;
       const goal = JSON.parse(raw) as AdaptiveSessionGoal;
       return goal.language === language ? goal : null;
