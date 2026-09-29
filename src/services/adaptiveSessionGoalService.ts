@@ -154,7 +154,8 @@ class AdaptiveSessionGoalService {
   }
 
   getGoal(language: LanguageCode): AdaptiveSessionGoal {
-    return this.getOrCreate(language);
+    // Keep completed sessions visible until the next real learning activity starts.
+    return this.read(language) || this.create(language);
   }
 
   clear(language?: LanguageCode): void {
