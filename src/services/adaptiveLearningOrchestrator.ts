@@ -79,20 +79,6 @@ class AdaptiveLearningOrchestrator {
       return { language, phase: 'targeted-practice', state, title: 'Luyện đúng điểm yếu', description: weak?.label || state.reason, reason: state.reason, path: '/ngan-hang-cau-hoi?focus=weak&lang=' + language, durationMinutes: 8, sourceQuestionId: weak?.entityId };
     }
 
-    const intelligence = learningIntelligenceProfileService.getProfile(language);
-    if (
-      (state.recommendedAction === 'challenge' || state.recommendedAction === 'continue') &&
-      intelligence.prioritySkill &&
-      intelligence.priorityScore >= 20
-    ) {
-      return this.buildBalancedSkillPlan(
-        language,
-        state,
-        intelligence.prioritySkill,
-        intelligence.reason + ' Hồ sơ hiện tại: ' + intelligence.evidenceCoverage + '% coverage, mastery trung bình ' + intelligence.overallMastery + '%.'
-      );
-    }
-
     const goalProgress = adaptiveSessionGoalService.getProgress(language);
     const continuity = dailyLearningContinuityService.syncProgress(goalProgress);
     if (goalProgress.status === 'completed') {
@@ -107,6 +93,20 @@ class AdaptiveLearningOrchestrator {
         sourceQuestionId: undefined,
         durationMinutes: 0,
       };
+    }
+
+    const intelligence = learningIntelligenceProfileService.getProfile(language);
+    if (
+      (state.recommendedAction === 'challenge' || state.recommendedAction === 'continue') &&
+      intelligence.prioritySkill &&
+      intelligence.priorityScore >= 20
+    ) {
+      return this.buildBalancedSkillPlan(
+        language,
+        state,
+        intelligence.prioritySkill,
+        intelligence.reason + ' Hồ sơ hiện tại: ' + intelligence.evidenceCoverage + '% coverage, mastery trung bình ' + intelligence.overallMastery + '%.'
+      );
     }
 
     const continuityFocus = continuity.today.completedSteps > 0
