@@ -96,11 +96,14 @@ class AdaptiveLearningOrchestrator {
       };
     }
 
+    const longTermMemory = longTermLearningMemoryService.getSummary(language);
+    const recentSkills = adaptiveSessionMemoryService.getRecentSteps(language, 4).map((step) => step.skill);
     const intelligence = learningIntelligenceProfileService.getProfile(language);
     if (
       (state.recommendedAction === 'challenge' || state.recommendedAction === 'continue') &&
       intelligence.prioritySkill &&
-      intelligence.priorityScore >= 20
+      intelligence.priorityScore >= 20 &&
+      !['recovering', 'improving'].includes(longTermMemory.recoveryPattern)
     ) {
       return this.buildBalancedSkillPlan(
         language,
@@ -114,8 +117,23 @@ class AdaptiveLearningOrchestrator {
       ? continuity.nextFocus
       : '';
 
-    const longTermMemory = longTermLearningMemoryService.getSummary(language);
-    const recentSkills = adaptiveSessionMemoryService.getRecentSteps(language, 4).map((step) => step.skill);
+    if (
+      (state.recommendedAction === 'challenge' || state.recommendedAction === 'continue') &&
+      ['recovering', 'improving'].includes(longTermMemory.recoveryPattern) &&
+      longTermMemory.recoverySkill
+    ) {
+      return this.buildRecoveryPlan(
+        language,
+        state,
+        longTermMemory.recoverySkill,
+        longTermMemory.recoveryPattern,
+        'Learning Recovery Pattern đang theo dõi ' + SKILL_LABELS[longTermMemory.recoverySkill] +
+          ': pattern=' + longTermMemory.recoveryPattern +
+          ', mastery delta=' + longTermMemory.masteryDelta +
+          ', score delta=' + longTermMemory.scoreDelta +
+          '. Bensop giữ trọng tâm ở kỹ năng này để củng cố đà phục hồi thay vì chuyển sang nội dung mới quá sớm.'
+      );
+    }
 
     if (
       (state.recommendedAction === 'challenge' || state.recommendedAction === 'continue') &&
@@ -194,7 +212,29 @@ class AdaptiveLearningOrchestrator {
     return { language, phase: 'start', state, title: 'Khởi động phiên học', description: 'Một lượt luyện ngắn để tạo evidence cho hồ sơ học tập.', reason: 'Chưa có tín hiệu đủ mạnh để cá nhân hóa sâu hơn.', path: '/luyen-tap', durationMinutes: 10 };
   }
 
-  private buildMemoryPlan(language: LanguageCode, state: LearningStateDecision, skill: AdaptiveMemorySkill, reason: string): AdaptiveLearningPlan {
+  private buildRecoveryPlan(
+    language: LanguageCode,
+    state: LearningStateDecision,
+    skill: AdaptiveMemorySkill,
+    pattern: 'recovering' | 'improving',
+    reason: string,
+  ): AdaptiveLearningPlan {
+    const isImproving = pattern === 'improving';
+    return {
+      language,
+      phase: 'cross-skill',
+      state,
+      title: (isImproving ? 'Recovery đang tiến bộ · ' : 'Recovery · ') + SKILL_LABELS[skill],
+      description: isImproving
+        ? 'Kỹ năng đã có tín hiệu đi lên sau giai đoạn yếu. Bensop giữ một lượt luyện vừa sức để chuyển đà cải thiện thành evidence ổn định.'
+        : 'Kỹ năng đang phục hồi. Bensop ưu tiên củng cố đúng kỹ năng này trước khi mở rộng sang nội dung mới.',
+      reason,
+      path: SKILL_PATHS[language][skill],
+      durationMinutes: skill === 'vocabulary' || skill === 'grammar' ? 6 : 8,
+    };
+  }
+
+    private buildMemoryPlan(language: LanguageCode, state: LearningStateDecision, skill: AdaptiveMemorySkill, reason: string): AdaptiveLearningPlan {
     return {
       language,
       phase: 'cross-skill',
