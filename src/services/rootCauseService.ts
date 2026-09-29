@@ -93,7 +93,7 @@ class RootCauseService {
         kind: 'vocabulary',
         title: 'Đã phục hồi từ nền · quay lại từ cấp trên',
         description: returnTarget.parentLabel,
-        path: returnTarget.path,
+        path: `${returnTarget.path}?recovery=1&sourceQuestionId=${encodeURIComponent(sourceQuestionId)}&parentKind=${returnTarget.sourceKind}&parentId=${encodeURIComponent(returnTarget.parentId)}`,
         reason: returnTarget.reason,
         sourceQuestionId,
       };
