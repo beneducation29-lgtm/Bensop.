@@ -90,7 +90,7 @@ class AdaptiveSessionExecutionService {
       result.quizSlug || result.sessionId
     );
 
-    const goal = adaptiveSessionGoalService.recordStep({
+    adaptiveSessionGoalService.recordStep({
       skill: 'quiz',
       language,
       activityId: result.quizSlug || result.sessionId,
