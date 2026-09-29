@@ -52,7 +52,7 @@ class AdaptiveSessionPlannerService {
     const recent = recentSteps.map((step) => step.skill);
     const lastStep = adaptiveSessionGoalService.getGoal(language).completedSteps.at(-1);
     const evidenceGate = adaptiveEvidenceGateService.evaluate(language, lastStep);
-    const gatedCurrent = goal.status === 'active' && evidenceGate && !evidenceGate.shouldAdvance
+    const gatedCurrent = goal.status === 'active' && evidenceGate && evidenceGate.skill !== 'quiz' && !evidenceGate.shouldAdvance
       ? this.buildEvidenceGatePlan(language, current, evidenceGate)
       : current;
     const upcoming = this.buildUpcoming(language, gatedCurrent, recent, Math.max(0, goal.remainingSteps - 1));
