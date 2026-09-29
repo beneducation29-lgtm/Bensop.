@@ -96,8 +96,12 @@ class AdaptiveSessionGoalService {
       goal.completedSteps.reduce((sum, item) => sum + item.score, 0) / goal.completedSteps.length
     );
 
-    const evidenceReady =
+    const targetStepsReady =
       goal.completedSteps.length >= goal.targetSteps &&
+      goal.completedSteps.slice(-goal.targetSteps).every((item) => item.score >= 70);
+
+    const evidenceReady =
+      targetStepsReady &&
       (uniqueSkills >= 2 || averageScore >= 70);
     const hardStop = goal.completedSteps.length >= goal.maxSteps;
 
