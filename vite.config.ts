@@ -8,6 +8,9 @@ export default defineConfig(() => {
     plugins: [react(), tailwindcss()],
     build: {
       sourcemap: true,
+      // Keep the production bundle readable while isolating the runtime
+      // "options is not defined" failure from the minifier.
+      minify: false,
     },
     resolve: {
       alias: {
